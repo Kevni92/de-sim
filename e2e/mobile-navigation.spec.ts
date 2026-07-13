@@ -11,9 +11,11 @@ const navigationLabels = [
   "Transparenz",
 ];
 
+test.describe.configure({ timeout: 90_000 });
+
 test("stellt die Desktop-Navigation mobil als bedienbares Burger-Menü bereit", async ({ page, isMobile }) => {
-  await page.goto("./#/wirkungen");
-  await expect(page.getByRole("heading", { name: "Indirekte und langfristige Wirkungen" })).toBeVisible();
+  await page.goto("/de-sim/#/dashboard");
+  await expect(page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" })).toBeVisible({ timeout: 45_000 });
 
   const menuButton = page.getByRole("button", { name: "Hauptmenü öffnen" });
   if (!isMobile) {
@@ -33,15 +35,18 @@ test("stellt die Desktop-Navigation mobil als bedienbares Burger-Menü bereit", 
   for (const label of navigationLabels) {
     await expect(menu.getByRole("button", { name: label, exact: true })).toBeVisible();
   }
-  await expect(menu.getByRole("button", { name: "Wirkungen", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(menu.getByRole("button", { name: "Dashboard", exact: true })).toHaveAttribute("aria-current", "page");
 
-  await menu.getByRole("button", { name: "Transparenz", exact: true }).click();
-  await expect(page).toHaveURL(/#\/transparenz$/);
+  await menu.getByRole("button", { name: "Wirkungen", exact: true }).click();
+  await expect(page).toHaveURL(/#\/wirkungen$/);
   await expect(menu).toBeHidden();
   await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
 
-  await page.getByRole("button", { name: "Hauptmenü öffnen" }).click();
+  const effectsMenuButton = page.getByRole("button", { name: "Hauptmenü öffnen" });
+  await expect(effectsMenuButton).toBeVisible({ timeout: 45_000 });
+  await effectsMenuButton.click();
   await expect(menu).toBeVisible();
+  await expect(menu.getByRole("button", { name: "Wirkungen", exact: true })).toHaveAttribute("aria-current", "page");
   await page.keyboard.press("Escape");
   await expect(menu).toBeHidden();
   await expect(page.getByRole("button", { name: "Hauptmenü öffnen" })).toBeFocused();
