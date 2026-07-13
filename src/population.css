@@ -54,5 +54,8 @@
 .population-transparency { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px 28px; }
 .population-transparency ul { margin: 0; padding-left: 18px; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
 .population-source-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--border); }
+html:has(.population-page) .source-drawer > header > div { min-width: 0; }
+html:has(.population-page) .source-drawer > header .icon-button { position: relative; z-index: 2; flex: 0 0 auto; }
+html:has(.population-page) .source-drawer h2 { overflow-wrap: anywhere; }
 @media (max-width: 980px) { .population-overview, .population-lower-grid { grid-template-columns: 1fr; } .population-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 680px) { html:has(.population-page) { scroll-behavior: auto; } .population-page { padding: 14px 12px 42px; } .population-header { align-items: flex-start; flex-direction: column; } .population-header .button { width: 100%; justify-content: center; } .population-kpi-grid { grid-template-columns: 1fr 1fr; } .population-active-card, .population-generator, .population-distributions, .population-calibration, .population-runs, .population-transparency { padding: 14px; } .population-tabs { scroll-margin-top: 72px; } .population-bar-row { grid-template-columns: 105px minmax(90px, 1fr) 58px; gap: 7px; } .population-transparency { grid-template-columns: 1fr; } .population-source-actions { grid-column: auto; } }
