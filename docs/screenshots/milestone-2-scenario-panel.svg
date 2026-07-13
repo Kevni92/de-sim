@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <rect width="1440" height="900" fill="#f4f7fa"/>
+  <rect width="1440" height="64" fill="#fff" stroke="#d6dde5"/>
+  <rect x="24" y="17" width="30" height="30" rx="6" fill="#147d7e"/>
+  <text x="64" y="31" font-family="Arial" font-size="15" font-weight="700" fill="#142033">Deutschland-Simulator</text>
+  <text x="64" y="47" font-family="Arial" font-size="10" fill="#5f6b78">Rechtsstand 2026 · Datenstand 2025 · DEMO</text>
+  <rect x="1125" y="15" width="170" height="34" rx="6" fill="#fff" stroke="#d6dde5"/>
+  <text x="1138" y="36" font-family="Arial" font-size="12" fill="#142033">Reformentwurf A</text>
+  <rect x="1304" y="15" width="112" height="34" rx="6" fill="#147d7e"/>
+  <text x="1324" y="36" font-family="Arial" font-size="12" font-weight="700" fill="#fff">Szenario</text>
+  <rect x="24" y="80" width="930" height="796" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <text x="48" y="118" font-family="Arial" font-size="12" font-weight="700" fill="#5f6b78">DASHBOARD</text>
+  <rect x="48" y="142" width="260" height="92" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <rect x="322" y="142" width="260" height="92" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <rect x="596" y="142" width="260" height="92" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <rect x="48" y="252" width="260" height="580" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <rect x="322" y="252" width="534" height="580" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <rect x="0" y="0" width="870" height="900" fill="#142033" opacity=".22"/>
+  <rect x="870" y="0" width="570" height="900" fill="#fff"/>
+  <line x1="870" y1="0" x2="870" y2="900" stroke="#d6dde5"/>
+  <text x="894" y="32" font-family="Arial" font-size="10" font-weight="700" letter-spacing="1" fill="#5f6b78">ZENTRALES SZENARIOMODELL</text>
+  <text x="894" y="57" font-family="Arial" font-size="18" font-weight="700" fill="#142033">Szenario verwalten</text>
+  <line x1="870" y1="76" x2="1440" y2="76" stroke="#d6dde5"/>
+  <g font-family="Arial">
+    <rect x="894" y="98" width="160" height="72" rx="6" fill="#eef2f6" stroke="#d6dde5"/>
+    <text x="908" y="118" font-size="9" fill="#5f6b78">STATUS</text><text x="908" y="143" font-size="12" font-weight="700" fill="#142033">Lokaler Entwurf</text>
+    <rect x="1064" y="98" width="160" height="72" rx="6" fill="#eef2f6" stroke="#d6dde5"/>
+    <text x="1078" y="118" font-size="9" fill="#5f6b78">LOKALE SZENARIEN</text><text x="1078" y="143" font-size="12" font-weight="700" fill="#142033">3</text>
+    <rect x="1234" y="98" width="182" height="72" rx="6" fill="#eef2f6" stroke="#d6dde5"/>
+    <text x="1248" y="118" font-size="9" fill="#5f6b78">MODELLVERSION</text><text x="1248" y="143" font-size="12" font-weight="700" fill="#142033">ui-demo-0.2.0</text>
+    <text x="894" y="205" font-size="11" font-weight="700" fill="#5f6b78">Name</text>
+    <rect x="894" y="214" width="522" height="38" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="908" y="238" font-size="12" fill="#142033">Reformentwurf A</text>
+    <text x="894" y="282" font-size="11" font-weight="700" fill="#5f6b78">Beschreibung</text>
+    <rect x="894" y="291" width="522" height="74" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="908" y="316" font-size="11" fill="#5f6b78">Arbeitsstand für eine neutrale Simulation von Einnahmen,</text>
+    <text x="908" y="335" font-size="11" fill="#5f6b78">Ausgaben und Verteilungswirkungen.</text>
+    <text x="894" y="397" font-size="11" font-weight="700" fill="#5f6b78">Rechtsstand</text>
+    <rect x="894" y="406" width="250" height="38" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="908" y="430" font-size="12" fill="#142033">2026</text>
+    <text x="1166" y="397" font-size="11" font-weight="700" fill="#5f6b78">Datenstand</text>
+    <rect x="1166" y="406" width="250" height="38" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="1180" y="430" font-size="12" fill="#142033">2025</text>
+    <text x="894" y="475" font-size="11" font-weight="700" fill="#5f6b78">Zeithorizont</text>
+    <rect x="894" y="484" width="250" height="38" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="908" y="508" font-size="12" fill="#142033">5 Jahre</text>
+    <text x="1166" y="475" font-size="11" font-weight="700" fill="#5f6b78">Modellstufe</text>
+    <rect x="1166" y="484" width="250" height="38" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="1180" y="508" font-size="12" fill="#142033">mit Verhaltenseffekt</text>
+    <text x="894" y="553" font-size="11" font-weight="700" fill="#5f6b78">Annahmen · eine pro Zeile</text>
+    <rect x="894" y="562" width="522" height="104" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="908" y="588" font-size="11" fill="#5f6b78">Alle sichtbaren Werte sind Demonstrationswerte.</text>
+    <text x="908" y="608" font-size="11" fill="#5f6b78">Verhaltensreaktionen werden vereinfacht berücksichtigt.</text>
+    <rect x="894" y="716" width="166" height="38" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="944" y="740" font-size="12" font-weight="700" fill="#142033">Neu</text>
+    <rect x="1070" y="716" width="166" height="38" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="1108" y="740" font-size="12" font-weight="700" fill="#142033">Duplizieren</text>
+    <rect x="1246" y="716" width="170" height="38" rx="6" fill="#fff" stroke="#d6dde5"/>
+    <text x="1277" y="740" font-size="12" font-weight="700" fill="#142033">JSON exportieren</text>
+    <rect x="894" y="766" width="522" height="40" rx="6" fill="#147d7e"/>
+    <text x="1090" y="791" font-size="12" font-weight="700" fill="#fff">Als JSON kopieren</text>
+  </g>
+  <rect x="870" y="852" width="570" height="48" fill="#eef2f6"/>
+  <text x="894" y="881" font-family="Arial" font-size="10" fill="#5f6b78">Änderungen werden automatisch über Worker und IndexedDB gesichert.</text>
+</svg>
