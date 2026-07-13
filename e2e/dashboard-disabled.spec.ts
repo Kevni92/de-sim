@@ -11,6 +11,7 @@ test("kennzeichnet nicht implementierte Einnahmen und Ausgaben als deaktiviert",
   const tradeTaxRow = revenuePanel.locator("li").filter({ hasText: "Gewerbesteuer" });
   const tradeTaxButton = tradeTaxRow.locator(".line-row-main");
   const wealthTaxRow = revenuePanel.locator("li").filter({ hasText: "Vermögensteuer" });
+  const corporateTaxRow = revenuePanel.locator("li").filter({ hasText: "Körperschaftsteuer" });
 
   await expect(tradeTaxButton).toBeDisabled();
   expect(await tradeTaxRow.evaluate((element) => getComputedStyle(element).backgroundImage)).toContain("repeating-linear-gradient");
@@ -26,6 +27,11 @@ test("kennzeichnet nicht implementierte Einnahmen und Ausgaben als deaktiviert",
 
   await expect(wealthTaxRow.locator(".line-row-main")).toBeEnabled();
   await expect(wealthTaxRow).toHaveCSS("background-image", "none");
+
+  await expect(corporateTaxRow).toHaveClass(/changed/);
+  const changedBackground = await corporateTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+  const neutralBackground = await wealthTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(changedBackground).toBe(neutralBackground);
 
   if (isMobile) {
     await page.getByRole("tab", { name: "Ausgaben" }).click();
