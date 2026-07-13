@@ -4,7 +4,7 @@ export const SCENARIO_SCHEMA_VERSION = 1;
 
 export const defaultScenarioDraft: ScenarioDraft = {
   name: "Reformentwurf A",
-  description: "Arbeitsstand für eine neutrale Simulation von Einnahmen, Ausgaben und Verteilungswirkungen.",
+  description: "Arbeitsstand für eine neutrale Simulation des gesetzlichen Einkommensteuertarifs 2026 und seiner Verteilungswirkung.",
   legalYear: 2026,
   dataYear: 2025,
   horizonYears: 5,
@@ -17,15 +17,16 @@ export const defaultScenarioDraft: ScenarioDraft = {
     topRate: 42,
     topThreshold: 75_000,
     richRate: 45,
-    childAllowance: 6_384,
+    childAllowance: 9_756,
     spouseSplitting: true,
   },
   assumptions: [
-    "Alle sichtbaren Werte sind Demonstrationswerte.",
-    "Verhaltensreaktionen werden als vereinfachter Modellfaktor berücksichtigt.",
+    "Die gesetzliche Baseline folgt dem Einkommensteuertarif 2026 nach § 32a EStG.",
+    "Aufkommen und Verteilung werden mit einer auf das Baseline-Aufkommen kalibrierten Referenzpopulation aggregiert.",
+    "Verhaltensreaktionen beruhen auf transparenten Elastizitätsannahmen und sind keine Prognose.",
   ],
-  modelVersion: "ui-demo-0.2.0",
-  sourceIds: ["source-budget", "source-est"],
+  modelVersion: "income-tax-2026-1.0.0",
+  sourceIds: ["source-budget", "source-est", "source-income-reference"],
 };
 
 export interface ScenarioHistory {
