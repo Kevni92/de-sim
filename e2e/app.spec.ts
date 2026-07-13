@@ -17,11 +17,37 @@ test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ pag
   await page.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
   await expect(page).toHaveURL(/#\/einkommensteuer$/);
   await expect(page.getByRole("heading", { name: "Einkommensteuer", exact: true })).toBeVisible();
+  await expect(page.getByText("Gesetzliche Baseline 2026")).toBeVisible();
   const allowance = page.getByLabel("Grundfreibetrag Wert");
   await allowance.fill("15000");
   await expect(allowance).toHaveValue("15000");
   await expect(page.getByRole("heading", { name: "Tarifkurve" })).toBeVisible();
-  await expect(page.getByText("Du hast ungefähr").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Referenzhaushalte" })).toBeVisible();
+});
+
+test("berechnet den gesetzlichen Tarif 2026 und hält die Baseline unverändert", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/einkommensteuer");
+
+  const taxCheckIncome = page.getByLabel("Zu versteuerndes Einkommen für Tarifprüfung");
+  await taxCheckIncome.fill("30000");
+  await expect(page.getByTestId("baseline-tax-check")).toHaveText("4.217 €");
+
+  const allowance = page.getByLabel("Grundfreibetrag Wert");
+  await allowance.fill("15000");
+  await expect(page.getByTestId("baseline-tax-check")).toHaveText("4.217 €");
+  await expect(page.getByText("Statische Wirkung")).toBeVisible();
+  await expect(page.getByText("Verhaltensanpassung")).toBeVisible();
+
+  await page.screenshot({ path: "test-results/milestone-4-income-tax.png", fullPage: true });
+});
+
+test("bildet beim gesetzlichen Tarif die Zusammenveranlagung ab", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/einkommensteuer");
+  await page.getByLabel("Zu versteuerndes Einkommen für Tarifprüfung").fill("60000");
+  await page.getByLabel("Veranlagung für Tarifprüfung").selectOption("joint");
+  await expect(page.getByTestId("baseline-tax-check")).toHaveText("8.434 €");
 });
 
 test("verwaltet einen zentralen Entwurf mit Undo, Redo und Autosave", async ({ page, isMobile }) => {
@@ -112,12 +138,11 @@ test("durchsucht das Transparenzregister und zeigt Rechenweg, Unsicherheit und H
   await expect(dialog.getByRole("heading", { name: "Unsicherheit" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Änderungsverlauf" })).toBeVisible();
-  await page.screenshot({ path: "test-results/milestone-3-transparency.png", fullPage: true });
 });
 
 test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ page, isMobile }) => {
   test.skip(isMobile, "Die kompakte App-Bar zeigt Speichern nur auf Desktop");
-  const name = `Milestone 3 ${Date.now()}`;
+  const name = `Milestone 4 ${Date.now()}`;
   await page.goto("./#/dashboard");
   await page.getByLabel("Szenarioname").fill(name);
   await page.getByRole("button", { name: /Speichern/ }).click();
@@ -147,8 +172,9 @@ test("bietet mobil Tabs, Nachweise, Detailseite und Szenarioverwaltung", async (
   await page.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
   await expect(page).toHaveURL(/#\/einkommensteuer$/);
   await expect(page.getByRole("heading", { name: "Einkommensteuer", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tarifprüfung 2026" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Annahmen und Quellen" }).click();
+  await page.getByRole("button", { name: "Berechnung und Quellen" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Szenario", exact: true }).click();

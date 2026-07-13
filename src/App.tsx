@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { AppBar, type AppRoute } from "./components/AppBar";
 import { ScenarioPanel } from "./components/ScenarioPanel";
 import { SourceDrawer } from "./components/SourceDrawer";
+import { estimateIncomeTaxRevenue } from "./lib/income-tax";
 import {
   createScenarioHistory,
   defaultScenarioDraft,
@@ -10,7 +11,7 @@ import {
   scenarioHistoryReducer,
   scenarioToJson,
 } from "./lib/scenario-state";
-import { expenseItems, fmtBn, fmtDiff, estimateIncomeTaxRevenue, revenueItems } from "./lib/sim-data";
+import { expenseItems, fmtBn, fmtDiff, revenueItems } from "./lib/sim-data";
 import { localServer } from "./lib/local-server-client";
 import type { MetricRecord, ScenarioDraft, ScenarioState, SourceRecord } from "./lib/types";
 import { ComparisonPage } from "./pages/ComparisonPage";
@@ -29,6 +30,15 @@ const legacyMetricIds: Record<string, string> = {
   "source-budget": "metric-public-budget-lines",
   "source-debt": "metric-public-debt",
 };
+
+function signedEuro(value: number) {
+  const sign = value > 0 ? "+" : value < 0 ? "−" : "±";
+  return `${sign}${Math.abs(Math.round(value)).toLocaleString("de-DE")} € / Monat`;
+}
+
+function formatMillion(value: number) {
+  return value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
 
 export function App() {
   const [route, setRoute] = useState<AppRoute>(readRoute);
@@ -67,15 +77,15 @@ export function App() {
       "metric-budget-balance": fmtBn(balance),
       "metric-public-debt": "2.634,0 Mrd. €",
       "metric-public-budget-lines": "positionsabhängig",
-      "metric-income-tax-revenue": fmtBn(taxResult.value),
+      "metric-income-tax-revenue": `${fmtBn(taxResult.value)} · ${fmtDiff(taxResult.delta)}`,
       "metric-income-tax-tariff": `${scenario.incomeTax.entryRate.toLocaleString("de-DE")}–${scenario.incomeTax.richRate.toLocaleString("de-DE")} %`,
-      "metric-income-tax-distribution": `${fmtDiff(taxResult.delta)} Aufkommenswirkung`,
-      "metric-household-examples": "+22 € / Monat (Median)",
-      "metric-regional-effects": "+8 bis +29 € / Monat",
+      "metric-income-tax-distribution": `${formatMillion(taxResult.winnersM)} Mio. Gewinner · ${formatMillion(taxResult.losersM)} Mio. Verlierer`,
+      "metric-household-examples": signedEuro(taxResult.medianMonthlyChange),
+      "metric-regional-effects": "noch nicht kalibriert",
       "metric-time-path": fmtDiff(taxResult.delta),
       "metric-migration-components": "29,8 Mrd. €",
     };
-  }, [scenario.incomeTax.entryRate, scenario.incomeTax.richRate, taxResult.delta, taxResult.value]);
+  }, [scenario.incomeTax.entryRate, scenario.incomeTax.richRate, taxResult]);
 
   const refreshScenarios = useCallback(async () => setScenarios(await localServer.listScenarios()), []);
 
@@ -234,8 +244,8 @@ export function App() {
       />
 
       {route === "/" && <OnboardingPage modelLevel={scenario.modelLevel} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onStart={() => navigate("/dashboard")} />}
-      {route === "/dashboard" && <DashboardPage incomeTaxValue={taxResult.value} incomeTaxDelta={taxResult.delta} scenarios={scenarios} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onNavigateComparison={() => navigate("/vergleich")} onOpenSource={openSource} onLoadScenario={loadScenario} onDeleteScenario={(saved) => void deleteScenario(saved)} />}
-      {route === "/einkommensteuer" && <IncomeTaxPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} revenue={taxResult.value} delta={taxResult.delta} onSettings={(incomeTax) => updateScenario({ incomeTax })} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onBack={() => navigate("/dashboard")} onApply={() => navigate("/dashboard")} onOpenSource={openSource} />}
+      {route === "/dashboard" && <DashboardPage incomeTaxResult={taxResult} scenarios={scenarios} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onNavigateComparison={() => navigate("/vergleich")} onOpenSource={openSource} onLoadScenario={loadScenario} onDeleteScenario={(saved) => void deleteScenario(saved)} />}
+      {route === "/einkommensteuer" && <IncomeTaxPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} result={taxResult} onSettings={(incomeTax) => updateScenario({ incomeTax })} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onBack={() => navigate("/dashboard")} onApply={() => navigate("/dashboard")} onOpenSource={openSource} />}
       {route === "/vergleich" && <ComparisonPage settings={scenario.incomeTax} revenue={taxResult.value} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
       {route === "/transparenz" && <TransparencyPage metrics={metrics} sources={sources} values={metricValues} onOpenMetric={openSource} />}
 

@@ -1,12 +1,18 @@
-import { ChevronRight, Info } from "lucide-react";
-import { deciles, fmtBn, households } from "../lib/sim-data";
+import { Calculator, ChevronRight, Info, Scale } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  calculateReformIncomeTax,
+  calculateStatutoryIncomeTax2026,
+  statutoryIncomeTax2026,
+  type IncomeTaxResult,
+} from "../lib/income-tax";
+import { fmtBn, fmtDiff } from "../lib/sim-data";
 import type { IncomeTaxSettings, ModelLevel } from "../lib/types";
 
 export function IncomeTaxPage({
   settings,
   modelLevel,
-  revenue,
-  delta,
+  result,
   onSettings,
   onModelLevel,
   onBack,
@@ -15,8 +21,7 @@ export function IncomeTaxPage({
 }: {
   settings: IncomeTaxSettings;
   modelLevel: ModelLevel;
-  revenue: number;
-  delta: number;
+  result: IncomeTaxResult;
   onSettings: (next: IncomeTaxSettings) => void;
   onModelLevel: (level: ModelLevel) => void;
   onBack: () => void;
@@ -24,55 +29,102 @@ export function IncomeTaxPage({
   onOpenSource: (metricId: string, value?: string) => void;
 }) {
   const update = <K extends keyof IncomeTaxSettings>(key: K, value: IncomeTaxSettings[K]) => onSettings({ ...settings, [key]: value });
+
   return (
-    <main className="content-width detail-page">
+    <main className="content-width detail-page income-tax-page">
       <nav className="breadcrumb"><button onClick={onBack}>Dashboard</button><ChevronRight size={12} /><span>Einkommensteuer</span></nav>
       <header className="detail-header">
-        <div><h1>Einkommensteuer</h1><p>Tarif, Freibeträge und Splitting anpassen. Ergebnisse aktualisieren sich live.</p></div>
-        <div><button className="button secondary" onClick={() => onOpenSource("metric-income-tax-revenue", fmtBn(revenue))}>Annahmen und Quellen</button><button className="button primary" onClick={onApply}>Übernehmen</button></div>
+        <div>
+          <div className="legal-badge"><Scale size={13} /> Gesetzliche Baseline 2026 · § 32a EStG</div>
+          <h1>Einkommensteuer</h1>
+          <p>Gesetzlichen Tarif 2026 mit einem transparenten Reformszenario vergleichen. Die tarifliche Steuer wird auf Basis des zu versteuernden Einkommens berechnet.</p>
+        </div>
+        <div><button className="button secondary" onClick={() => onOpenSource("metric-income-tax-revenue", fmtBn(result.value))}>Berechnung und Quellen</button><button className="button primary" onClick={onApply}>Übernehmen</button></div>
       </header>
+
+      <section className="income-tax-law-summary card-flat" aria-label="Gesetzliche Eckwerte 2026">
+        <div><span>Grundfreibetrag</span><strong>12.348 €</strong></div>
+        <div><span>Beginn 42 %</span><strong>69.879 €</strong></div>
+        <div><span>Beginn 45 %</span><strong>277.826 €</strong></div>
+        <div><span>Rundung</span><strong>volle Euro</strong></div>
+        <button className="source-badge" onClick={() => onOpenSource("metric-income-tax-tariff", "Rechtsstand 2026")}><Info size={10} /> Nachweis</button>
+      </section>
 
       <div className="detail-layout">
         <section className="card-flat parameter-panel">
-          <header><h2>Parameter</h2></header>
-          <NumberSlider label="Grundfreibetrag" value={settings.allowance} baseline={11_784} min={0} max={20_000} step={100} unit="€ / Jahr" onChange={(value) => update("allowance", value)} />
-          <NumberSlider label="Eingangssteuersatz" value={settings.entryRate} baseline={14} min={0} max={30} step={0.5} unit="%" onChange={(value) => update("entryRate", value)} />
-          <NumberSlider label="Spitzensteuersatz" value={settings.topRate} baseline={42} min={30} max={60} step={0.5} unit="%" onChange={(value) => update("topRate", value)} />
-          <NumberSlider label="Schwelle Spitzensteuersatz" value={settings.topThreshold} baseline={66_761} min={40_000} max={150_000} step={500} unit="€ / Jahr" onChange={(value) => update("topThreshold", value)} />
-          <NumberSlider label="Reichensteuersatz" value={settings.richRate} baseline={45} min={30} max={65} step={0.5} unit="%" onChange={(value) => update("richRate", value)} />
-          <NumberSlider label="Kinderfreibetrag" value={settings.childAllowance} baseline={6_384} min={0} max={12_000} step={100} unit="€ / Jahr" onChange={(value) => update("childAllowance", value)} />
-          <div className="switch-row"><div><strong>Ehegattensplitting</strong><small>Baseline: aktiviert</small></div><button role="switch" aria-checked={settings.spouseSplitting} className={`switch ${settings.spouseSplitting ? "active" : ""}`} onClick={() => update("spouseSplitting", !settings.spouseSplitting)}><span /></button></div>
+          <header><div><h2>Reformparameter</h2><p>Die Baseline bleibt unverändert und wird gestrichelt dargestellt.</p></div></header>
+          <NumberSlider label="Grundfreibetrag" value={settings.allowance} baseline={statutoryIncomeTax2026.allowance} min={0} max={25_000} step={100} unit="€ / Jahr" onChange={(value) => update("allowance", value)} />
+          <NumberSlider label="Eingangssteuersatz" value={settings.entryRate} baseline={statutoryIncomeTax2026.entryRate} min={0} max={30} step={0.5} unit="%" onChange={(value) => update("entryRate", value)} />
+          <NumberSlider label="Spitzensteuersatz" value={settings.topRate} baseline={statutoryIncomeTax2026.topRate} min={30} max={60} step={0.5} unit="%" onChange={(value) => update("topRate", value)} />
+          <NumberSlider label="Schwelle Spitzensteuersatz" value={settings.topThreshold} baseline={statutoryIncomeTax2026.topThreshold} min={40_000} max={150_000} step={500} unit="€ / Jahr" onChange={(value) => update("topThreshold", value)} />
+          <NumberSlider label="Reichensteuersatz" value={settings.richRate} baseline={statutoryIncomeTax2026.richRate} min={30} max={65} step={0.5} unit="%" onChange={(value) => update("richRate", value)} />
+          <NumberSlider label="Kinderfreibetrag" value={settings.childAllowance} baseline={statutoryIncomeTax2026.childAllowance} min={0} max={15_000} step={100} unit="€ / Kind" onChange={(value) => update("childAllowance", value)} />
+          <div className="switch-row"><div><strong>Ehegattensplitting</strong><small>Baseline 2026: aktiviert</small></div><button role="switch" aria-label="Ehegattensplitting" aria-checked={settings.spouseSplitting} className={`switch ${settings.spouseSplitting ? "active" : ""}`} onClick={() => update("spouseSplitting", !settings.spouseSplitting)}><span /></button></div>
+          <p className="parameter-note">Kinderfreibetrag und Splitting werden in den Referenzhaushalten vereinfacht abgebildet. Die Günstigerprüfung mit Kindergeld ist noch nicht Bestandteil dieses Moduls.</p>
         </section>
 
         <section className="detail-results">
           <div className="card-flat model-card">
-            <div className="model-head"><div><h2>Modellstufe</h2><p>bestimmt, wie stark Verhaltensreaktionen berücksichtigt werden</p></div><div className="segment-control">{(["statisch", "verhalten", "langfrist"] as ModelLevel[]).map((level) => <button key={level} className={modelLevel === level ? "active" : ""} onClick={() => onModelLevel(level)}>{level === "statisch" ? "statisch" : level === "verhalten" ? "mit Verhaltenseffekt" : "Langfristszenario"}</button>)}</div></div>
+            <div className="model-head"><div><h2>Modellstufe</h2><p>Statischer Tarifvergleich oder zusätzlich modellierte Reaktion des zu versteuernden Einkommens.</p></div><div className="segment-control">{(["statisch", "verhalten", "langfrist"] as ModelLevel[]).map((level) => <button key={level} className={modelLevel === level ? "active" : ""} onClick={() => onModelLevel(level)}>{level === "statisch" ? "statisch" : level === "verhalten" ? "mit Verhaltenseffekt" : "Langfristszenario"}</button>)}</div></div>
             <div className="detail-kpis">
-              <MiniKpi label="Steueraufkommen" value={fmtBn(revenue)} delta={`${delta >= 0 ? "+" : "−"}${Math.abs(delta).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Mrd. €`} tone={delta >= 0 ? "positive" : "negative"} hint="Bandbreite ± 25 %" onSource={() => onOpenSource("metric-income-tax-revenue", fmtBn(revenue))} />
-              <MiniKpi label="Gewinner" value="24,3 Mio." delta="Haushalte" tone="positive" onSource={() => onOpenSource("metric-income-tax-distribution", "24,3 Mio. Haushalte")} />
-              <MiniKpi label="Verlierer" value="3,1 Mio." delta="Haushalte" tone="negative" onSource={() => onOpenSource("metric-income-tax-distribution", "3,1 Mio. Haushalte")} />
-              <MiniKpi label="Median-Wirkung" value="+22 € / Monat" delta="Median" tone="neutral" onSource={() => onOpenSource("metric-income-tax-distribution", "+22 € / Monat")} />
+              <MiniKpi label="Steueraufkommen" value={fmtBn(result.value)} delta={fmtDiff(result.delta)} tone={result.delta >= 0 ? "positive" : "negative"} hint={`statisch ${fmtDiff(result.staticDelta)}`} onSource={() => onOpenSource("metric-income-tax-revenue", fmtBn(result.value))} />
+              <MiniKpi label="Gewinner" value={`${formatNumber(result.winnersM)} Mio.`} delta="Steuerfälle" tone="positive" onSource={() => onOpenSource("metric-income-tax-distribution", `${formatNumber(result.winnersM)} Mio.`)} />
+              <MiniKpi label="Verlierer" value={`${formatNumber(result.losersM)} Mio.`} delta="Steuerfälle" tone="negative" onSource={() => onOpenSource("metric-income-tax-distribution", `${formatNumber(result.losersM)} Mio.`)} />
+              <MiniKpi label="Median-Wirkung" value={formatSignedEuro(result.medianMonthlyChange, " / Monat")} delta="gewichteter Median" tone={result.medianMonthlyChange >= 0 ? "positive" : "negative"} onSource={() => onOpenSource("metric-household-examples", formatSignedEuro(result.medianMonthlyChange, " / Monat"))} />
+            </div>
+            <div className="model-breakdown">
+              <span><b>Statische Wirkung</b>{fmtDiff(result.staticDelta)}</span>
+              <span><b>Verhaltensanpassung</b>{fmtDiff(result.behavioralAdjustment)}</span>
+              <span><b>Kalibrierte Steuerfälle</b>{formatNumber(result.taxUnitsM)} Mio.</span>
             </div>
           </div>
 
+          <TaxCheckCard settings={settings} onOpenSource={onOpenSource} />
+
           <section className="card-flat chart-card">
-            <header><div><h2>Tarifkurve</h2><p>Grenzsteuersatz nach zu versteuerndem Einkommen</p></div><button className="source-badge" onClick={() => onOpenSource("metric-income-tax-tariff", `${settings.entryRate.toLocaleString("de-DE")}–${settings.richRate.toLocaleString("de-DE")} %`)}><Info size={10} /> Quelle</button></header>
-            <TariffChart settings={settings} />
-            <div className="chart-legend"><span><i className="baseline" /> Status quo</span><span><i className="reform" /> Reform</span><span><i className="band" /> Unsicherheitsband</span></div>
+            <header><div><h2>Tarifkurve</h2><p>Grenzsteuersatz nach zu versteuerndem Einkommen</p></div><button className="source-badge" onClick={() => onOpenSource("metric-income-tax-tariff", "Tarifvergleich 2026")}><Info size={10} /> Nachweis</button></header>
+            <TariffChart result={result} />
+            <div className="chart-legend"><span><i className="baseline" /> gesetzlicher Tarif 2026</span><span><i className="reform" /> Reformszenario</span></div>
           </section>
 
           <section className="card-flat chart-card">
-            <header><div><h2>Verteilung nach Einkommensdezilen</h2><p>Monatliche Nettowirkung des Reformszenarios</p></div><button className="source-badge" onClick={() => onOpenSource("metric-income-tax-distribution", "D1 bis D10")}><Info size={10} /> Quelle</button></header>
-            <div className="distribution-bars compact">{deciles.map((item) => <div key={item.d}><span>{item.d}</span><i><b className={item.reform >= 0 ? "positive" : "negative"} style={{ left: item.reform >= 0 ? "50%" : `${50 - Math.abs(item.reform) / 120 * 50}%`, width: `${Math.abs(item.reform) / 120 * 50}%` }} /></i><em className={item.reform >= 0 ? "positive" : "negative"}>{item.reform >= 0 ? "+" : "−"}{Math.abs(item.reform)} €</em></div>)}</div>
+            <header><div><h2>Verteilung nach Einkommensdezilen</h2><p>Gewichtete monatliche Änderung der tariflichen Einkommensteuer</p></div><button className="source-badge" onClick={() => onOpenSource("metric-income-tax-distribution", "D1 bis D10")}><Info size={10} /> Nachweis</button></header>
+            <DistributionRows result={result} />
           </section>
 
           <section className="card-flat chart-card">
-            <header><div><h2>Beispielhaushalte</h2><p>Klare Alltagssprache statt technischer Vorzeichen</p></div><button className="source-badge" onClick={() => onOpenSource("metric-household-examples", "+22 € / Monat (Median)")}><Info size={10} /> Quelle</button></header>
-            <div className="household-grid compact">{households.map((household) => <article className="household-card" key={household.name}><div><strong>{household.name}</strong><small>{household.income}</small></div><em className={household.delta >= 0 ? "positive" : "negative"}>{household.delta >= 0 ? "+" : "−"}{Math.abs(household.delta)} € / Monat</em><p>Du hast ungefähr {Math.abs(household.delta)} € {household.delta >= 0 ? "mehr" : "weniger"} im Monat, weil {household.reason}.</p></article>)}</div>
+            <header><div><h2>Referenzhaushalte</h2><p>Direkter Vergleich aus gesetzlichem Tarif und Reformszenario</p></div><button className="source-badge" onClick={() => onOpenSource("metric-household-examples", formatSignedEuro(result.medianMonthlyChange, " / Monat"))}><Info size={10} /> Nachweis</button></header>
+            <div className="household-grid compact">{result.households.map((household) => <article className="household-card" key={household.id}><div><strong>{household.name}</strong><small>{household.description}</small></div><em className={household.monthlyChange >= 0 ? "positive" : "negative"}>{formatSignedEuro(household.monthlyChange, " / Monat")}</em><p>Baseline: {formatEuro(household.baselineTax)} · Reform: {formatEuro(household.reformTax)} pro Jahr.</p><span>{household.joint ? "Zusammenveranlagung" : "Einzelveranlagung"}</span></article>)}</div>
           </section>
         </section>
       </div>
     </main>
+  );
+}
+
+function TaxCheckCard({ settings, onOpenSource }: { settings: IncomeTaxSettings; onOpenSource: (metricId: string, value?: string) => void }) {
+  const [income, setIncome] = useState(50_000);
+  const [joint, setJoint] = useState(false);
+  const calculation = useMemo(() => {
+    const baselineTax = calculateStatutoryIncomeTax2026(income, joint);
+    const reformTax = calculateReformIncomeTax(settings, income, joint);
+    return { baselineTax, reformTax, change: baselineTax - reformTax };
+  }, [income, joint, settings]);
+
+  return (
+    <section className="card-flat tax-check-card" aria-labelledby="tax-check-title">
+      <header><div><span className="calculator-icon"><Calculator size={16} /></span><div><h2 id="tax-check-title">Tarifprüfung 2026</h2><p>Tarifliche Einkommensteuer für ein frei wählbares zu versteuerndes Einkommen.</p></div></div><button className="source-badge" onClick={() => onOpenSource("metric-income-tax-tariff", formatEuro(calculation.baselineTax))}><Info size={10} /> Formel</button></header>
+      <div className="tax-check-inputs">
+        <label><span>Zu versteuerndes Einkommen</span><input aria-label="Zu versteuerndes Einkommen für Tarifprüfung" type="number" min="0" step="100" value={income} onChange={(event) => setIncome(Math.max(0, Number(event.target.value)))} /><small>€ / Jahr</small></label>
+        <label><span>Veranlagung</span><select aria-label="Veranlagung für Tarifprüfung" value={joint ? "joint" : "single"} onChange={(event) => setJoint(event.target.value === "joint")}><option value="single">alleinstehend</option><option value="joint">zusammenveranlagt</option></select></label>
+      </div>
+      <div className="tax-check-results">
+        <div><span>Gesetz 2026</span><strong data-testid="baseline-tax-check">{formatEuro(calculation.baselineTax)}</strong><small>{formatRate(calculation.baselineTax, income)} Durchschnitt</small></div>
+        <div><span>Reformszenario</span><strong>{formatEuro(calculation.reformTax)}</strong><small>{formatRate(calculation.reformTax, income)} Durchschnitt</small></div>
+        <div className={calculation.change >= 0 ? "positive" : "negative"}><span>Verfügbares Einkommen</span><strong>{formatSignedEuro(calculation.change, " / Jahr")}</strong><small>{formatSignedEuro(calculation.change / 12, " / Monat")}</small></div>
+      </div>
+      <p className="tax-check-disclaimer">Die Prüfung berechnet ausschließlich die tarifliche Einkommensteuer. Solidaritätszuschlag, Kirchensteuer, Sozialabgaben und individuelle Abzüge sind nicht enthalten.</p>
+    </section>
   );
 }
 
@@ -81,18 +133,40 @@ function NumberSlider({ label, value, baseline, min, max, step, unit, onChange }
 }
 
 function MiniKpi({ label, value, delta, tone, hint, onSource }: { label: string; value: string; delta: string; tone: string; hint?: string; onSource: () => void }) {
-  return <article className="mini-kpi"><div className="mini-kpi-head"><span>{label}</span><button className="plain-icon" aria-label={`Quelle für ${label}`} onClick={onSource}><Info size={11} /></button></div><strong>{value}</strong><em className={tone}>{delta}</em>{hint && <small>{hint}</small>}</article>;
+  return <article className="mini-kpi"><div className="mini-kpi-head"><span>{label}</span><button className="plain-icon" aria-label={`Nachweis für ${label}`} onClick={onSource}><Info size={11} /></button></div><strong>{value}</strong><em className={tone}>{delta}</em>{hint && <small>{hint}</small>}</article>;
 }
 
-function TariffChart({ settings }: { settings: IncomeTaxSettings }) {
-  const points = Array.from({ length: 21 }, (_, index) => {
-    const income = index * 10_000;
-    let rate = 0;
-    if (income > settings.allowance) rate = settings.entryRate + (Math.min(income, settings.topThreshold) - settings.allowance) / Math.max(1, settings.topThreshold - settings.allowance) * (settings.topRate - settings.entryRate);
-    if (income > settings.topThreshold) rate = settings.topRate;
-    if (income > 180_000) rate = settings.richRate;
-    return { income, rate: Math.max(0, Math.min(65, rate)) };
-  });
-  const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${30 + point.income / 200_000 * 650} ${235 - point.rate / 65 * 190}`).join(" ");
-  return <svg className="tariff-chart" viewBox="0 0 720 270" role="img" aria-label="Tarifkurve der Einkommensteuer"><rect x="30" y="35" width="650" height="200" className="uncertainty-band" /><line x1="30" x2="680" y1="235" y2="235" /><line x1="30" x2="30" y1="35" y2="235" /><path className="baseline-line" d="M 30 235 L 68 235 L 140 188 L 250 135 L 410 112 L 620 102 L 680 102" /><path className="reform-line" d={path} />{[0, 50, 100, 150, 200].map((value) => <text key={value} x={30 + value / 200 * 650} y="255" textAnchor="middle">{value}k</text>)}{[0, 20, 40, 60].map((value) => <text key={value} x="22" y={235 - value / 65 * 190 + 4} textAnchor="end">{value}%</text>)}</svg>;
+function TariffChart({ result }: { result: IncomeTaxResult }) {
+  const x = (income: number) => 30 + income / 300_000 * 650;
+  const y = (rate: number) => 235 - rate / 60 * 190;
+  const baselinePath = result.curve.map((point, index) => `${index === 0 ? "M" : "L"} ${x(point.taxableIncome)} ${y(point.baselineMarginalRate)}`).join(" ");
+  const reformPath = result.curve.map((point, index) => `${index === 0 ? "M" : "L"} ${x(point.taxableIncome)} ${y(point.reformMarginalRate)}`).join(" ");
+  return <svg className="tariff-chart" viewBox="0 0 720 270" role="img" aria-label="Vergleich der Grenzsteuersätze"><line x1="30" x2="680" y1="235" y2="235" /><line x1="30" x2="30" y1="45" y2="235" /><path className="baseline-line" d={baselinePath} /><path className="reform-line" d={reformPath} />{[0, 50, 100, 150, 200, 250, 300].map((value) => <text key={value} x={x(value * 1_000)} y="255" textAnchor="middle">{value}k</text>)}{[0, 15, 30, 45, 60].map((value) => <text key={value} x="22" y={y(value) + 4} textAnchor="end">{value}%</text>)}</svg>;
+}
+
+function DistributionRows({ result }: { result: IncomeTaxResult }) {
+  const max = Math.max(1, ...result.deciles.map((item) => Math.abs(item.monthlyChange)));
+  return <div className="distribution-bars compact">{result.deciles.map((item) => {
+    const positive = item.monthlyChange >= 0;
+    const width = Math.abs(item.monthlyChange) / max * 50;
+    return <div key={item.id} title={`${formatSignedEuro(item.lowerMonthlyChange)} bis ${formatSignedEuro(item.upperMonthlyChange)}`}><span>{item.id}</span><i><b className={positive ? "positive" : "negative"} style={{ left: positive ? "50%" : `${50 - width}%`, width: `${width}%` }} /></i><em className={positive ? "positive" : "negative"}>{formatSignedEuro(item.monthlyChange)}</em></div>;
+  })}</div>;
+}
+
+function formatNumber(value: number) {
+  return value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+function formatEuro(value: number) {
+  return `${Math.round(value).toLocaleString("de-DE")} €`;
+}
+
+function formatSignedEuro(value: number, suffix = "") {
+  const sign = value > 0 ? "+" : value < 0 ? "−" : "±";
+  return `${sign}${Math.abs(Math.round(value)).toLocaleString("de-DE")} €${suffix}`;
+}
+
+function formatRate(tax: number, income: number) {
+  if (income <= 0) return "0,0 %";
+  return `${(tax / income * 100).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
 }

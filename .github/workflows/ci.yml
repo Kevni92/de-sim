@@ -34,7 +34,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: milestone-3-transparency
-          path: test-results/milestone-3-transparency.png
+          name: milestone-4-income-tax
+          path: test-results/milestone-4-income-tax.png
           if-no-files-found: warn
           retention-days: 14
