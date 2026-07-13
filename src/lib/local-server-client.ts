@@ -21,7 +21,7 @@ class LocalServerClient {
   private pending = new Map<string, { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }>();
 
   constructor() {
-    this.worker = new Worker(new URL("../workers/local-server.worker.ts", import.meta.url), { type: "module" });
+    this.worker = new Worker(new URL("../workers/local-server-v5.worker.ts", import.meta.url), { type: "module" });
     this.worker.addEventListener("message", (event: MessageEvent<LocalResponse>) => {
       const request = this.pending.get(event.data.id);
       if (!request) return;
