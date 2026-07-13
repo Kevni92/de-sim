@@ -21,6 +21,8 @@ type LocalRequestInput = WithoutId<LocalRequest>;
 
 class WorkerRpcClient {
   private pending = new Map<string, { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }>();
+  private tail: Promise<void> = Promise.resolve();
+
   constructor(private worker: Worker) {
     worker.addEventListener("message", (event: MessageEvent<LocalResponse>) => {
       const request = this.pending.get(event.data.id);
@@ -33,12 +35,18 @@ class WorkerRpcClient {
       this.pending.clear();
     });
   }
+
   call<T>(request: LocalRequestInput): Promise<T> {
-    const id = crypto.randomUUID();
-    return new Promise<T>((resolve, reject) => {
-      this.pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
-      this.worker.postMessage({ ...request, id } as LocalRequest);
-    });
+    const execute = () => {
+      const id = crypto.randomUUID();
+      return new Promise<T>((resolve, reject) => {
+        this.pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
+        this.worker.postMessage({ ...request, id } as LocalRequest);
+      });
+    };
+    const result = this.tail.then(execute, execute);
+    this.tail = result.then(() => undefined, () => undefined);
+    return result;
   }
 }
 
