@@ -38,3 +38,11 @@ jobs:
           path: test-results/detail-mask-alignment.png
           if-no-files-found: warn
           retention-days: 14
+      - name: Dashboard-Screenshot hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-disabled-items
+          path: test-results/dashboard-disabled-items.png
+          if-no-files-found: warn
+          retention-days: 14
