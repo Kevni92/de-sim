@@ -34,7 +34,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: milestone-2-scenario-panel
-          path: test-results/milestone-2-scenario-panel.png
+          name: milestone-3-transparency
+          path: test-results/milestone-3-transparency.png
           if-no-files-found: warn
           retention-days: 14
