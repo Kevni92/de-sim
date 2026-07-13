@@ -1,4 +1,13 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
+
+async function openSourceDrawer(button: Locator, dialog: Locator) {
+  await expect(button).toBeVisible();
+  await expect.poll(async () => {
+    if (await dialog.isVisible()) return true;
+    await button.click();
+    return dialog.isVisible();
+  }, { timeout: 10_000, intervals: [200, 400, 800] }).toBe(true);
+}
 
 test("führt vom Onboarding in das vollständige Desktop-Dashboard", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
@@ -80,9 +89,8 @@ test("aktiviert ein Vermögensteuer-Szenario aus einer Null-Baseline", async ({ 
 test("lädt für weitere Einnahmen den vollständigen Nachweis aus dem lokalen Worker", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/einnahmen");
-  await page.getByRole("button", { name: "Berechnung und Quellen" }).click();
   const dialog = page.getByRole("dialog", { name: "Nachweis: Aufkommen der Umsatzsteuer" });
-  await expect(dialog).toBeVisible();
+  await openSourceDrawer(page.getByRole("button", { name: "Berechnung und Quellen" }), dialog);
   await expect(dialog.getByRole("heading", { name: "Aufkommen der Umsatzsteuer" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Verwendete Parameter" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
@@ -162,9 +170,8 @@ test("exportiert, importiert und dupliziert Szenarien", async ({ page, isMobile 
 test("öffnet für Dashboard-Kennzahlen den vollständigen Nachweis", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/dashboard");
-  await page.getByRole("button", { name: "Quelle" }).first().click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
+  await openSourceDrawer(page.getByRole("button", { name: "Quelle" }).first(), dialog);
   await expect(dialog.getByText("Nachweis und Rechenweg")).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Gesamteinnahmen" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Berechnung" })).toBeVisible();
@@ -224,6 +231,6 @@ test("bietet mobil Dashboard, Einkommensteuer und Einnahmemodule", async ({ page
   await expect(page.getByRole("heading", { name: "Steuern und Sozialbeiträge" })).toBeVisible();
   await expect(page.getByLabel("Regelsteuersatz Wert")).toBeVisible();
 
-  await page.getByRole("button", { name: "Berechnung und Quellen" }).click();
-  await expect(page.getByRole("dialog", { name: "Nachweis: Aufkommen der Umsatzsteuer" })).toBeVisible();
+  const dialog = page.getByRole("dialog", { name: "Nachweis: Aufkommen der Umsatzsteuer" });
+  await openSourceDrawer(page.getByRole("button", { name: "Berechnung und Quellen" }), dialog);
 });
