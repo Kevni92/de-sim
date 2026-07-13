@@ -20,6 +20,7 @@ import type {
   PopulationRun,
   PopulationSummary,
   ScenarioState,
+  Sgb2PopulationSummary,
   SourceRecord,
 } from "./types";
 
@@ -108,6 +109,7 @@ class LocalServerClient {
   activatePopulation(runId: string) { return this.population.call<PopulationRun>({ type: "population:activate", payload: { runId } }); }
   getPopulationSummary(runId?: string | null) { return this.population.call<PopulationSummary>({ type: "population:get-summary", payload: { runId: runId ?? undefined } }); }
   getPopulationCalibration(runId?: string | null) { return this.population.call<CalibrationEntry[]>({ type: "population:get-calibration", payload: { runId: runId ?? undefined } }); }
+  getSgb2PopulationSummary(runId?: string | null) { return this.population.call<Sgb2PopulationSummary>({ type: "population:get-sgb2-summary", payload: { runId: runId ?? undefined } }); }
   queryPopulation(query: PopulationQuery, runId?: string | null) { return this.population.call<PopulationQueryResult>({ type: "population:query", payload: { runId: runId ?? undefined, query } }); }
   deletePopulationRun(runId: string) { return this.population.call<null>({ type: "population:delete-run", payload: { runId } }); }
   estimatePopulationIncomeTax(settings: IncomeTaxSettings, modelLevel: ModelLevel, runId?: string | null) {

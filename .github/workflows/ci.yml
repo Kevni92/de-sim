@@ -55,6 +55,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+      - name: SGB-II-Populationsscreenshot hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sgb2-population-calibration
+          path: test-results/sgb2-population-calibration.png
+          if-no-files-found: warn
+          retention-days: 14
       - name: Milestone-8-Screenshot hochladen
         if: always()
         uses: actions/upload-artifact@v4

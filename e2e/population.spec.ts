@@ -23,18 +23,22 @@ async function selectDistribution(page: Page, name: string) {
   await expect(tab).toHaveAttribute("aria-selected", "true");
 }
 
-test("zeigt Standardlauf, Summen, Verteilungen und Kalibrierung", async ({ page }) => {
+test("zeigt Standardlauf, SGB-II-Summen, Verteilungen und Kalibrierung", async ({ page }) => {
   await openPopulation(page);
   await expect(page.getByText("Synthetische Personen")).toBeVisible();
   await expect(page.getByText("Gewichtete Bevölkerung")).toBeVisible();
+  await expect(page.getByText("Gewichtete Bedarfsgemeinschaften")).toBeVisible();
+  await expect(page.getByText("Mittlere Bezugsdauer")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Kalibrierungsbericht" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Ziel" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Modell" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Abweichung" })).toBeVisible();
   await selectDistribution(page, "Haushaltsformen");
   await expect(page.locator(".population-bars").getByText("Paar mit Kindern", { exact: true })).toBeVisible();
-  await selectDistribution(page, "Wohnen");
-  await expect(page.locator(".population-bars").getByText("Eigentum", { exact: true })).toBeVisible();
+  await selectDistribution(page, "SGB-II-BG-Typen");
+  await expect(page.locator(".population-bars").getByText("Alleinstehend", { exact: true })).toBeVisible();
+  await selectDistribution(page, "Bezugsmonate");
+  await expect(page.locator(".population-bars").getByText("10-12", { exact: true })).toBeVisible();
 });
 
 test("erzeugt mit gleichem Seed reproduzierbare Zusammenfassungen", async ({ page, isMobile }) => {
@@ -52,7 +56,7 @@ test("erzeugt mit gleichem Seed reproduzierbare Zusammenfassungen", async ({ pag
   await expect(page.locator(".population-active-card header p")).toHaveText(firstRun);
   await expect.poll(() => page.locator(".population-kpi-grid").innerText()).toBe(firstSummary);
 
-  await page.screenshot({ path: "test-results/milestone-7-synthetic-population.png", fullPage: true });
+  await page.screenshot({ path: "test-results/sgb2-population-calibration.png", fullPage: true });
 });
 
 test("anderer Seed erzeugt einen neuen Lauf, bleibt kalibriert und lässt sich löschen", async ({ page, isMobile }) => {
@@ -70,14 +74,14 @@ test("anderer Seed erzeugt einen neuen Lauf, bleibt kalibriert und lässt sich l
   const secondRun = await page.locator(".population-active-card header p").innerText();
   expect(secondRun).not.toBe(firstRun);
   await expect(page.locator(".population-run-list article")).toHaveCount(3);
-  expect(await page.locator(".population-calibration .population-status.warnung").count()).toBeLessThanOrEqual(2);
+  await expect(page.locator(".population-calibration tbody tr").filter({ hasText: "SGB II · Bedarfsgemeinschaften" })).toBeVisible();
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Bevölkerungslauf seed-a löschen" }).click();
   await expect(page.locator(".population-run-list article")).toHaveCount(2);
 });
 
-test("stellt den aktiven Lauf aus IndexedDB wieder her und nutzt ihn in der Einkommensteuer", async ({ page, isMobile }) => {
+test("stellt Bevölkerung und SGB-II-Aggregate aus IndexedDB wieder her und nutzt den Lauf in der Einkommensteuer", async ({ page, isMobile }) => {
   test.skip(isMobile, "Persistenz und Steuerintegration werden im Desktop-Funktionspfad geprüft; mobile Bedienung separat.");
   await openPopulation(page);
   await page.getByLabel("Seed der Bevölkerung").fill("steuerlauf-7");
@@ -85,10 +89,12 @@ test("stellt den aktiven Lauf aus IndexedDB wieder her und nutzt ihn in der Eink
   await page.locator(".population-generate").click();
   await waitForGeneration(page);
   const runId = await page.locator(".population-active-card header p").innerText();
+  const sgb2Summary = await page.locator(".population-kpi-grid").innerText();
   await expect(page.getByText("Synthetische Bevölkerung erzeugt und aktiviert")).toBeHidden({ timeout: 10_000 });
 
   await page.reload();
   await expect(page.locator(".population-active-card header p")).toHaveText(runId, { timeout: 45_000 });
+  await expect.poll(() => page.locator(".population-kpi-grid").innerText()).toBe(sgb2Summary);
 
   await page.goto("./#/einkommensteuer");
   await expect(page).toHaveURL(/#\/einkommensteuer$/);
@@ -142,12 +148,16 @@ test("exportiert die Laufreferenz und meldet eine fehlende importierte Referenz"
   await expect(page.getByRole("alert")).toContainText("lokal nicht vorhanden");
 });
 
-test("öffnet den Bevölkerungsnachweis und bleibt mobil bedienbar", async ({ page, isMobile }) => {
+test("öffnet Bevölkerungs- und SGB-II-Nachweise und bleibt mobil bedienbar", async ({ page, isMobile }) => {
   await openPopulation(page);
   await page.getByRole("button", { name: "Methode und Quellen" }).click();
-  const dialog = page.getByRole("dialog", { name: /Nachweis:/ });
+  let dialog = page.getByRole("dialog", { name: /Nachweis:/ });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
+  await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.getByRole("button", { name: "SGB-II-Statistik" }).click();
+  dialog = page.getByRole("dialog", { name: /Nachweis:/ });
+  await expect(dialog.getByRole("heading", { name: "Statistik der Grundsicherung für Arbeitsuchende", exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
   if (isMobile) {
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
