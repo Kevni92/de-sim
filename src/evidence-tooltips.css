@@ -1,0 +1,136 @@
+.tooltip-trigger {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.evidence-tooltip {
+  position: fixed;
+  z-index: 200;
+  width: min(320px, calc(100vw - 16px));
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 7px;
+  background: #142033;
+  box-shadow: 0 10px 30px rgba(20, 32, 51, .24);
+  padding: 12px;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.45;
+  pointer-events: none;
+  animation: evidence-tooltip-in 100ms ease-out;
+}
+
+.evidence-tooltip-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.evidence-tooltip-head > strong,
+.confidence-explanation > strong,
+.evidence-tooltip-copy > strong {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.evidence-status,
+.evidence-tooltip-badges span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.evidence-tooltip-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.evidence-preview dl {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.evidence-preview dl > div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.evidence-preview dt {
+  color: rgba(255, 255, 255, .68);
+  font-weight: 650;
+}
+
+.evidence-preview dd {
+  margin: 0;
+}
+
+.evidence-preview > small,
+.confidence-explanation > small {
+  display: block;
+  margin-top: 9px;
+  color: rgba(255, 255, 255, .68);
+}
+
+.confidence-explanation p,
+.evidence-tooltip-copy p {
+  margin: 6px 0 0;
+}
+
+.confidence-trigger {
+  border-radius: 4px;
+  margin: -4px -2px;
+  padding: 4px 2px;
+  cursor: help;
+}
+
+.confidence-trigger:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.source-icon-button {
+  min-width: 20px;
+  min-height: 20px;
+  border-radius: 4px;
+}
+
+.line-side > .tooltip-trigger {
+  justify-self: end;
+}
+
+:root[data-theme="dark"] .evidence-tooltip {
+  border-color: rgba(20, 32, 51, .18);
+  background: #f5f7fa;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .42);
+  color: #142033;
+}
+
+:root[data-theme="dark"] .evidence-status,
+:root[data-theme="dark"] .evidence-tooltip-badges span {
+  border-color: rgba(20, 32, 51, .22);
+}
+
+:root[data-theme="dark"] .evidence-preview dt,
+:root[data-theme="dark"] .evidence-preview > small,
+:root[data-theme="dark"] .confidence-explanation > small {
+  color: rgba(20, 32, 51, .68);
+}
+
+@keyframes evidence-tooltip-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evidence-tooltip { animation: none; }
+}

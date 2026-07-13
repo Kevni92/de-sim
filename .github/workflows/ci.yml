@@ -46,3 +46,11 @@ jobs:
           path: test-results/dashboard-disabled-items.png
           if-no-files-found: warn
           retention-days: 14
+      - name: Evidenztooltip-Screenshot hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-tooltips
+          path: test-results/evidence-tooltips.png
+          if-no-files-found: warn
+          retention-days: 14
