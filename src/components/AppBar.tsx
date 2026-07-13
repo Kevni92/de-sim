@@ -1,6 +1,6 @@
 import { Landmark, Redo2, Save, SlidersHorizontal, Undo2 } from "lucide-react";
 
-export type AppRoute = "/" | "/dashboard" | "/einkommensteuer" | "/vergleich" | "/transparenz";
+export type AppRoute = "/" | "/dashboard" | "/einkommensteuer" | "/einnahmen" | "/vergleich" | "/transparenz";
 
 export function AppBar({
   route,
@@ -36,13 +36,14 @@ export function AppBar({
           <span className="brand-mark"><Landmark size={15} /></span>
           <span className="brand-copy">
             <strong>Deutschland-Simulator</strong>
-            <small>Rechtsstand {legalYear} · Datenstand {dataYear} · DEMO</small>
+            <small>Rechtsstand {legalYear} · Datenstand {dataYear} · MODELL</small>
           </span>
         </button>
 
         <nav className="top-nav" aria-label="Hauptnavigation">
           <button className={route === "/dashboard" || route === "/" ? "active" : ""} onClick={() => onNavigate("/dashboard")}>Dashboard</button>
           <button className={route === "/einkommensteuer" ? "active" : ""} onClick={() => onNavigate("/einkommensteuer")}>Einkommensteuer</button>
+          <button className={route === "/einnahmen" ? "active" : ""} onClick={() => onNavigate("/einnahmen")}>Weitere Einnahmen</button>
           <button className={route === "/vergleich" ? "active" : ""} onClick={() => onNavigate("/vergleich")}>Vergleich</button>
           <button className={route === "/transparenz" ? "active" : ""} onClick={() => onNavigate("/transparenz")}>Transparenz</button>
         </nav>
