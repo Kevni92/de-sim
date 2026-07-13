@@ -1,6 +1,6 @@
 import { Landmark, Redo2, Save, SlidersHorizontal, Undo2 } from "lucide-react";
 
-type Route = "/" | "/dashboard" | "/einkommensteuer" | "/vergleich";
+export type AppRoute = "/" | "/dashboard" | "/einkommensteuer" | "/vergleich" | "/transparenz";
 
 export function AppBar({
   route,
@@ -16,14 +16,14 @@ export function AppBar({
   onSave,
   onOpenScenario,
 }: {
-  route: Route;
+  route: AppRoute;
   scenarioName: string;
   legalYear: number;
   dataYear: number;
   canUndo: boolean;
   canRedo: boolean;
   onScenarioName: (name: string) => void;
-  onNavigate: (route: Route) => void;
+  onNavigate: (route: AppRoute) => void;
   onUndo: () => void;
   onRedo: () => void;
   onSave: () => void;
@@ -44,6 +44,7 @@ export function AppBar({
           <button className={route === "/dashboard" || route === "/" ? "active" : ""} onClick={() => onNavigate("/dashboard")}>Dashboard</button>
           <button className={route === "/einkommensteuer" ? "active" : ""} onClick={() => onNavigate("/einkommensteuer")}>Einkommensteuer</button>
           <button className={route === "/vergleich" ? "active" : ""} onClick={() => onNavigate("/vergleich")}>Vergleich</button>
+          <button className={route === "/transparenz" ? "active" : ""} onClick={() => onNavigate("/transparenz")}>Transparenz</button>
         </nav>
 
         <div className="app-actions">
