@@ -3,6 +3,12 @@ import { AppBar, type AppRoute } from "./components/AppBar";
 import { ScenarioPanel } from "./components/ScenarioPanel";
 import { SourceDrawer } from "./components/SourceDrawer";
 import { estimateIncomeTaxRevenue } from "./lib/income-tax";
+import { localServer } from "./lib/local-server-client";
+import {
+  calculateRevenueModules,
+  revenueResultsById,
+  type RevenueModuleId,
+} from "./lib/revenue-modules";
 import {
   createScenarioHistory,
   defaultScenarioDraft,
@@ -12,17 +18,17 @@ import {
   scenarioToJson,
 } from "./lib/scenario-state";
 import { expenseItems, fmtBn, fmtDiff, revenueItems } from "./lib/sim-data";
-import { localServer } from "./lib/local-server-client";
 import type { MetricRecord, ScenarioDraft, ScenarioState, SourceRecord } from "./lib/types";
 import { ComparisonPage } from "./pages/ComparisonPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { IncomeTaxPage } from "./pages/IncomeTaxPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { RevenueModulesPage } from "./pages/RevenueModulesPage";
 import { TransparencyPage } from "./pages/TransparencyPage";
 
 function readRoute(): AppRoute {
   const path = window.location.hash.replace(/^#/, "") || "/";
-  return (["/", "/dashboard", "/einkommensteuer", "/vergleich", "/transparenz"] as AppRoute[]).includes(path as AppRoute) ? path as AppRoute : "/dashboard";
+  return (["/", "/dashboard", "/einkommensteuer", "/einnahmen", "/vergleich", "/transparenz"] as AppRoute[]).includes(path as AppRoute) ? path as AppRoute : "/dashboard";
 }
 
 const legacyMetricIds: Record<string, string> = {
@@ -49,6 +55,7 @@ export function App() {
   const [scenarios, setScenarios] = useState<ScenarioState[]>([]);
   const [history, dispatch] = useReducer(scenarioHistoryReducer, defaultScenarioDraft, createScenarioHistory);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
+  const [selectedRevenueModule, setSelectedRevenueModule] = useState<RevenueModuleId>("ust");
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -57,19 +64,38 @@ export function App() {
     () => estimateIncomeTaxRevenue(scenario.incomeTax, scenario.modelLevel),
     [scenario.incomeTax, scenario.modelLevel],
   );
+  const revenueModuleResults = useMemo(
+    () => calculateRevenueModules(scenario.revenueChanges, scenario.modelLevel),
+    [scenario.modelLevel, scenario.revenueChanges],
+  );
+  const revenueModulesById = useMemo(() => revenueResultsById(revenueModuleResults), [revenueModuleResults]);
+  const otherRevenueDelta = useMemo(() => revenueModuleResults.reduce((sum, item) => sum + item.delta, 0), [revenueModuleResults]);
+  const totalModeledRevenueDelta = taxResult.delta + otherRevenueDelta;
+
   const materializedScenario = useMemo<ScenarioDraft>(() => ({
     ...scenario,
-    revenueChanges: { ...scenario.revenueChanges, est: taxResult.delta, kredit: -taxResult.delta },
-  }), [scenario, taxResult.delta]);
+    modelVersion: "revenue-modules-0.5.0",
+    sourceIds: Array.from(new Set([...scenario.sourceIds, "source-revenue-model"])),
+    revenueChanges: {
+      ...scenario.revenueChanges,
+      ...Object.fromEntries(revenueModuleResults.map((item) => [item.id, item.delta])),
+      est: taxResult.delta,
+      kredit: 0,
+    },
+  }), [revenueModuleResults, scenario, taxResult.delta]);
 
   const metricValues = useMemo<Record<string, string>>(() => {
     const revenueTotal = revenueItems.reduce((sum, item) => {
       if (item.id === "est") return sum + taxResult.value;
-      if (item.id === "kredit") return sum + item.statusQuo - taxResult.delta;
+      if (item.id in revenueModulesById) return sum + revenueModulesById[item.id as RevenueModuleId].value;
       return sum + item.statusQuo;
     }, 0);
     const expenseTotal = expenseItems.reduce((sum, item) => sum + item.statusQuo, 0);
     const balance = revenueTotal - expenseTotal;
+    const revenueModuleValues = Object.fromEntries(revenueModuleResults.map((item) => [
+      `metric-revenue-${item.id}`,
+      `${fmtBn(item.value)} · ${fmtDiff(item.delta)} · statisch ${fmtDiff(item.staticDelta)}`,
+    ]));
 
     return {
       "metric-total-revenue": fmtBn(revenueTotal),
@@ -82,10 +108,11 @@ export function App() {
       "metric-income-tax-distribution": `${formatMillion(taxResult.winnersM)} Mio. Gewinner · ${formatMillion(taxResult.losersM)} Mio. Verlierer`,
       "metric-household-examples": signedEuro(taxResult.medianMonthlyChange),
       "metric-regional-effects": "noch nicht kalibriert",
-      "metric-time-path": fmtDiff(taxResult.delta),
+      "metric-time-path": fmtDiff(totalModeledRevenueDelta),
       "metric-migration-components": "29,8 Mrd. €",
+      ...revenueModuleValues,
     };
-  }, [scenario.incomeTax.entryRate, scenario.incomeTax.richRate, taxResult]);
+  }, [revenueModuleResults, revenueModulesById, scenario.incomeTax.entryRate, scenario.incomeTax.richRate, taxResult, totalModeledRevenueDelta]);
 
   const refreshScenarios = useCallback(async () => setScenarios(await localServer.listScenarios()), []);
 
@@ -226,6 +253,11 @@ export function App() {
     }
   };
 
+  const navigateRevenueModule = (id: RevenueModuleId) => {
+    setSelectedRevenueModule(id);
+    navigate("/einnahmen");
+  };
+
   return (
     <div className="app-shell">
       <AppBar
@@ -244,8 +276,9 @@ export function App() {
       />
 
       {route === "/" && <OnboardingPage modelLevel={scenario.modelLevel} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onStart={() => navigate("/dashboard")} />}
-      {route === "/dashboard" && <DashboardPage incomeTaxResult={taxResult} scenarios={scenarios} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onNavigateComparison={() => navigate("/vergleich")} onOpenSource={openSource} onLoadScenario={loadScenario} onDeleteScenario={(saved) => void deleteScenario(saved)} />}
+      {route === "/dashboard" && <DashboardPage incomeTaxResult={taxResult} revenueModuleResults={revenueModuleResults} scenarios={scenarios} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onNavigateRevenue={navigateRevenueModule} onNavigateComparison={() => navigate("/vergleich")} onOpenSource={openSource} onLoadScenario={loadScenario} onDeleteScenario={(saved) => void deleteScenario(saved)} />}
       {route === "/einkommensteuer" && <IncomeTaxPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} result={taxResult} onSettings={(incomeTax) => updateScenario({ incomeTax })} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onBack={() => navigate("/dashboard")} onApply={() => navigate("/dashboard")} onOpenSource={openSource} />}
+      {route === "/einnahmen" && <RevenueModulesPage selectedId={selectedRevenueModule} results={revenueModuleResults} parameters={scenario.revenueChanges} modelLevel={scenario.modelLevel} onSelect={setSelectedRevenueModule} onParameters={(revenueChanges) => updateScenario({ revenueChanges })} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
       {route === "/vergleich" && <ComparisonPage settings={scenario.incomeTax} revenue={taxResult.value} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
       {route === "/transparenz" && <TransparencyPage metrics={metrics} sources={sources} values={metricValues} onOpenMetric={openSource} />}
 
