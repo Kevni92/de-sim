@@ -7,13 +7,15 @@ import {
   populationSources,
   queryPopulation,
 } from "../lib/population-model";
+import { augmentPopulationRunWithSgb2, SGB2_POPULATION_MODEL_VERSION } from "../lib/sgb2-population";
 import type {
   CalibrationEntry,
   LocalRequest,
   LocalResponse,
   PopulationRun,
-  PopulationRunMetadata,
   PopulationValidationIssue,
+  Sgb2BenefitUnit,
+  Sgb2PersonProfile,
   SyntheticHousehold,
   SyntheticPerson,
 } from "../lib/types";
@@ -24,18 +26,27 @@ const scope = globalThis as unknown as {
 };
 
 const DB_NAME = "de-sim-population-server";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const RUNS = "population-runs";
 const PERSONS = "population-persons";
 const HOUSEHOLDS = "population-households";
+const SGB2_PERSONS = "population-sgb2-persons";
+const BENEFIT_UNITS = "population-benefit-units";
 const CALIBRATION = "population-calibration";
 const VALIDATION = "population-validation";
 const SETTINGS = "population-settings";
 const ACTIVE_KEY = "active-run";
 
+interface StoredCalibration extends CalibrationEntry { storageId: string; runId: string; }
+interface StoredValidation extends PopulationValidationIssue { storageId: string; runId: string; }
+
 type StoredRun = PopulationRun;
-type StoredCalibration = CalibrationEntry & { storageId: string; runId: string };
-type StoredValidation = PopulationValidationIssue & { storageId: string; runId: string };
+
+function createRunIndexedStore(db: IDBDatabase, name: string, keyPath: string) {
+  if (db.objectStoreNames.contains(name)) return;
+  const store = db.createObjectStore(name, { keyPath });
+  store.createIndex("runId", "runId", { unique: false });
+}
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -43,14 +54,10 @@ function openDb(): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(RUNS)) db.createObjectStore(RUNS, { keyPath: "metadata.id" });
-      if (!db.objectStoreNames.contains(PERSONS)) {
-        const store = db.createObjectStore(PERSONS, { keyPath: "id" });
-        store.createIndex("runId", "runId", { unique: false });
-      }
-      if (!db.objectStoreNames.contains(HOUSEHOLDS)) {
-        const store = db.createObjectStore(HOUSEHOLDS, { keyPath: "id" });
-        store.createIndex("runId", "runId", { unique: false });
-      }
+      createRunIndexedStore(db, PERSONS, "id");
+      createRunIndexedStore(db, HOUSEHOLDS, "id");
+      createRunIndexedStore(db, SGB2_PERSONS, "id");
+      createRunIndexedStore(db, BENEFIT_UNITS, "id");
       if (!db.objectStoreNames.contains(CALIBRATION)) {
         const store = db.createObjectStore(CALIBRATION, { keyPath: "storageId" });
         store.createIndex("runId", "runId", { unique: false });
@@ -72,6 +79,7 @@ function requestValue<T>(request: IDBRequest<T>): Promise<T> {
     request.onerror = () => reject(request.error);
   });
 }
+
 function transactionComplete(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     transaction.oncomplete = () => resolve();
@@ -79,13 +87,16 @@ function transactionComplete(transaction: IDBTransaction): Promise<void> {
     transaction.onabort = () => reject(transaction.error ?? new Error("IndexedDB-Transaktion abgebrochen"));
   });
 }
+
 function indexValues<T>(db: IDBDatabase, storeName: string, runId: string) {
   return requestValue(db.transaction(storeName).objectStore(storeName).index("runId").getAll(runId)) as Promise<T[]>;
 }
+
 async function activeRunId(db: IDBDatabase) {
   const value = await requestValue(db.transaction(SETTINGS).objectStore(SETTINGS).get(ACTIVE_KEY)) as { id: string; runId: string } | undefined;
   return value?.runId ?? null;
 }
+
 async function setActiveRun(db: IDBDatabase, runId: string | null) {
   const transaction = db.transaction([SETTINGS, RUNS], "readwrite");
   const runs = await requestValue(transaction.objectStore(RUNS).getAll()) as StoredRun[];
@@ -93,6 +104,7 @@ async function setActiveRun(db: IDBDatabase, runId: string | null) {
   transaction.objectStore(SETTINGS).put({ id: ACTIVE_KEY, runId });
   await transactionComplete(transaction);
 }
+
 async function deleteByRun(db: IDBDatabase, storeName: string, runId: string) {
   const transaction = db.transaction(storeName, "readwrite");
   const index = transaction.objectStore(storeName).index("runId");
@@ -108,45 +120,57 @@ async function deleteByRun(db: IDBDatabase, storeName: string, runId: string) {
   });
   await transactionComplete(transaction);
 }
+
 async function deleteRunData(db: IDBDatabase, runId: string) {
-  await deleteByRun(db, PERSONS, runId);
-  await deleteByRun(db, HOUSEHOLDS, runId);
-  await deleteByRun(db, CALIBRATION, runId);
-  await deleteByRun(db, VALIDATION, runId);
+  for (const store of [PERSONS, HOUSEHOLDS, SGB2_PERSONS, BENEFIT_UNITS, CALIBRATION, VALIDATION]) await deleteByRun(db, store, runId);
   const transaction = db.transaction(RUNS, "readwrite");
   transaction.objectStore(RUNS).delete(runId);
   await transactionComplete(transaction);
 }
 
-async function saveGeneratedPopulation(db: IDBDatabase, generated: ReturnType<typeof generatePopulation>) {
-  const runId = generated.run.metadata.id;
+async function saveGeneratedPopulation(db: IDBDatabase, generated: ReturnType<typeof generatePopulation>, activate = true) {
+  const augmented = augmentPopulationRunWithSgb2(generated);
+  const runId = augmented.run.metadata.id;
   const existing = await requestValue(db.transaction(RUNS).objectStore(RUNS).get(runId)) as StoredRun | undefined;
   if (existing) await deleteRunData(db, runId);
-  const transaction = db.transaction([RUNS, PERSONS, HOUSEHOLDS, CALIBRATION, VALIDATION], "readwrite");
-  transaction.objectStore(RUNS).put(generated.run);
-  generated.persons.forEach((person) => transaction.objectStore(PERSONS).put(person));
-  generated.households.forEach((household) => transaction.objectStore(HOUSEHOLDS).put(household));
-  generated.run.calibration.forEach((entry) => transaction.objectStore(CALIBRATION).put({ ...entry, runId, storageId: `${runId}:${entry.id}` } satisfies StoredCalibration));
-  generated.run.validation.forEach((entry, index) => transaction.objectStore(VALIDATION).put({ ...entry, runId, storageId: `${runId}:${entry.code}:${entry.entityId ?? index}` } satisfies StoredValidation));
+  const transaction = db.transaction([RUNS, PERSONS, HOUSEHOLDS, SGB2_PERSONS, BENEFIT_UNITS, CALIBRATION, VALIDATION], "readwrite");
+  transaction.objectStore(RUNS).put(augmented.run);
+  augmented.persons.forEach((person) => transaction.objectStore(PERSONS).put(person));
+  augmented.households.forEach((household) => transaction.objectStore(HOUSEHOLDS).put(household));
+  augmented.sgb2Persons.forEach((person) => transaction.objectStore(SGB2_PERSONS).put(person));
+  augmented.benefitUnits.forEach((unit) => transaction.objectStore(BENEFIT_UNITS).put(unit));
+  augmented.run.calibration.forEach((entry) => transaction.objectStore(CALIBRATION).put({ ...entry, runId, storageId: `${runId}:${entry.id}` } satisfies StoredCalibration));
+  augmented.run.validation.forEach((entry, index) => transaction.objectStore(VALIDATION).put({ ...entry, runId, storageId: `${runId}:${entry.code}:${entry.entityId ?? index}` } satisfies StoredValidation));
   await transactionComplete(transaction);
-  await setActiveRun(db, runId);
-  return generated.run;
+  if (activate) await setActiveRun(db, runId);
+  return augmented.run;
+}
+
+async function ensureSgb2Run(db: IDBDatabase, run: StoredRun) {
+  if (run.sgb2Summary?.modelVersion === SGB2_POPULATION_MODEL_VERSION && run.metadata.sgb2ModelVersion === SGB2_POPULATION_MODEL_VERSION) return run;
+  const [persons, households] = await Promise.all([
+    indexValues<SyntheticPerson>(db, PERSONS, run.metadata.id),
+    indexValues<SyntheticHousehold>(db, HOUSEHOLDS, run.metadata.id),
+  ]);
+  if (!persons.length || !households.length) throw new Error("Der Bevölkerungslauf enthält keine migrierbaren Personen- und Haushaltsdaten.");
+  return saveGeneratedPopulation(db, { run, persons, households }, false);
 }
 
 async function ensureDefaultRun(db: IDBDatabase) {
   const runId = await activeRunId(db);
   if (runId) {
     const existing = await requestValue(db.transaction(RUNS).objectStore(RUNS).get(runId)) as StoredRun | undefined;
-    if (existing) return existing;
+    if (existing) return ensureSgb2Run(db, existing);
   }
   return saveGeneratedPopulation(db, generatePopulation({ seed: DEFAULT_POPULATION_SEED, sampleSize: DEFAULT_POPULATION_SAMPLE_SIZE, baselineId: DEFAULT_BASELINE_ID }));
 }
+
 async function resolveRun(db: IDBDatabase, requested?: string) {
   const id = requested ?? await activeRunId(db);
   if (!id) return ensureDefaultRun(db);
   const run = await requestValue(db.transaction(RUNS).objectStore(RUNS).get(id)) as StoredRun | undefined;
   if (!run) throw new Error("Der referenzierte Bevölkerungslauf ist lokal nicht vorhanden.");
-  return run;
+  return ensureSgb2Run(db, run);
 }
 
 async function handle(request: LocalRequest): Promise<LocalResponse> {
@@ -160,10 +184,16 @@ async function handle(request: LocalRequest): Promise<LocalResponse> {
       return { id: request.id, ok: true, data: runs };
     }
     if (request.type === "population:activate") {
-      await resolveRun(db, request.payload.runId); await setActiveRun(db, request.payload.runId);
+      await resolveRun(db, request.payload.runId);
+      await setActiveRun(db, request.payload.runId);
       return { id: request.id, ok: true, data: await resolveRun(db, request.payload.runId) };
     }
     if (request.type === "population:get-summary") return { id: request.id, ok: true, data: (await resolveRun(db, request.payload.runId)).summary };
+    if (request.type === "population:get-sgb2-summary") {
+      const run = await resolveRun(db, request.payload.runId);
+      if (!run.sgb2Summary) throw new Error("Der Bevölkerungslauf enthält keine SGB-II-Zusammenfassung.");
+      return { id: request.id, ok: true, data: run.sgb2Summary };
+    }
     if (request.type === "population:get-calibration") {
       const run = await resolveRun(db, request.payload.runId);
       const entries = await indexValues<StoredCalibration>(db, CALIBRATION, run.metadata.id);
@@ -197,4 +227,5 @@ async function handle(request: LocalRequest): Promise<LocalResponse> {
 }
 
 void populationSources;
+void (null as unknown as Sgb2BenefitUnit | Sgb2PersonProfile);
 scope.addEventListener("message", async (event) => scope.postMessage(await handle(event.data)));
