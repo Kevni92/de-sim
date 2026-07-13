@@ -8,7 +8,7 @@
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
-    "test:unit": "rm -rf .test-dist && tsc -p tests/tsconfig.json && node -e \"require('fs').writeFileSync('.test-dist/package.json', JSON.stringify({type:'commonjs'}))\" && node --test .test-dist/tests/population-model.test.js .test-dist/tests/effects-model.test.js",
+    "test:unit": "rm -rf .test-dist && tsc -p tests/tsconfig.json && node -e \"require('fs').writeFileSync('.test-dist/package.json', JSON.stringify({type:'commonjs'}))\" && node --test .test-dist/tests/population-model.test.js .test-dist/tests/effects-model.test.js .test-dist/tests/sgb2-policy.test.js",
     "test:e2e": "playwright test",
     "test": "npm run build && npm run test:unit && npm run test:e2e"
   },

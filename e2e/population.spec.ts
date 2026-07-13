@@ -116,11 +116,18 @@ test("exportiert die Laufreferenz und meldet eine fehlende importierte Referenz"
   expect(downloadPath).not.toBeNull();
   const exported = JSON.parse(await readFile(downloadPath!, "utf8")) as {
     schemaVersion: number;
-    scenario: { populationRunId: string | null; populationModelVersion: string | null };
+    scenario: {
+      populationRunId: string | null;
+      populationModelVersion: string | null;
+      sgb2: { policyVersionId: string; populationRunId: string | null; modelVersion: string };
+    };
   };
-  expect(exported.schemaVersion).toBe(3);
+  expect(exported.schemaVersion).toBe(4);
   expect(exported.scenario.populationRunId).toBe(runId);
   expect(exported.scenario.populationModelVersion).toBe("synthetic-population-0.7.0");
+  expect(exported.scenario.sgb2.policyVersionId).toBe("sgb2-policy-2026-07");
+  expect(exported.scenario.sgb2.populationRunId).toBe(runId);
+  expect(exported.scenario.sgb2.modelVersion).toBe("sgb2-0.1.0");
 
   const missingReference = {
     ...exported,
