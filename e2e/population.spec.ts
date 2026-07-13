@@ -94,11 +94,11 @@ test("stellt den aktiven Lauf aus IndexedDB wieder her und nutzt ihn in der Eink
   await expect(page).toHaveURL(/#\/einkommensteuer$/);
   await expect(page.getByText(runId)).toBeVisible({ timeout: 45_000 });
   await expect(page.getByText("2.000 synthetische Personen", { exact: false })).toBeVisible();
-  const winnerValue = page.getByText("Gewinner", { exact: true }).locator("..").locator("..").locator(":scope > strong");
-  const before = await winnerValue.innerText();
+  const scenarioValue = page.getByText("Szenariowert", { exact: true }).locator("..").locator(":scope > strong");
+  const before = await scenarioValue.innerText();
   await page.getByLabel("Grundfreibetrag Wert").fill("16000");
   await expect(page.getByLabel("Grundfreibetrag Wert")).toHaveValue("16000");
-  await expect.poll(() => winnerValue.innerText(), { timeout: 15_000 }).not.toBe(before);
+  await expect.poll(() => scenarioValue.innerText(), { timeout: 15_000 }).not.toBe(before);
 });
 
 test("exportiert die Laufreferenz und meldet eine fehlende importierte Referenz", async ({ page, isMobile }) => {
