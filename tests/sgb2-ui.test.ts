@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { defaultScenarioDraft, normalizeScenarioDraft } from "../src/lib/scenario-state";
 import { defaultSgb2ScenarioReference } from "../src/lib/sgb2-policy";
 import {
   getSgb2Parameter,
@@ -74,4 +75,15 @@ test("Unterkunftsgruppe enthält konkrete Berliner Miet- und Heizgrenzen", () =>
   assert.ok(housing.parameterIds.some((id) => id.includes("gross-cold-rent.hh1")));
   assert.ok(housing.parameterIds.some((id) => id.includes("heating.natural-gas.501-1000.hh1")));
   assert.ok(housing.parameterIds.includes("sgb2.housing.grace-cap-factor"));
+});
+
+test("explizite SGB-II-Overrides bleiben trotz alter Aggregatindizes erhalten", () => {
+  const sgb2 = setSgb2UiParameter(defaultScenarioDraft.sgb2, "sgb2.standard-need.single", 60_000);
+  const normalized = normalizeScenarioDraft({
+    ...defaultScenarioDraft,
+    expenseChanges: { "expense.param.social.benefitIndex": 100 },
+    sgb2,
+  });
+  assert.equal(resolvedSgb2UiValue(normalized.sgb2, "sgb2.standard-need.single"), 60_000);
+  assert.equal(normalized.sgb2.parameterOverrides.filter((item) => item.parameterId === "sgb2.standard-need.single").length, 1);
 });
