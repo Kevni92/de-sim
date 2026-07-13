@@ -141,7 +141,7 @@ export function App() {
 
   useEffect(() => {
     const routeNeedsPopulation = route === "/bevoelkerung" || route === "/einkommensteuer";
-    if (!ready || activePopulation || populationLoading || (!routeNeedsPopulation && !scenario.populationRunId)) return;
+    if (!ready || activePopulation || (!routeNeedsPopulation && !scenario.populationRunId)) return;
 
     const attemptKey = scenario.populationRunId ?? "__default__";
     if (populationAttemptKey.current === attemptKey) return;
@@ -193,7 +193,7 @@ export function App() {
 
     void loadPopulation();
     return () => { cancelled = true; };
-  }, [activePopulation, populationLoading, ready, route, scenario.populationRunId]);
+  }, [activePopulation, ready, route, scenario.populationRunId]);
 
   useEffect(() => {
     if (!ready) return;
