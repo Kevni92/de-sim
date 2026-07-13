@@ -1,3 +1,7 @@
+.line-panel li.changed:not(:has(.line-row-main:disabled)) {
+  background: transparent;
+}
+
 .line-panel li.uncertain {
   background-image: none;
 }
