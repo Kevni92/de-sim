@@ -1,4 +1,5 @@
-import { ChevronLeft, Info, RotateCcw } from "lucide-react";
+import { ModuleMetric, ModuleModelLevelCard, ModulePageHeader, ModuleSummaryHeader } from "../components/ModuleDetailComponents";
+import type { IncomeTaxResult } from "../lib/income-tax";
 import {
   defaultRevenueParameters,
   revenueModuleDefinitionById,
@@ -13,9 +14,11 @@ import type { ModelLevel } from "../lib/types";
 export function RevenueModulesPage({
   selectedId,
   results,
+  incomeTaxResult,
   parameters,
   modelLevel,
   onSelect,
+  onNavigateIncomeTax,
   onParameters,
   onModelLevel,
   onBack,
@@ -23,9 +26,11 @@ export function RevenueModulesPage({
 }: {
   selectedId: RevenueModuleId;
   results: RevenueModuleResult[];
+  incomeTaxResult: IncomeTaxResult;
   parameters: Record<string, number>;
   modelLevel: ModelLevel;
   onSelect: (id: RevenueModuleId) => void;
+  onNavigateIncomeTax: () => void;
   onParameters: (parameters: Record<string, number>) => void;
   onModelLevel: (level: ModelLevel) => void;
   onBack: () => void;
@@ -48,20 +53,21 @@ export function RevenueModulesPage({
 
   return (
     <main className="content-width revenue-modules-page">
-      <header className="detail-header revenue-header">
-        <div>
-          <button className="back-link" onClick={onBack}><ChevronLeft size={14} /> Zurück zum Dashboard</button>
-          <span className="eyebrow">Milestone 5 · weitere Einnahmen</span>
-          <h1>Steuern und Sozialbeiträge</h1>
-          <p>Sieben getrennte Module mit amtlicher Baseline, statischer Erstwirkung und offen ausgewiesener Verhaltenskomponente.</p>
-        </div>
-        <button className="source-badge" onClick={() => onOpenSource(`metric-revenue-${selectedId}`, `${fmtBn(result.value)} · ${fmtDiff(result.delta)}`)}><Info size={10} /> Berechnung und Quellen</button>
-      </header>
+      <ModulePageHeader
+        eyebrow="Milestone 5 · Einnahmenmodule"
+        title="Steuern und Sozialbeiträge"
+        description="Acht getrennte Module mit einheitlichem Aufbau für Baseline, Szenario, Erstwirkung, Modellstufe und Nachweise."
+        onBack={onBack}
+      />
 
       <section className="revenue-module-layout">
         <aside className="card-flat revenue-module-list" aria-label="Einnahmemodule">
-          <header><h2>Module</h2><span>{results.length}</span></header>
+          <header><h2>Module</h2><span>{results.length + 1}</span></header>
           <nav>
+            <button onClick={onNavigateIncomeTax}>
+              <span><strong>Einkommensteuer</strong><small>§ 32a EStG · gesetzlicher Tarif 2026</small></span>
+              <span className="module-list-value"><b>{fmtBn(incomeTaxResult.value)}</b><em className={incomeTaxResult.delta >= 0 ? "positive" : "negative"}>{fmtDiff(incomeTaxResult.delta)}</em></span>
+            </button>
             {revenueModuleDefinitions.map((module) => {
               const moduleResult = results.find((item) => item.id === module.id)!;
               return (
@@ -76,19 +82,19 @@ export function RevenueModulesPage({
 
         <div className="revenue-module-content">
           <section className="card-flat revenue-module-summary">
-            <div className="module-summary-head">
-              <div>
-                <span className={`evidence-pill ${definition.confidence}`}>Konfidenz {definition.confidence}</span>
-                <h2>{definition.label}</h2>
-                <p>{definition.description}</p>
-              </div>
-              <button className="button secondary small" onClick={resetModule}><RotateCcw size={13} /> Baseline wiederherstellen</button>
-            </div>
+            <ModuleSummaryHeader
+              badge={`Konfidenz ${definition.confidence}`}
+              badgeTone={definition.confidence}
+              title={definition.label}
+              description={definition.description}
+              onOpenSource={() => onOpenSource(`metric-revenue-${selectedId}`, `${fmtBn(result.value)} · ${fmtDiff(result.delta)}`)}
+              onReset={resetModule}
+            />
             <div className="revenue-kpi-grid">
-              <Metric label="Baseline" value={fmtBn(result.baseline)} note={definition.legalBasis} />
-              <Metric label="Szenariowert" value={fmtBn(result.value)} note={`${fmtDiff(result.delta)} gegenüber Baseline`} tone={result.delta >= 0 ? "positive" : "negative"} testId="revenue-module-value" />
-              <Metric label="Statische Wirkung" value={fmtDiff(result.staticDelta)} note="ohne Verhaltensreaktion" tone={result.staticDelta >= 0 ? "positive" : "negative"} />
-              <Metric label="Verhaltenskomponente" value={fmtDiff(result.behavioralAdjustment)} note={`Modellstufe ${modelLabel(modelLevel)}`} tone={result.behavioralAdjustment >= 0 ? "positive" : "negative"} />
+              <ModuleMetric label="Baseline" value={fmtBn(result.baseline)} note={definition.legalBasis} />
+              <ModuleMetric label="Szenariowert" value={fmtBn(result.value)} note={`${fmtDiff(result.delta)} gegenüber Baseline`} tone={result.delta >= 0 ? "positive" : "negative"} testId="revenue-module-value" />
+              <ModuleMetric label="Statische Wirkung" value={fmtDiff(result.staticDelta)} note="ohne Verhaltensreaktion" tone={result.staticDelta >= 0 ? "positive" : "negative"} />
+              <ModuleMetric label="Verhaltenskomponente" value={fmtDiff(result.behavioralAdjustment)} note={`Modellstufe ${modelLabel(modelLevel)}`} tone={result.behavioralAdjustment >= 0 ? "positive" : "negative"} />
             </div>
           </section>
 
@@ -114,17 +120,14 @@ export function RevenueModulesPage({
             </article>
 
             <aside className="revenue-side-stack">
-              <article className="card-flat model-level-card">
-                <h3>Modellstufe</h3>
-                <p>Die statische Erstwirkung bleibt sichtbar. Verhaltensannahmen werden separat hinzugerechnet.</p>
-                <div className="model-level-options" role="radiogroup" aria-label="Modellstufe Einnahmemodul">
-                  {(["statisch", "verhalten", "langfrist"] as const).map((level) => (
-                    <button key={level} role="radio" aria-checked={modelLevel === level} className={modelLevel === level ? "active" : ""} onClick={() => onModelLevel(level)}>
-                      <strong>{modelLabel(level)}</strong><small>{modelDescription(level)}</small>
-                    </button>
-                  ))}
-                </div>
-              </article>
+              <ModuleModelLevelCard
+                description="Die statische Erstwirkung bleibt sichtbar. Verhaltensannahmen werden separat hinzugerechnet."
+                ariaLabel="Modellstufe Einnahmemodul"
+                modelLevel={modelLevel}
+                onModelLevel={onModelLevel}
+                modelLabel={modelLabel}
+                modelDescription={modelDescription}
+              />
 
               <article className="card-flat incidence-card">
                 <div className="section-title"><div><h3>Inzidenzannahme</h3><p>Wer die Belastung wirtschaftlich trägt, ist nicht zwingend identisch mit dem gesetzlichen Steuerschuldner.</p></div></div>
@@ -146,10 +149,6 @@ export function RevenueModulesPage({
       </section>
     </main>
   );
-}
-
-function Metric({ label, value, note, tone = "neutral", testId }: { label: string; value: string; note: string; tone?: "positive" | "negative" | "neutral"; testId?: string }) {
-  return <article><span>{label}</span><strong className={tone} data-testid={testId}>{value}</strong><small>{note}</small></article>;
 }
 
 function modelLabel(level: ModelLevel) {
