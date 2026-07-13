@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <rect width="1440" height="900" fill="#f4f7fa"/>
+  <rect width="1440" height="64" fill="#fff" stroke="#d6dde5"/>
+  <rect x="32" y="17" width="29" height="29" rx="6" fill="#147d7e"/>
+  <text x="72" y="31" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#142033">Deutschland-Simulator</text>
+  <text x="72" y="46" font-family="Arial,sans-serif" font-size="10" fill="#5f6b78">Rechtsstand 2026 · Datenstand 2025</text>
+  <text x="330" y="38" font-family="Arial,sans-serif" font-size="13" fill="#147d7e">Weitere Einnahmen</text>
+  <text x="32" y="105" font-family="Arial,sans-serif" font-size="11" fill="#5f6b78">Dashboard › Weitere Einnahmen</text>
+  <text x="32" y="150" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#142033">Weitere Einnahmemodule</text>
+  <text x="32" y="177" font-family="Arial,sans-serif" font-size="13" fill="#5f6b78">Steuersätze, Beitragsparameter, statische Erstwirkung und Verhalten getrennt simulieren.</text>
+  <rect x="32" y="205" width="280" height="650" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <text x="50" y="237" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#142033">Einnahmen</text>
+  <g font-family="Arial,sans-serif" font-size="11" fill="#142033">
+    <rect x="32" y="255" width="280" height="66" fill="#e1efef"/><text x="50" y="280" font-weight="700">Umsatzsteuer</text><text x="50" y="299" fill="#5f6b78">19 % · 7 % · Preisweitergabe</text><text x="255" y="283" text-anchor="end" font-weight="700">291,4</text>
+    <text x="50" y="350" font-weight="700">Erbschaftsteuer</text><text x="50" y="369" fill="#5f6b78">Tarif · Freibetrag · Verschonung</text>
+    <text x="50" y="420" font-weight="700">Vermögensteuer</text><text x="50" y="439" fill="#5f6b78">hypothetisches Szenario</text>
+    <text x="50" y="490" font-weight="700">Sozialbeiträge</text><text x="50" y="509" fill="#5f6b78">Sätze und Bemessungsgrenzen</text>
+    <text x="50" y="560" font-weight="700">Körperschaftsteuer</text><text x="50" y="579" fill="#5f6b78">Satz · Verluste · Investitionen</text>
+    <text x="50" y="630" font-weight="700">Kapitalertragsteuer</text><text x="50" y="649" fill="#5f6b78">Satz · Pauschbetrag</text>
+    <text x="50" y="700" font-weight="700">Energie &amp; Verbrauch</text><text x="50" y="719" fill="#5f6b78">getrennte Belastungsindizes</text>
+  </g>
+  <rect x="330" y="205" width="1078" height="174" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <text x="352" y="235" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#147d7e">UMSATZSTEUER · § 12 USTG</text>
+  <text x="352" y="270" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#142033">Umsatzsteuer</text>
+  <text x="352" y="293" font-family="Arial,sans-serif" font-size="12" fill="#5f6b78">Regel- und ermäßigter Satz mit transparenter Annahme zur Bemessungsgrundlage.</text>
+  <g font-family="Arial,sans-serif">
+    <rect x="352" y="315" width="235" height="48" rx="6" fill="#f8fafb" stroke="#d6dde5"/><text x="365" y="334" font-size="9" fill="#5f6b78">BASELINE</text><text x="365" y="354" font-size="16" font-weight="700" fill="#142033">291,4 Mrd. €</text>
+    <rect x="600" y="315" width="235" height="48" rx="6" fill="#f8fafb" stroke="#d6dde5"/><text x="613" y="334" font-size="9" fill="#5f6b78">SZENARIO</text><text x="613" y="354" font-size="16" font-weight="700" fill="#142033">306,1 Mrd. €</text>
+    <rect x="848" y="315" width="235" height="48" rx="6" fill="#f8fafb" stroke="#d6dde5"/><text x="861" y="334" font-size="9" fill="#5f6b78">STATISCHE WIRKUNG</text><text x="861" y="354" font-size="16" font-weight="700" fill="#18704d">+17,2 Mrd. €</text>
+    <rect x="1096" y="315" width="290" height="48" rx="6" fill="#fff4d8"/><text x="1109" y="334" font-size="9" fill="#73570f">VERHALTEN &amp; UNSICHERHEIT</text><text x="1109" y="354" font-size="16" font-weight="700" fill="#73570f">−2,5 · ±12 %</text>
+  </g>
+  <rect x="330" y="397" width="670" height="458" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <text x="352" y="429" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#142033">Szenarioparameter</text>
+  <g font-family="Arial,sans-serif" font-size="11" fill="#142033">
+    <text x="352" y="475" font-weight="700">Regelsteuersatz</text><rect x="352" y="492" width="500" height="5" rx="3" fill="#d6dde5"/><rect x="352" y="492" width="350" height="5" rx="3" fill="#147d7e"/><text x="920" y="479" text-anchor="end" fill="#147d7e">20,0 %</text>
+    <text x="352" y="555" font-weight="700">Ermäßigter Steuersatz</text><rect x="352" y="572" width="500" height="5" rx="3" fill="#d6dde5"/><rect x="352" y="572" width="220" height="5" rx="3" fill="#147d7e"/><text x="920" y="559" text-anchor="end" fill="#147d7e">7,0 %</text>
+    <text x="352" y="635" font-weight="700">Anteil ermäßigter Umsätze</text><rect x="352" y="652" width="500" height="5" rx="3" fill="#d6dde5"/><rect x="352" y="652" width="245" height="5" rx="3" fill="#147d7e"/><text x="920" y="639" text-anchor="end" fill="#147d7e">32 %</text>
+    <text x="352" y="715" font-weight="700">Preisweitergabe</text><rect x="352" y="732" width="500" height="5" rx="3" fill="#d6dde5"/><rect x="352" y="732" width="450" height="5" rx="3" fill="#147d7e"/><text x="920" y="719" text-anchor="end" fill="#147d7e">90 %</text>
+  </g>
+  <rect x="1018" y="397" width="390" height="216" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <text x="1040" y="429" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#142033">Wirkungsträger</text>
+  <rect x="1040" y="457" width="344" height="15" rx="8" fill="#edf2f5"/><rect x="1040" y="457" width="248" height="15" rx="8" fill="#147d7e"/><rect x="1288" y="457" width="27" height="15" fill="#147d7e" opacity=".65"/><rect x="1315" y="457" width="69" height="15" rx="8" fill="#147d7e" opacity=".4"/>
+  <text x="1040" y="505" font-family="Arial,sans-serif" font-size="11" fill="#142033">Private Haushalte</text><text x="1384" y="505" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="700">72 %</text>
+  <text x="1040" y="535" font-family="Arial,sans-serif" font-size="11" fill="#142033">Staat und Gemeinwesen</text><text x="1384" y="535" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="700">8 %</text>
+  <text x="1040" y="565" font-family="Arial,sans-serif" font-size="11" fill="#142033">Unternehmen ohne Vorsteuerabzug</text><text x="1384" y="565" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="700">20 %</text>
+  <rect x="1018" y="631" width="390" height="224" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <text x="1040" y="663" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#142033">Modellstufe</text>
+  <rect x="1040" y="686" width="344" height="43" rx="5" fill="#fff" stroke="#d6dde5"/><text x="1054" y="703" font-family="Arial,sans-serif" font-size="11" font-weight="700">Statisch</text><text x="1054" y="719" font-family="Arial,sans-serif" font-size="9" fill="#5f6b78">Keine Nachfrage- oder Ausweichreaktion</text>
+  <rect x="1040" y="738" width="344" height="43" rx="5" fill="#e1efef" stroke="#147d7e"/><text x="1054" y="755" font-family="Arial,sans-serif" font-size="11" font-weight="700">Mit Verhaltenseffekt</text><text x="1054" y="771" font-family="Arial,sans-serif" font-size="9" fill="#5f6b78">Dokumentierte Modulsensitivität</text>
+  <rect x="1040" y="790" width="344" height="43" rx="5" fill="#fff" stroke="#d6dde5"/><text x="1054" y="807" font-family="Arial,sans-serif" font-size="11" font-weight="700">Langfristig</text><text x="1054" y="823" font-family="Arial,sans-serif" font-size="9" fill="#5f6b78">Stärkere Anpassung, keine Prognose</text>
+</svg>
