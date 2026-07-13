@@ -1,0 +1,84 @@
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 1px 3px rgba(20, 32, 51, .14);
+}
+
+.theme-toggle {
+  flex: 0 0 auto;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0e141d;
+  --surface: #151d28;
+  --foreground: #edf2f7;
+  --muted-foreground: #a6b1bf;
+  --subtle: #1d2734;
+  --line: #2c3847;
+  --line-strong: #465568;
+  --primary: #62c3c3;
+  --primary-foreground: #071314;
+  --primary-soft: #17383d;
+  --positive: #69c99b;
+  --positive-soft: #18372b;
+  --negative: #ef8a8a;
+  --negative-soft: #422426;
+  --warning: #f2b85b;
+  --warning-soft: #422f18;
+  --chart-1: #62c3c3;
+  --chart-2: #79aee8;
+  --chart-3: #bd91da;
+  --chart-4: #f2b85b;
+  --chart-5: #86c38e;
+  --chart-6: #c6a374;
+}
+
+:root[data-theme="dark"] .app-bar {
+  background: rgba(14, 20, 29, .96);
+}
+
+:root[data-theme="dark"] .sticky-kpis {
+  background: rgba(14, 20, 29, .94);
+}
+
+:root[data-theme="dark"] .germany-map span {
+  background: rgba(21, 29, 40, .9);
+}
+
+:root[data-theme="dark"] .waterfall {
+  background: linear-gradient(
+    to bottom,
+    transparent 24%,
+    color-mix(in srgb, var(--line) 55%, transparent) 25%,
+    transparent 26%,
+    transparent 49%,
+    color-mix(in srgb, var(--line) 55%, transparent) 50%,
+    transparent 51%,
+    transparent 74%,
+    color-mix(in srgb, var(--line) 55%, transparent) 75%,
+    transparent 76%
+  );
+}
+
+:root[data-theme="dark"] .income-tax-page .revenue-module-list nav > button.active {
+  background: var(--primary-soft);
+  box-shadow: inset 3px 0 var(--primary);
+}
+
+:root[data-theme="dark"] .toast {
+  background: #edf2f7;
+  color: #0e141d;
+}
+
+@media (max-width: 480px) {
+  .brand-logo {
+    width: 30px;
+    height: 30px;
+  }
+}
