@@ -34,7 +34,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: milestone-5-revenue-modules
-          path: test-results/milestone-5-revenue-modules.png
+          name: milestone-6-expense-modules
+          path: test-results/milestone-6-expense-modules.png
           if-no-files-found: warn
           retention-days: 14
