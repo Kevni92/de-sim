@@ -52,7 +52,7 @@ export function App() {
     revenueChanges: { ...scenario.revenueChanges, est: taxResult.delta, kredit: -taxResult.delta },
   }), [scenario, taxResult.delta]);
 
-  const metricValues = useMemo(() => {
+  const metricValues = useMemo<Record<string, string>>(() => {
     const revenueTotal = revenueItems.reduce((sum, item) => {
       if (item.id === "est") return sum + taxResult.value;
       if (item.id === "kredit") return sum + item.statusQuo - taxResult.delta;
@@ -74,7 +74,7 @@ export function App() {
       "metric-regional-effects": "+8 bis +29 € / Monat",
       "metric-time-path": fmtDiff(taxResult.delta),
       "metric-migration-components": "29,8 Mrd. €",
-    } satisfies Record<string, string>;
+    };
   }, [scenario.incomeTax.entryRate, scenario.incomeTax.richRate, taxResult.delta, taxResult.value]);
 
   const refreshScenarios = useCallback(async () => setScenarios(await localServer.listScenarios()), []);
