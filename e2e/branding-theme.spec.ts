@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 test("zeigt HaushaltsKompass-Branding und speichert den Darkmode", async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem("haushaltskompass-theme", "light"));
   await page.goto("./#/dashboard");
+  await page.evaluate(() => localStorage.setItem("haushaltskompass-theme", "light"));
+  await page.reload();
 
   await expect(page).toHaveTitle("HaushaltsKompass");
   await expect(page.locator(".brand-logo")).toBeVisible();
