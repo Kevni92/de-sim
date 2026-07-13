@@ -105,6 +105,87 @@ export interface SyntheticHousehold {
   weight: number;
 }
 
+export type Sgb2PersonStatus = "erwerbsfaehig" | "nicht-erwerbsfaehig-kind" | "nicht-erwerbsfaehig-erwachsen";
+export type Sgb2EligibilityStatus = "potenziell-leistungsberechtigt" | "ausgeschlossen-alter" | "ausgeschlossen-modell";
+export type Sgb2BenefitUnitType = "alleinstehend" | "paar-ohne-kinder" | "paar-mit-kindern" | "alleinerziehend" | "gemischt";
+export type Sgb2IncomeBand = "kein-einkommen" | "niedriges-erwerbseinkommen" | "sonstiges-einkommen" | "vorrangige-leistung";
+export type Sgb2ReceiptStatus = "bezug" | "kein-bezug" | "unklar";
+
+export interface Sgb2MonthlyIncomeProfile {
+  employmentGrossCents: number;
+  otherIncomeCents: number;
+  pensionIncomeCents: number;
+  transferIncomeCents: number;
+  countableIncomeProxyCents: number;
+}
+
+export interface Sgb2PersonProfile {
+  id: string;
+  runId: string;
+  personId: string;
+  householdId: string;
+  benefitUnitId: string;
+  status: Sgb2PersonStatus;
+  eligibilityStatus: Sgb2EligibilityStatus;
+  relationshipRole: HouseholdRole;
+  age: number;
+  income: Sgb2MonthlyIncomeProfile;
+  benefitMonths: number;
+  weight: number;
+  benefitWeight: number;
+  sourceId: string;
+  assumptionIds: string[];
+}
+
+export interface Sgb2HousingProfile {
+  regionId: string;
+  municipalityProviderId?: string;
+  housingStatus: HousingStatus;
+  floorAreaSquareMeters: number;
+  baseRentCents: number;
+  coldOperatingCostsCents: number;
+  grossColdRentCents: number;
+  heatingCostsCents: number;
+  sourceId: string;
+  uncertainty: "mittel" | "hoch";
+}
+
+export interface Sgb2BenefitUnit {
+  id: string;
+  runId: string;
+  householdId: string;
+  memberIds: string[];
+  eligibleMemberIds: string[];
+  nonEligibleMemberIds: string[];
+  type: Sgb2BenefitUnitType;
+  regionGroup: "west" | "ost" | "sued" | "stadtstaat";
+  incomeBand: Sgb2IncomeBand;
+  receiptStatus: Sgb2ReceiptStatus;
+  benefitMonths: number;
+  entryMonth: number | null;
+  exitMonth: number | null;
+  monthlyCountableIncomeProxyCents: number;
+  monthlyNeedProxyCents: number;
+  housing: Sgb2HousingProfile;
+  baseWeight: number;
+  weight: number;
+  derivationTrace: string[];
+  sourceIds: string[];
+  assumptionIds: string[];
+}
+
+export interface Sgb2PopulationSummary {
+  schemaVersion: number;
+  modelVersion: string;
+  benefitUnitCount: number;
+  weightedBenefitUnits: number;
+  weightedSgb2Persons: number;
+  averageBenefitMonths: number;
+  receiptRateAmongHouseholds: number;
+  distributions: Record<string, PopulationDistributionItem[]>;
+  jointDistributionAssumptions: string[];
+}
+
 export type CalibrationStatus = "innerhalb-toleranz" | "warnung";
 export interface CalibrationEntry {
   id: string;
@@ -124,7 +205,7 @@ export interface CalibrationEntry {
 export interface PopulationValidationIssue {
   code: string;
   severity: "error" | "warning";
-  entityType: "run" | "household" | "person";
+  entityType: "run" | "household" | "person" | "benefit-unit" | "sgb2-person";
   entityId?: string;
   message: string;
 }
@@ -159,6 +240,8 @@ export interface PopulationRunMetadata {
   quality: { maxRelativeDeviation: number; meanRelativeDeviation: number; status: CalibrationStatus };
   limitations: string[];
   active: boolean;
+  sgb2SchemaVersion?: number;
+  sgb2ModelVersion?: string;
 }
 
 export interface PopulationRun {
@@ -166,6 +249,7 @@ export interface PopulationRun {
   summary: PopulationSummary;
   calibration: CalibrationEntry[];
   validation: PopulationValidationIssue[];
+  sgb2Summary?: Sgb2PopulationSummary;
 }
 
 export interface PopulationGenerationOptions { seed: string; sampleSize: number; baselineId: string; }
@@ -213,6 +297,7 @@ export type LocalRequest =
   | { id: string; type: "population:activate"; payload: { runId: string } }
   | { id: string; type: "population:get-summary"; payload: { runId?: string } }
   | { id: string; type: "population:get-calibration"; payload: { runId?: string } }
+  | { id: string; type: "population:get-sgb2-summary"; payload: { runId?: string } }
   | { id: string; type: "population:query"; payload: { runId?: string; query: PopulationQuery } }
   | { id: string; type: "population:delete-run"; payload: { runId: string } }
   | { id: string; type: "population:income-tax"; payload: { runId?: string; settings: IncomeTaxSettings; modelLevel: ModelLevel } };
