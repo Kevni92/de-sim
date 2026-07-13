@@ -1,6 +1,7 @@
 import type { IncomeTaxResult } from "./income-tax";
 import type {
   ActiveScenarioDraft,
+  CalibrationEntry,
   IncomeTaxSettings,
   LocalRequest,
   LocalResponse,
@@ -11,7 +12,6 @@ import type {
   PopulationQueryResult,
   PopulationRun,
   PopulationSummary,
-  CalibrationEntry,
   ScenarioState,
   SourceRecord,
 } from "./types";
@@ -37,7 +37,7 @@ class WorkerRpcClient {
     const id = crypto.randomUUID();
     return new Promise<T>((resolve, reject) => {
       this.pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
-      this.worker.postMessage({ ...request, id } satisfies LocalRequest);
+      this.worker.postMessage({ ...request, id } as LocalRequest);
     });
   }
 }
@@ -58,12 +58,12 @@ class LocalServerClient {
   getActivePopulation() { return this.population.call<PopulationRun>({ type: "population:get-active" }); }
   listPopulationRuns() { return this.population.call<PopulationRun[]>({ type: "population:list-runs" }); }
   activatePopulation(runId: string) { return this.population.call<PopulationRun>({ type: "population:activate", payload: { runId } }); }
-  getPopulationSummary(runId?: string) { return this.population.call<PopulationSummary>({ type: "population:get-summary", payload: { runId } }); }
-  getPopulationCalibration(runId?: string) { return this.population.call<CalibrationEntry[]>({ type: "population:get-calibration", payload: { runId } }); }
-  queryPopulation(query: PopulationQuery, runId?: string) { return this.population.call<PopulationQueryResult>({ type: "population:query", payload: { runId, query } }); }
+  getPopulationSummary(runId?: string | null) { return this.population.call<PopulationSummary>({ type: "population:get-summary", payload: { runId: runId ?? undefined } }); }
+  getPopulationCalibration(runId?: string | null) { return this.population.call<CalibrationEntry[]>({ type: "population:get-calibration", payload: { runId: runId ?? undefined } }); }
+  queryPopulation(query: PopulationQuery, runId?: string | null) { return this.population.call<PopulationQueryResult>({ type: "population:query", payload: { runId: runId ?? undefined, query } }); }
   deletePopulationRun(runId: string) { return this.population.call<null>({ type: "population:delete-run", payload: { runId } }); }
-  estimatePopulationIncomeTax(settings: IncomeTaxSettings, modelLevel: ModelLevel, runId?: string) {
-    return this.population.call<IncomeTaxResult>({ type: "population:income-tax", payload: { runId, settings, modelLevel } });
+  estimatePopulationIncomeTax(settings: IncomeTaxSettings, modelLevel: ModelLevel, runId?: string | null) {
+    return this.population.call<IncomeTaxResult>({ type: "population:income-tax", payload: { runId: runId ?? undefined, settings, modelLevel } });
   }
 }
 
