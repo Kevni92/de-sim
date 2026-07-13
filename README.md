@@ -26,6 +26,19 @@ npx playwright install chromium
 npm run test:e2e -- --project=chromium
 ```
 
+## Milestone 1: UI-Grundlage
+
+Die Anwendung übernimmt die ausgearbeitete Oberfläche aus `Kevni92/staat-sklarheit` als verbindliche Basis. Enthalten sind:
+
+- Onboarding für Rechtsstand und Modellstufe,
+- dreispaltiges Dashboard mit mobiler Tab-Navigation,
+- Einkommensteuer-Detailseite mit Live-Parametern,
+- Szenariovergleich,
+- datengetriebener Quellen-Drawer,
+- responsive Desktop- und Mobilansichten.
+
+Die Berechnungen und Zahlen bleiben in diesem Milestone ausdrücklich Demonstrationswerte. Fachlich belastbare Modelle folgen in späteren Milestones.
+
 ## Lokaler Serverersatz
 
 Die erste Fassung verwendet einen Web Worker als serverähnliche Grenze. Quellen und Szenarien werden in IndexedDB gespeichert. UI-Komponenten greifen ausschließlich über `LocalServerClient` auf diese Daten zu, damit später ein echter HTTP-/RPC-Server eingesetzt werden kann.

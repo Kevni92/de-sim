@@ -1,5 +1,6 @@
 export type Confidence = "hoch" | "mittel" | "niedrig";
 export type SourceStatus = "amtlich" | "modell" | "annahme";
+export type ModelLevel = "statisch" | "verhalten" | "langfrist";
 
 export interface SourceRecord {
   id: string;
@@ -16,14 +17,25 @@ export interface SourceRecord {
   checkedAt: string;
 }
 
+export interface IncomeTaxSettings {
+  allowance: number;
+  entryRate: number;
+  topRate: number;
+  topThreshold: number;
+  richRate: number;
+  childAllowance: number;
+  spouseSplitting: boolean;
+}
+
 export interface ScenarioState {
   id: string;
   name: string;
   createdAt: string;
   updatedAt: string;
-  modelLevel: "statisch" | "verhalten" | "langfrist";
+  modelLevel: ModelLevel;
   revenueChanges: Record<string, number>;
   expenseChanges: Record<string, number>;
+  incomeTax?: IncomeTaxSettings;
 }
 
 export type LocalRequest =
