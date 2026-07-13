@@ -17,6 +17,7 @@
     "sgb2-policy.test.ts",
     "sgb2-population.test.ts",
     "sgb2-claim.test.ts",
+    "sgb2-housing.test.ts",
     "../src/lib/population-model.ts",
     "../src/lib/income-tax.ts",
     "../src/lib/income-tax-population.d.ts",
@@ -27,6 +28,9 @@
     "../src/lib/sgb2-population.ts",
     "../src/lib/sgb2-claim-contracts.ts",
     "../src/lib/sgb2-claim.ts",
+    "../src/lib/sgb2-housing-contracts.ts",
+    "../src/lib/sgb2-housing-data.ts",
+    "../src/lib/sgb2-housing.ts",
     "../src/lib/scenario-state.ts",
     "../src/lib/types.ts"
   ]

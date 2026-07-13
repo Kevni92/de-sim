@@ -9,6 +9,7 @@ export const SGB2_SOURCE_IDS = {
   ruleRates2026: "source-sgb2-rule-rates-2026",
   statistics: "source-sgb2-statistics",
   housingModel: "source-sgb2-kdu-model",
+  housingBerlin2026: "source-sgb2-kdu-berlin-2026",
 } as const;
 
 export type Sgb2Scalar = number | string | boolean;
@@ -17,6 +18,7 @@ export type Sgb2EvidenceClass = "gesetz" | "amtliche-statistik" | "modell" | "an
 export type Sgb2UncertaintyClass = "niedrig" | "mittel" | "hoch";
 export type Sgb2RoundingRule = "keine" | "kaufmaennisch-cent" | "abrunden-cent" | "aufrunden-cent";
 export type Sgb2ParameterUnit = "cent-pro-monat" | "anteil" | "index" | "quadratmeter" | "monate" | "boolean";
+export type Sgb2HeatingEnergySource = "heating-oil" | "natural-gas" | "district-heating" | "heat-pump" | "unknown";
 
 export interface Sgb2ParameterConstraints {
   min?: number;
@@ -141,7 +143,19 @@ export interface HousingAllowanceRule {
   maxRentPerSquareMeterParameterId?: string;
   heatingLimitParameterId?: string;
   heatingLimitModelId?: string;
+  additionalPersonFromHouseholdSize?: number;
+  additionalPersonAdequateFloorAreaParameterId?: string;
+  additionalPersonGrossColdRentLimitParameterId?: string;
   hardshipRuleIds: string[];
+}
+
+export interface HousingHeatingLimitRule {
+  id: string;
+  energySource: Exclude<Sgb2HeatingEnergySource, "unknown">;
+  buildingAreaMin: number;
+  buildingAreaMax?: number;
+  monthlyLimitParameterIds: [string, string, string, string, string];
+  additionalPersonLimitParameterId: string;
 }
 
 export interface HousingAllowanceDataset {
@@ -159,6 +173,7 @@ export interface HousingAllowanceDataset {
   status: HousingDatasetStatus;
   modelCostIndexParameterId?: string;
   rules: HousingAllowanceRule[];
+  heatingRules?: HousingHeatingLimitRule[];
 }
 
 export interface Sgb2PolicyBundle {

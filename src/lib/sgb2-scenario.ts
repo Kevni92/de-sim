@@ -139,7 +139,11 @@ export function validateSgb2ScenarioReference(reference: Sgb2ScenarioReference, 
     seenHousing.add(key);
     const dataset = datasetMap.get(override.datasetId);
     if (!dataset) issues.push({ code: "scenario_housing_dataset_unknown", severity: "error", path, message: `KdU-Datensatz ${override.datasetId} ist unbekannt.` });
-    else if (override.ruleId && !dataset.rules.some((rule) => rule.id === override.ruleId)) issues.push({ code: "scenario_housing_rule_unknown", severity: "error", path, message: `KdU-Regel ${override.ruleId} ist unbekannt.` });
+    else if (override.ruleId) {
+      const knownRule = dataset.rules.some((rule) => rule.id === override.ruleId)
+        || (dataset.heatingRules ?? []).some((rule) => rule.id === override.ruleId);
+      if (!knownRule) issues.push({ code: "scenario_housing_rule_unknown", severity: "error", path, message: `KdU-Regel ${override.ruleId} ist unbekannt.` });
+    }
     if (!Number.isFinite(override.value) || override.value < 0) issues.push({ code: "scenario_housing_value_invalid", severity: "error", path, message: "KdU-Override muss eine nichtnegative endliche Zahl sein." });
   });
 

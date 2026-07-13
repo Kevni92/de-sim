@@ -1,5 +1,6 @@
 import type { Sgb2PolicyBundle, Sgb2ScenarioReference } from "./sgb2-contracts";
 import { SGB2_FALLBACK_HOUSING_DATASET_ID, SGB2_HOUSING_SCHEMA_VERSION, SGB2_MODEL_VERSION, SGB2_POLICY_2026_ID, SGB2_POLICY_SCHEMA_VERSION, SGB2_SOURCE_IDS } from "./sgb2-contracts";
+import { berlin2026HousingDataset } from "./sgb2-housing-data";
 import { LEGAL_STATUS_DATE, VALID_FROM, sgb2Parameters } from "./sgb2-parameters";
 
 export const defaultSgb2PolicyBundle: Sgb2PolicyBundle = {
@@ -17,6 +18,7 @@ export const defaultSgb2PolicyBundle: Sgb2PolicyBundle = {
     changeNotes: [
       "Erste versionierte Policy-Struktur für den Bürgergeld-/Grundsicherungsgeld-Milestone.",
       "Regionale Unterkunftsgrenzen sind bewusst vom bundesweiten Leistungsrecht getrennt.",
+      "Berliner AV-Wohnen-Richtwerte 2026 sind als erster vollständiger regionaler Referenzdatensatz integriert.",
     ],
   },
   parameters: sgb2Parameters,
@@ -90,6 +92,7 @@ export const defaultSgb2PolicyBundle: Sgb2PolicyBundle = {
         { id: "hh5plus", householdSizeMin: 5, adequateFloorAreaParameterId: "sgb2.housing.floor-area.hh5plus", hardshipRuleIds: [] },
       ],
     },
+    berlin2026HousingDataset,
   ],
 };
 

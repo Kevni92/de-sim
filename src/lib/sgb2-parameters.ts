@@ -1,5 +1,6 @@
 import type { Sgb2EvidenceClass, Sgb2Parameter, Sgb2ParameterConstraints, Sgb2ParameterUnit, Sgb2RoundingRule, Sgb2UncertaintyClass } from "./sgb2-contracts";
 import { SGB2_SOURCE_IDS } from "./sgb2-contracts";
+import { berlin2026HousingParameters } from "./sgb2-housing-data";
 
 export const VALID_FROM = "2026-07-01";
 export const LEGAL_STATUS_DATE = "2026-07-01";
@@ -65,6 +66,19 @@ export const sgb2Parameters: Sgb2Parameter[] = [
   numericParameter("sgb2.reduction.missed-appointment-rate", 0.10, "anteil", SGB2_SOURCE_IDS.law, { constraints: { min: 0, max: 0.30 } }),
   numericParameter("sgb2.reduction.default-duration-months", 3, "monate", SGB2_SOURCE_IDS.law, { constraints: { min: 1, max: 12, integer: true } }),
 
+  numericParameter("sgb2.housing.grace-period-months", 12, "monate", SGB2_SOURCE_IDS.law, {
+    notes: "Karenzzeit wird nur angewendet, wenn ein Leistungsbeginn als Laufzeitfakt vorliegt; Heizkosten bleiben getrennt geprüft.",
+    constraints: { min: 0, max: 36, integer: true },
+  }),
+  numericParameter("sgb2.housing.grace-cap-factor", 1.5, "anteil", SGB2_SOURCE_IDS.law, {
+    notes: "Ab Juli 2026 werden Unterkunftskosten auch während der Karenzzeit höchstens bis zum Eineinhalbfachen der abstrakten örtlichen Angemessenheitsgrenze anerkannt.",
+    constraints: { min: 1, max: 3 },
+  }),
+  numericParameter("sgb2.housing.cost-reduction-transition-months", 6, "monate", SGB2_SOURCE_IDS.law, {
+    notes: "Modellparameter für einen ausdrücklich gestarteten Kostensenkungszeitraum.",
+    constraints: { min: 0, max: 24, integer: true },
+  }),
+
   numericParameter("sgb2.legacy.recipient-index", 100, "index", SGB2_SOURCE_IDS.housingModel, {
     evidenceClass: "annahme",
     uncertaintyClass: "hoch",
@@ -88,4 +102,5 @@ export const sgb2Parameters: Sgb2Parameter[] = [
   numericParameter("sgb2.housing.floor-area.hh3", 80, "quadratmeter", SGB2_SOURCE_IDS.housingModel, { evidenceClass: "modell", uncertaintyClass: "hoch", constraints: { min: 0, max: 300 } }),
   numericParameter("sgb2.housing.floor-area.hh4", 95, "quadratmeter", SGB2_SOURCE_IDS.housingModel, { evidenceClass: "modell", uncertaintyClass: "hoch", constraints: { min: 0, max: 300 } }),
   numericParameter("sgb2.housing.floor-area.hh5plus", 110, "quadratmeter", SGB2_SOURCE_IDS.housingModel, { evidenceClass: "modell", uncertaintyClass: "hoch", constraints: { min: 0, max: 500 } }),
+  ...berlin2026HousingParameters,
 ];
