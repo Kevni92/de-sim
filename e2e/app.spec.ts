@@ -36,17 +36,17 @@ test("verwaltet einen zentralen Entwurf mit Undo, Redo und Autosave", async ({ p
   await page.getByRole("button", { name: "Wiederholen" }).click();
   await expect(allowance).toHaveValue("15000");
 
-  await page.getByRole("button", { name: "Szenario" }).click();
+  await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
   await dialog.getByLabel("Szenariobeschreibung").fill(description);
   await dialog.getByLabel("Zeithorizont").selectOption("10");
   await page.screenshot({ path: "test-results/milestone-2-scenario-panel.png", fullPage: true });
-  await dialog.getByRole("button", { name: "Schließen" }).click();
+  await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
 
   await page.waitForTimeout(400);
   await page.reload();
   await expect(page.getByLabel("Grundfreibetrag Wert")).toHaveValue("15000");
-  await page.getByRole("button", { name: "Szenario" }).click();
+  await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const reloadedDialog = page.getByRole("dialog", { name: "Szenario verwalten" });
   await expect(reloadedDialog.getByLabel("Szenariobeschreibung")).toHaveValue(description);
   await expect(reloadedDialog.getByLabel("Zeithorizont")).toHaveValue("10");
@@ -55,7 +55,7 @@ test("verwaltet einen zentralen Entwurf mit Undo, Redo und Autosave", async ({ p
 test("exportiert, importiert und dupliziert Szenarien", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/dashboard");
-  await page.getByRole("button", { name: "Szenario" }).click();
+  await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
 
   const downloadPromise = page.waitForEvent("download");
@@ -129,7 +129,7 @@ test("bietet mobil Tabs, Quellen, Detailseite und Szenarioverwaltung", async ({ 
 
   await page.getByRole("button", { name: "Annahmen und Quellen" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByRole("button", { name: "Schließen" }).click();
-  await page.getByRole("button", { name: "Szenario" }).click();
+  await page.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.getByRole("button", { name: "Szenario", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Szenario verwalten" })).toBeVisible();
 });
