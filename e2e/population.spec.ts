@@ -143,6 +143,6 @@ test("öffnet den Bevölkerungsnachweis und bleibt mobil bedienbar", async ({ pa
   await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
   if (isMobile) {
-    await expect(page.locator("body")).toHaveCSS("overflow-x", "hidden");
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   }
 });
