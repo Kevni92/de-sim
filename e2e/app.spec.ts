@@ -9,7 +9,6 @@ test("führt vom Onboarding in das vollständige Desktop-Dashboard", async ({ pa
   await expect(page.getByRole("heading", { name: "Einnahmen" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ausgaben" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Wasserfall Budgetsaldo" }).first()).toBeVisible();
-  await page.screenshot({ path: "test-results/milestone-1-dashboard.png", fullPage: true });
 });
 
 test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ page, isMobile }) => {
@@ -25,6 +24,65 @@ test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ pag
   await expect(page.getByText("Du hast ungefähr").first()).toBeVisible();
 });
 
+test("verwaltet einen zentralen Entwurf mit Undo, Redo und Autosave", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  const description = `Persistenter Entwurf ${Date.now()}`;
+
+  await page.goto("./#/einkommensteuer");
+  const allowance = page.getByLabel("Grundfreibetrag Wert");
+  await allowance.fill("15000");
+  await page.getByRole("button", { name: "Rückgängig" }).click();
+  await expect(allowance).toHaveValue("13500");
+  await page.getByRole("button", { name: "Wiederholen" }).click();
+  await expect(allowance).toHaveValue("15000");
+
+  await page.getByRole("button", { name: "Szenario" }).click();
+  const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
+  await dialog.getByLabel("Szenariobeschreibung").fill(description);
+  await dialog.getByLabel("Zeithorizont").selectOption("10");
+  await page.screenshot({ path: "test-results/milestone-2-scenario-panel.png", fullPage: true });
+  await dialog.getByRole("button", { name: "Schließen" }).click();
+
+  await page.waitForTimeout(400);
+  await page.reload();
+  await expect(page.getByLabel("Grundfreibetrag Wert")).toHaveValue("15000");
+  await page.getByRole("button", { name: "Szenario" }).click();
+  const reloadedDialog = page.getByRole("dialog", { name: "Szenario verwalten" });
+  await expect(reloadedDialog.getByLabel("Szenariobeschreibung")).toHaveValue(description);
+  await expect(reloadedDialog.getByLabel("Zeithorizont")).toHaveValue("10");
+});
+
+test("exportiert, importiert und dupliziert Szenarien", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/dashboard");
+  await page.getByRole("button", { name: "Szenario" }).click();
+  const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
+
+  const downloadPromise = page.waitForEvent("download");
+  await dialog.getByRole("button", { name: "JSON exportieren" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.json$/);
+
+  await dialog.getByLabel("Szenario-JSON auswählen").setInputFiles({
+    name: "import-szenario.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify({
+      schemaVersion: 1,
+      scenario: {
+        name: "Importiertes Szenario",
+        horizonYears: 20,
+        incomeTax: { allowance: 16000 },
+      },
+    })),
+  });
+  await expect(dialog.getByLabel("Szenarioname im Dialog")).toHaveValue("Importiertes Szenario");
+  await expect(dialog.getByLabel("Zeithorizont")).toHaveValue("20");
+
+  await dialog.getByRole("button", { name: "Duplizieren" }).click();
+  await expect(page.getByRole("status")).toContainText("dupliziert");
+  await expect(dialog.getByLabel("Szenarioname im Dialog")).toHaveValue("Importiertes Szenario (Kopie)");
+});
+
 test("zeigt Quellen und Methodik in einem Drawer", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/dashboard");
@@ -37,8 +95,8 @@ test("zeigt Quellen und Methodik in einem Drawer", async ({ page, isMobile }) =>
 });
 
 test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ page, isMobile }) => {
-  test.skip(isMobile, "Die kompakte App-Bar zeigt Speichern erst in einem späteren Mobilfluss");
-  const name = `Milestone 1 ${Date.now()}`;
+  test.skip(isMobile, "Die kompakte App-Bar zeigt Speichern nur auf Desktop");
+  const name = `Milestone 2 ${Date.now()}`;
   await page.goto("./#/dashboard");
   await page.getByLabel("Szenarioname").fill(name);
   await page.getByRole("button", { name: /Speichern/ }).click();
@@ -57,7 +115,7 @@ test("öffnet den neutralen Szenariovergleich", async ({ page, isMobile }) => {
   await expect(page.getByText("Zentrale Politikeinstellungen")).toBeVisible();
 });
 
-test("bietet mobil Tabs, Quellen und die Einkommensteuer-Detailseite", async ({ page, isMobile }) => {
+test("bietet mobil Tabs, Quellen, Detailseite und Szenarioverwaltung", async ({ page, isMobile }) => {
   test.skip(!isMobile, "Mobiler Nutzerfluss");
   await page.goto("./#/dashboard");
   const tablist = page.getByRole("tablist", { name: "Dashboardbereiche" });
@@ -71,4 +129,7 @@ test("bietet mobil Tabs, Quellen und die Einkommensteuer-Detailseite", async ({ 
 
   await page.getByRole("button", { name: "Annahmen und Quellen" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("button", { name: "Schließen" }).click();
+  await page.getByRole("button", { name: "Szenario" }).click();
+  await expect(page.getByRole("dialog", { name: "Szenario verwalten" })).toBeVisible();
 });
