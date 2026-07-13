@@ -39,7 +39,8 @@ test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ pag
   await page.getByRole("button", { name: /Speichern/ }).click();
   await expect(page.getByRole("status")).toContainText("lokal gespeichert");
   await page.reload();
-  await expect(page.getByRole("button", { name: new RegExp(name) })).toBeVisible();
+  const savedRow = page.locator(".saved-scenarios li").filter({ hasText: name });
+  await expect(savedRow.getByRole("button").first()).toBeVisible();
 });
 
 test("öffnet den neutralen Szenariovergleich", async ({ page }) => {
