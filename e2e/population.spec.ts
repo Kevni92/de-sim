@@ -39,7 +39,7 @@ test("erzeugt mit gleichem Seed reproduzierbare Zusammenfassungen", async ({ pag
   if (!isMobile) await page.screenshot({ path: "test-results/milestone-7-synthetic-population.png", fullPage: true });
 });
 
-test("anderer Seed erzeugt einen neuen Lauf und bleibt kalibriert", async ({ page }) => {
+test("anderer Seed erzeugt einen neuen Lauf, bleibt kalibriert und lässt sich löschen", async ({ page }) => {
   await openPopulation(page);
   await page.getByLabel("Stichprobengröße").selectOption("2000");
   await page.getByLabel("Seed der Bevölkerung").fill("seed-a");
@@ -54,6 +54,10 @@ test("anderer Seed erzeugt einen neuen Lauf und bleibt kalibriert", async ({ pag
   expect(secondRun).not.toBe(firstRun);
   await expect(page.locator(".population-run-list article")).toHaveCount(3);
   await expect(page.locator(".population-calibration .population-status.warnung")).toHaveCount(0);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Bevölkerungslauf seed-a löschen" }).click();
+  await expect(page.locator(".population-run-list article")).toHaveCount(2);
 });
 
 test("stellt den aktiven Lauf aus IndexedDB wieder her und nutzt ihn in der Einkommensteuer", async ({ page }) => {
@@ -119,4 +123,18 @@ test("öffnet den Bevölkerungsnachweis und bleibt mobil bedienbar", async ({ pa
     await page.getByRole("tab", { name: "Einkommensdezile" }).click();
     await expect(page.getByText("Dezil 10")).toBeVisible();
   }
+});
+
+test("verursacht im zentralen Bevölkerungspfad keine Konsolen- oder Seitenfehler", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(error.message));
+
+  await openPopulation(page);
+  await page.getByRole("tab", { name: "Einkommensdezile" }).click();
+  await page.getByRole("button", { name: "Einkommensteuer" }).click();
+  await expect(page.getByRole("heading", { name: "Steuern und Sozialbeiträge" })).toBeVisible();
+  expect(errors).toEqual([]);
 });
