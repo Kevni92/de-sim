@@ -22,6 +22,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
       - run: npm run build
+      - run: npm run test:unit
       - run: npm run test:e2e
       - name: Playwright-Bericht hochladen
         if: always()
@@ -29,6 +30,14 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 14
+      - name: Milestone-7-Screenshot hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: milestone-7-synthetic-population
+          path: test-results/milestone-7-synthetic-population.png
+          if-no-files-found: warn
           retention-days: 14
       - name: UI-Screenshot hochladen
         if: always()
