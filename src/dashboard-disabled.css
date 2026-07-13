@@ -1,5 +1,5 @@
 .line-panel li.changed:not(:has(.line-row-main:disabled)) {
-  background: var(--surface);
+  background: transparent;
 }
 
 .line-panel li.uncertain {
