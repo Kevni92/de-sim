@@ -7,9 +7,9 @@ export type Sgb2AggregateComponent = "standard-need" | "additional-need" | "acco
 export type Sgb2FinancingView = "cash-payer" | "net-financing";
 export type Sgb2DrilldownDimension = "benefit-unit-type" | "region" | "income-band" | "component";
 export type Sgb2ComparisonScope =
-  | { kind: "total-payment" }
-  | { kind: "component"; component: Sgb2AggregateComponent }
-  | { kind: "payer"; view: Sgb2FinancingView; payer: string };
+  | { kind: "total-payment"; component?: undefined; view?: undefined; payer?: undefined }
+  | { kind: "component"; component: Sgb2AggregateComponent; view?: undefined; payer?: undefined }
+  | { kind: "payer"; component?: undefined; view: Sgb2FinancingView; payer: string };
 
 export interface Sgb2MoneyAggregate {
   exactCents: number;
