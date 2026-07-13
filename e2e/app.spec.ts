@@ -7,7 +7,7 @@ test("führt vom Onboarding in das vollständige Dashboard", async ({ page }) =>
   await expect(page).toHaveURL(/#\/dashboard$/);
   await expect(page.getByRole("heading", { name: "Einnahmen" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ausgaben" }).first()).toBeVisible();
-  await expect(page.getByText("Wasserfall Budgetsaldo")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Wasserfall Budgetsaldo" }).first()).toBeVisible();
 });
 
 test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ page }) => {
