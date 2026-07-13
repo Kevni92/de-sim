@@ -1,16 +1,18 @@
+import { defaultEffectParameters } from "./long-term-effects";
 import type { ScenarioDraft, ScenarioState, TimeHorizon } from "./types";
 
-export const SCENARIO_SCHEMA_VERSION = 2;
+export const SCENARIO_SCHEMA_VERSION = 3;
 
 export const defaultScenarioDraft: ScenarioDraft = {
   name: "Reformentwurf A",
-  description: "Arbeitsstand für eine neutrale Simulation des Staatshaushalts mit Einnahmen-, Steuer-, Beitrags- und Ausgabenmodulen.",
+  description: "Arbeitsstand für eine neutrale Simulation des Staatshaushalts mit Einnahmen-, Steuer-, Beitrags-, Ausgaben- und Wirkungsmodulen.",
   legalYear: 2026,
   dataYear: 2025,
   horizonYears: 5,
   modelLevel: "verhalten",
   revenueChanges: {},
   expenseChanges: {},
+  effectParameters: { ...defaultEffectParameters },
   incomeTax: {
     allowance: 13_500,
     entryRate: 12,
@@ -24,11 +26,12 @@ export const defaultScenarioDraft: ScenarioDraft = {
     "Die gesetzliche Einkommensteuer-Baseline folgt dem Tarif 2026 nach § 32a EStG.",
     "Verteilungsrechnungen verwenden einen referenzierten, vollständig synthetischen Bevölkerungslauf.",
     "Weitere Einnahmen und priorisierte Ausgaben werden als getrennte, versionierte Aggregatmodelle berechnet.",
-    "Direkte Haushaltswirkung, Verhaltens- beziehungsweise Folgewirkung, Begünstigtenstruktur und Unsicherheit werden getrennt ausgewiesen.",
+    "Direkte Haushaltswirkung, indirekte Wirkung, Zeitverzögerung, Rückkopplung und Unsicherheit werden getrennt ausgewiesen.",
+    "Langfristige Wirkungen sind Szenariorechnungen und keine sicheren Prognosen; nicht ausreichend belegte Bereiche bleiben unberechnet.",
     "Aufkommens- und Ausgabenmodelle sind keine individuelle Steuer-, Beitrags- oder Leistungsberatung.",
   ],
-  modelVersion: "synthetic-population-0.7.0",
-  sourceIds: ["source-budget", "source-est", "source-population-destatis", "source-population-microcensus", "source-population-phf", "source-population-model", "source-revenue-model", "source-expense-model"],
+  modelVersion: "long-term-effects-0.8.0",
+  sourceIds: ["source-budget", "source-est", "source-population-destatis", "source-population-microcensus", "source-population-phf", "source-population-model", "source-revenue-model", "source-expense-model", "source-effect-engine"],
   populationRunId: null,
   populationModelVersion: null,
 };
@@ -37,7 +40,7 @@ export interface ScenarioHistory { past: ScenarioDraft[]; present: ScenarioDraft
 export type ScenarioHistoryAction = { type: "change"; patch: Partial<ScenarioDraft> } | { type: "replace"; scenario: ScenarioDraft } | { type: "undo" } | { type: "redo" };
 
 function cloneScenario(scenario: ScenarioDraft): ScenarioDraft {
-  return { ...scenario, incomeTax: { ...scenario.incomeTax }, revenueChanges: { ...scenario.revenueChanges }, expenseChanges: { ...scenario.expenseChanges }, assumptions: [...scenario.assumptions], sourceIds: [...scenario.sourceIds] };
+  return { ...scenario, incomeTax: { ...scenario.incomeTax }, revenueChanges: { ...scenario.revenueChanges }, expenseChanges: { ...scenario.expenseChanges }, effectParameters: { ...scenario.effectParameters }, assumptions: [...scenario.assumptions], sourceIds: [...scenario.sourceIds] };
 }
 function equalScenario(a: ScenarioDraft, b: ScenarioDraft) { return JSON.stringify(a) === JSON.stringify(b); }
 export function createScenarioHistory(scenario = defaultScenarioDraft): ScenarioHistory { return { past: [], present: cloneScenario(scenario), future: [] }; }
@@ -50,6 +53,10 @@ export function scenarioHistoryReducer(state: ScenarioHistory, action: ScenarioH
 function numberOr(value: unknown, fallback: number) { return typeof value === "number" && Number.isFinite(value) ? value : fallback; }
 function stringArray(value: unknown, fallback: string[]) { return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : fallback; }
 function nullableString(value: unknown) { return typeof value === "string" && value.trim() ? value : null; }
+function numberRecord(value: unknown, fallback: Record<string, number>) {
+  if (!value || typeof value !== "object") return { ...fallback };
+  return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, number] => typeof entry[1] === "number" && Number.isFinite(entry[1])));
+}
 
 export function normalizeScenarioDraft(value: Partial<ScenarioDraft> | ScenarioState | null | undefined): ScenarioDraft {
   const fallback = defaultScenarioDraft;
@@ -62,8 +69,9 @@ export function normalizeScenarioDraft(value: Partial<ScenarioDraft> | ScenarioS
     dataYear: numberOr(value?.dataYear, fallback.dataYear),
     horizonYears: allowedHorizons.includes(horizon as TimeHorizon) ? horizon as TimeHorizon : fallback.horizonYears,
     modelLevel: value?.modelLevel === "statisch" || value?.modelLevel === "langfrist" || value?.modelLevel === "verhalten" ? value.modelLevel : fallback.modelLevel,
-    revenueChanges: value?.revenueChanges && typeof value.revenueChanges === "object" ? { ...value.revenueChanges } : {},
-    expenseChanges: value?.expenseChanges && typeof value.expenseChanges === "object" ? { ...value.expenseChanges } : {},
+    revenueChanges: numberRecord(value?.revenueChanges, {}),
+    expenseChanges: numberRecord(value?.expenseChanges, {}),
+    effectParameters: { ...fallback.effectParameters, ...numberRecord(value?.effectParameters, {}) },
     incomeTax: {
       allowance: numberOr(value?.incomeTax?.allowance, fallback.incomeTax.allowance),
       entryRate: numberOr(value?.incomeTax?.entryRate, fallback.incomeTax.entryRate),
@@ -83,6 +91,6 @@ export function normalizeScenarioDraft(value: Partial<ScenarioDraft> | ScenarioS
 export function scenarioToJson(scenario: ScenarioDraft) { return JSON.stringify({ schemaVersion: SCENARIO_SCHEMA_VERSION, scenario }, null, 2); }
 export function scenarioFromJson(text: string): ScenarioDraft {
   const parsed = JSON.parse(text) as { schemaVersion?: unknown; scenario?: unknown };
-  if ((parsed.schemaVersion !== 1 && parsed.schemaVersion !== SCENARIO_SCHEMA_VERSION) || !parsed.scenario || typeof parsed.scenario !== "object") throw new Error("Die Datei ist kein unterstütztes Deutschland-Simulator-Szenario.");
+  if ((parsed.schemaVersion !== 1 && parsed.schemaVersion !== 2 && parsed.schemaVersion !== SCENARIO_SCHEMA_VERSION) || !parsed.scenario || typeof parsed.scenario !== "object") throw new Error("Die Datei ist kein unterstütztes Deutschland-Simulator-Szenario.");
   return normalizeScenarioDraft(parsed.scenario as Partial<ScenarioDraft>);
 }

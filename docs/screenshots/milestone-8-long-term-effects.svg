@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Milestone 8 – indirekte und langfristige Wirkungen</title>
+  <desc id="desc">UI-Vorschau mit Wirkungsmodulen, Modellstufe, Unsicherheitsband und Zeitpfad.</desc>
+  <rect width="1440" height="900" fill="#f4f7fa"/>
+  <rect width="1440" height="64" fill="#ffffff" stroke="#d6dde5"/>
+  <text x="42" y="39" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#142033">HaushaltsKompass</text>
+  <text x="1085" y="38" font-family="Arial, sans-serif" font-size="14" fill="#147d7e">Wirkungen</text>
+  <text x="42" y="112" font-family="Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2" fill="#5f6b78">MILESTONE 8 · WIRKUNGS-ENGINE</text>
+  <text x="42" y="154" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#142033">Indirekte und langfristige Wirkungen</text>
+  <text x="42" y="184" font-family="Arial, sans-serif" font-size="15" fill="#5f6b78">Direkte Erstwirkung, Zeitverzögerung, Rückkopplung und Unsicherheit getrennt.</text>
+  <rect x="42" y="210" width="1356" height="56" rx="8" fill="#fff8eb" stroke="#d6dde5"/>
+  <text x="62" y="244" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#142033">Keine sichere Prognose.</text>
+  <text x="225" y="244" font-family="Arial, sans-serif" font-size="14" fill="#5f6b78">Ergebnisse zeigen mögliche Pfade unter transparenten Annahmen.</text>
+  <g font-family="Arial, sans-serif">
+    <rect x="42" y="286" width="255" height="550" rx="8" fill="#ffffff" stroke="#d6dde5"/>
+    <text x="62" y="320" font-size="14" font-weight="700" fill="#142033">Wirkungsbereiche</text>
+    <rect x="42" y="340" width="255" height="68" fill="#e1efef"/>
+    <rect x="42" y="340" width="4" height="68" fill="#147d7e"/>
+    <text x="62" y="369" font-size="13" font-weight="700" fill="#142033">Kita und Betreuung</text>
+    <text x="62" y="391" font-size="11" fill="#5f6b78">Modellrechnung</text>
+    <text x="62" y="444" font-size="13" fill="#142033">Erwerbsbeteiligung</text>
+    <text x="62" y="498" font-size="13" fill="#142033">Krankheitstage</text>
+    <text x="62" y="552" font-size="13" fill="#142033">Produktivität</text>
+    <text x="62" y="606" font-size="13" fill="#142033">Bildung und Qualifikation</text>
+    <text x="62" y="660" font-size="13" fill="#142033">Verwaltung und Bürokratie</text>
+    <text x="62" y="714" font-size="13" fill="#142033">Migration und Integration</text>
+    <text x="62" y="768" font-size="13" fill="#142033">Demografie und Altersausgaben</text>
+    <rect x="317" y="286" width="1081" height="146" rx="8" fill="#ffffff" stroke="#d6dde5"/>
+    <rect x="337" y="307" width="112" height="25" rx="12" fill="#e1efef"/>
+    <text x="351" y="324" font-size="11" fill="#147d7e">MODELLRECHNUNG</text>
+    <text x="337" y="370" font-size="25" font-weight="700" fill="#142033">Kita-Verfügbarkeit und Betreuung</text>
+    <text x="337" y="400" font-size="14" fill="#5f6b78">Plätze, Ausfalltage, Öffnungsstunden, Arbeitszeit und fiskalische Rückflüsse.</text>
+    <g>
+      <rect x="317" y="448" width="172" height="105" rx="8" fill="#ffffff" stroke="#d6dde5"/>
+      <text x="335" y="476" font-size="11" fill="#5f6b78">DIREKTE ERSTWIRKUNG</text>
+      <text x="335" y="515" font-size="20" font-weight="700" fill="#a33b3b">−1,8 Mrd. €</text>
+      <rect x="499" y="448" width="172" height="105" rx="8" fill="#ffffff" stroke="#d6dde5"/>
+      <text x="517" y="476" font-size="11" fill="#5f6b78">INDIREKTE WIRKUNG</text>
+      <text x="517" y="515" font-size="20" font-weight="700" fill="#18704d">+2,4 Mrd. €</text>
+      <rect x="681" y="448" width="172" height="105" rx="8" fill="#ffffff" stroke="#d6dde5"/>
+      <text x="699" y="476" font-size="11" fill="#5f6b78">LANGFRISTIG</text>
+      <text x="699" y="515" font-size="20" font-weight="700" fill="#18704d">+0,4 Mrd. €</text>
+      <rect x="863" y="448" width="172" height="105" rx="8" fill="#ffffff" stroke="#d6dde5"/>
+      <text x="881" y="476" font-size="11" fill="#5f6b78">RÜCKKOPPLUNG</text>
+      <text x="881" y="515" font-size="20" font-weight="700" fill="#18704d">+0,8 Mrd. €</text>
+      <rect x="1045" y="448" width="353" height="105" rx="8" fill="#f1f8f8" stroke="#d6dde5"/>
+      <text x="1063" y="476" font-size="11" fill="#5f6b78">UNSICHERHEITSBAND</text>
+      <text x="1063" y="515" font-size="20" font-weight="700" fill="#142033">+0,5 bis +3,1 Mrd. €</text>
+    </g>
+    <rect x="317" y="570" width="1081" height="266" rx="8" fill="#ffffff" stroke="#d6dde5"/>
+    <text x="337" y="606" font-size="12" font-weight="700" letter-spacing="1" fill="#5f6b78">ZEITPFAD</text>
+    <text x="337" y="638" font-size="20" font-weight="700" fill="#142033">Wirkung nach Jahr</text>
+    <line x1="360" y1="784" x2="1358" y2="784" stroke="#b9c3ce"/>
+    <line x1="360" y1="680" x2="360" y2="784" stroke="#b9c3ce"/>
+    <path d="M360 764 C490 750 550 735 650 720 S820 690 930 676 S1140 658 1358 650" fill="none" stroke="#147d7e" stroke-width="4"/>
+    <path d="M360 778 C490 770 550 758 650 748 S820 720 930 708 S1140 690 1358 680 L1358 620 C1140 638 930 646 820 660 S550 710 360 742 Z" fill="#e1efef" opacity=".8"/>
+    <text x="360" y="812" font-size="11" fill="#5f6b78">2025</text>
+    <text x="1320" y="812" font-size="11" fill="#5f6b78">2045</text>
+  </g>
+</svg>

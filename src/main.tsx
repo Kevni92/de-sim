@@ -1,6 +1,7 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { EffectsRoute } from "./EffectsRoute";
 import "./styles.css";
 import "./dashboard-disabled.css";
 import "./evidence-tooltips.css";
@@ -11,9 +12,20 @@ import "./income-tax-population.css";
 import "./revenue-modules.css";
 import "./expense-modules.css";
 import "./population.css";
+import "./effects.css";
+
+function Root() {
+  const [hash, setHash] = useState(window.location.hash.replace(/^#/, "") || "/");
+  useEffect(() => {
+    const listener = () => setHash(window.location.hash.replace(/^#/, "") || "/");
+    window.addEventListener("hashchange", listener);
+    return () => window.removeEventListener("hashchange", listener);
+  }, []);
+  return hash === "/wirkungen" ? <EffectsRoute /> : <App />;
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <Root />
   </StrictMode>,
 );

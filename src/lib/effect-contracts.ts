@@ -1,0 +1,18 @@
+import type { ModelLevel } from "./types";
+
+export const EFFECT_MODEL_VERSION = "long-term-effects-0.8.0";
+export const EFFECT_PARAMETER_PREFIX = "effect:";
+export type EffectEvidenceStatus = "amtlich-beobachtet" | "modellrechnung" | "szenarioannahme" | "externe-evidenz" | "nicht-berechnet" | "nicht-ausreichend-belegt";
+export type EffectCausality = "deskriptiv" | "korrelativ" | "kausal-geschaetzt" | "modelliert" | "hypothetisch";
+export type EffectModuleStatus = "aktiv" | "experimentell" | "nicht-berechnet";
+export type EffectCategory = "arbeit" | "gesundheit" | "betreuung" | "bildung" | "verwaltung" | "migration" | "demografie" | "fiskalisch" | "infrastruktur";
+export interface EffectParameterDefinition { id:string; label:string; description:string; unit:string; baseline:number; min:number; max:number; step:number; defaultValue:number; status:EffectEvidenceStatus; sourceId:string; uncertainty:string; sensitivity:"niedrig"|"mittel"|"hoch"; rationale:string; }
+export interface EffectTimingDefinition { startYear:number; rampYears:number; peakYear:number; decayRate:number; permanence:"temporär"|"dauerhaft"; horizonYears:number; feedback:string; }
+export interface EffectModuleDefinition { id:string; title:string; description:string; category:EffectCategory; status:EffectModuleStatus; modelVersion:string; dataYear:number; legalYear:number; horizonYears:number[]; supportedLevels:ModelLevel[]; parameters:EffectParameterDefinition[]; targetPopulation:string; directEffect:string; indirectEffect:string; timing:EffectTimingDefinition; uncertaintyModel:string; evidenceIds:string[]; sourceIds:string[]; limitations:string[]; dependencies:string[]; feedbacks:string[]; evidenceStatus:EffectEvidenceStatus; causality:EffectCausality; }
+export interface EffectTimeSeriesPoint { year:number; baseline:number; scenarioValue:number; directEffect:number; indirectEffect:number; feedback:number; lower:number; upper:number; }
+export interface EffectNonMonetaryMeasure { label:string; value:number; unit:string; }
+export interface EffectModuleResult { moduleId:string; title:string; period:{fromYear:number;toYear:number}; baselineValue:number; directEffect:number; indirectEffect:number; longTermEffect:number; feedbackEffect:number; totalEffect:number; lower:number; central:number; upper:number; affectedPersons:number; affectedHouseholds:number; monetaryEffect:number; nonMonetaryEffects:EffectNonMonetaryMeasure[]; relevantGroups:string[]; evidenceStatus:EffectEvidenceStatus; causality:EffectCausality; warnings:string[]; assumptions:string[]; modelVersion:string; populationRunId:string; scenarioId:string; timeSeries:EffectTimeSeriesPoint[]; }
+export interface EffectRun { id:string; scenarioId:string; populationRunId:string; modelVersion:string; modelLevel:ModelLevel; horizonYears:number; dataYear:number; legalYear:number; createdAt:string; parameters:Record<string,number>; moduleResults:EffectModuleResult[]; warnings:string[]; }
+export interface EffectCalculationInput { scenarioId:string; populationRunId:string; modelLevel:ModelLevel; horizonYears:number; dataYear:number; legalYear:number; parameters:Record<string,number>; }
+export type EffectLocalRequest = {id:string;type:"effects:registry"}|{id:string;type:"effects:calculate";payload:EffectCalculationInput}|{id:string;type:"effects:get-latest";payload:{scenarioId:string;populationRunId?:string}}|{id:string;type:"effects:list-runs";payload?:undefined}|{id:string;type:"effects:delete-run";payload:{runId:string}};
+export type EffectLocalResponse = {id:string;ok:true;data:unknown}|{id:string;ok:false;error:string};

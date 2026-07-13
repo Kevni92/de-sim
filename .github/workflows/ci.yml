@@ -55,6 +55,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+      - name: Milestone-8-Screenshot hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: milestone-8-long-term-effects
+          path: test-results/milestone-8-long-term-effects.png
+          if-no-files-found: warn
+          retention-days: 14
       - name: Milestone-7-Screenshot hochladen
         if: always()
         uses: actions/upload-artifact@v4
