@@ -87,22 +87,56 @@ export function App() {
     let cancelled = false;
     const listener = () => setRoute(readRoute());
     window.addEventListener("hashchange", listener);
-    void Promise.all([localServer.listSources(), localServer.listMetrics(), localServer.listScenarios(), localServer.getActiveDraft(), localServer.getActivePopulation(), localServer.listPopulationRuns()]).then(async ([loadedSources, loadedMetrics, loadedScenarios, draft, population, runs]) => {
-      if (cancelled) return;
-      setSources([...loadedSources, ...populationSources]); setMetrics(loadedMetrics); setScenarios(loadedScenarios); setPopulationRuns(runs);
-      let selectedPopulation = population;
-      if (draft) {
-        const normalized = normalizeScenarioDraft(draft.scenario);
-        dispatch({ type: "replace", scenario: normalized }); setActiveScenarioId(draft.activeScenarioId);
-        if (normalized.populationRunId && normalized.populationRunId !== population.metadata.id) {
-          try { selectedPopulation = await localServer.activatePopulation(normalized.populationRunId); }
-          catch { setPopulationError("Der im Szenario referenzierte Bevölkerungslauf fehlt lokal. Bitte einen Lauf aktivieren oder neu erzeugen."); }
+
+    const initialize = async () => {
+      try {
+        const [loadedSources, loadedMetrics, loadedScenarios, draft] = await Promise.all([
+          localServer.listSources(),
+          localServer.listMetrics(),
+          localServer.listScenarios(),
+          localServer.getActiveDraft(),
+        ]);
+        if (cancelled) return;
+
+        setSources([...loadedSources, ...populationSources]);
+        setMetrics(loadedMetrics);
+        setScenarios(loadedScenarios);
+        const normalizedDraft = draft ? normalizeScenarioDraft(draft.scenario) : null;
+        if (normalizedDraft) {
+          dispatch({ type: "replace", scenario: normalizedDraft });
+          setActiveScenarioId(draft?.activeScenarioId ?? null);
         }
-      } else {
-        dispatch({ type: "change", patch: { populationRunId: population.metadata.id, populationModelVersion: population.metadata.modelVersion } });
+        setReady(true);
+
+        const [population, runs] = await Promise.all([
+          localServer.getActivePopulation(),
+          localServer.listPopulationRuns(),
+        ]);
+        if (cancelled) return;
+
+        let selectedPopulation = population;
+        if (normalizedDraft?.populationRunId && normalizedDraft.populationRunId !== population.metadata.id) {
+          try {
+            selectedPopulation = await localServer.activatePopulation(normalizedDraft.populationRunId);
+          } catch {
+            setPopulationError("Der im Szenario referenzierte Bevölkerungslauf fehlt lokal. Bitte einen Lauf aktivieren oder neu erzeugen.");
+          }
+        } else if (!normalizedDraft?.populationRunId) {
+          dispatch({ type: "change", patch: { populationRunId: population.metadata.id, populationModelVersion: population.metadata.modelVersion } });
+        }
+        if (!cancelled) {
+          setActivePopulation(selectedPopulation);
+          setPopulationRuns(runs.map((run) => ({ ...run, metadata: { ...run.metadata, active: run.metadata.id === selectedPopulation.metadata.id } })));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPopulationError(error instanceof Error ? error.message : "Lokale Datenbasis konnte nicht geladen werden.");
+          setReady(true);
+        }
       }
-      if (!cancelled) { setActivePopulation(selectedPopulation); setReady(true); }
-    }).catch((error) => { if (!cancelled) { setPopulationError(error instanceof Error ? error.message : "Lokale Datenbasis konnte nicht geladen werden."); setReady(true); } });
+    };
+
+    void initialize();
     return () => { cancelled = true; window.removeEventListener("hashchange", listener); };
   }, []);
 
