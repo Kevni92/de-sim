@@ -1,6 +1,6 @@
 import type { ScenarioDraft, ScenarioState, TimeHorizon } from "./types";
 
-export const SCENARIO_SCHEMA_VERSION = 1;
+export const SCENARIO_SCHEMA_VERSION = 2;
 
 export const defaultScenarioDraft: ScenarioDraft = {
   name: "Reformentwurf A",
@@ -22,12 +22,15 @@ export const defaultScenarioDraft: ScenarioDraft = {
   },
   assumptions: [
     "Die gesetzliche Einkommensteuer-Baseline folgt dem Tarif 2026 nach § 32a EStG.",
+    "Verteilungsrechnungen verwenden einen referenzierten, vollständig synthetischen Bevölkerungslauf.",
     "Weitere Einnahmen und priorisierte Ausgaben werden als getrennte, versionierte Aggregatmodelle berechnet.",
     "Direkte Haushaltswirkung, Verhaltens- beziehungsweise Folgewirkung, Begünstigtenstruktur und Unsicherheit werden getrennt ausgewiesen.",
     "Aufkommens- und Ausgabenmodelle sind keine individuelle Steuer-, Beitrags- oder Leistungsberatung.",
   ],
-  modelVersion: "expense-modules-0.6.0",
-  sourceIds: ["source-budget", "source-est", "source-income-reference", "source-revenue-model", "source-expense-model"],
+  modelVersion: "synthetic-population-0.7.0",
+  sourceIds: ["source-budget", "source-est", "source-population-destatis", "source-population-microcensus", "source-population-phf", "source-population-model", "source-revenue-model", "source-expense-model"],
+  populationRunId: null,
+  populationModelVersion: null,
 };
 
 export interface ScenarioHistory { past: ScenarioDraft[]; present: ScenarioDraft; future: ScenarioDraft[]; }
@@ -46,6 +49,7 @@ export function scenarioHistoryReducer(state: ScenarioHistory, action: ScenarioH
 }
 function numberOr(value: unknown, fallback: number) { return typeof value === "number" && Number.isFinite(value) ? value : fallback; }
 function stringArray(value: unknown, fallback: string[]) { return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : fallback; }
+function nullableString(value: unknown) { return typeof value === "string" && value.trim() ? value : null; }
 
 export function normalizeScenarioDraft(value: Partial<ScenarioDraft> | ScenarioState | null | undefined): ScenarioDraft {
   const fallback = defaultScenarioDraft;
@@ -72,11 +76,13 @@ export function normalizeScenarioDraft(value: Partial<ScenarioDraft> | ScenarioS
     assumptions: stringArray(value?.assumptions, fallback.assumptions),
     modelVersion: typeof value?.modelVersion === "string" ? value.modelVersion : fallback.modelVersion,
     sourceIds: stringArray(value?.sourceIds, fallback.sourceIds),
+    populationRunId: nullableString(value?.populationRunId),
+    populationModelVersion: nullableString(value?.populationModelVersion),
   };
 }
 export function scenarioToJson(scenario: ScenarioDraft) { return JSON.stringify({ schemaVersion: SCENARIO_SCHEMA_VERSION, scenario }, null, 2); }
 export function scenarioFromJson(text: string): ScenarioDraft {
   const parsed = JSON.parse(text) as { schemaVersion?: unknown; scenario?: unknown };
-  if (parsed.schemaVersion !== SCENARIO_SCHEMA_VERSION || !parsed.scenario || typeof parsed.scenario !== "object") throw new Error("Die Datei ist kein unterstütztes Deutschland-Simulator-Szenario.");
+  if ((parsed.schemaVersion !== 1 && parsed.schemaVersion !== SCENARIO_SCHEMA_VERSION) || !parsed.scenario || typeof parsed.scenario !== "object") throw new Error("Die Datei ist kein unterstütztes Deutschland-Simulator-Szenario.");
   return normalizeScenarioDraft(parsed.scenario as Partial<ScenarioDraft>);
 }
