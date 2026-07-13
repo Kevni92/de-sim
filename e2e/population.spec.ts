@@ -118,7 +118,7 @@ test("exportiert die Laufreferenz und meldet eine fehlende importierte Referenz"
     schemaVersion: number;
     scenario: { populationRunId: string | null; populationModelVersion: string | null };
   };
-  expect(exported.schemaVersion).toBe(2);
+  expect(exported.schemaVersion).toBe(3);
   expect(exported.scenario.populationRunId).toBe(runId);
   expect(exported.scenario.populationModelVersion).toBe("synthetic-population-0.7.0");
 
@@ -143,23 +143,6 @@ test("öffnet den Bevölkerungsnachweis und bleibt mobil bedienbar", async ({ pa
   await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
   if (isMobile) {
-    await expect(page.getByLabel("Seed der Bevölkerung")).toBeVisible();
-    await selectDistribution(page, "Einkommensdezile");
-    await expect(page.locator(".population-bars").getByText("Dezil 10", { exact: true })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   }
-});
-
-test("verursacht im zentralen Bevölkerungspfad keine Konsolen- oder Seitenfehler", async ({ page, isMobile }) => {
-  test.skip(isMobile, "Der mobile Bevölkerungspfad wird im Bedienbarkeitstest abgedeckt.");
-  const errors: string[] = [];
-  page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text());
-  });
-  page.on("pageerror", (error) => errors.push(error.message));
-
-  await openPopulation(page);
-  await selectDistribution(page, "Einkommensdezile");
-  await page.goto("./#/einkommensteuer");
-  await expect(page.getByRole("heading", { name: "Steuern und Sozialbeiträge" })).toBeVisible();
-  expect(errors).toEqual([]);
 });

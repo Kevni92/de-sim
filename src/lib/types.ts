@@ -184,6 +184,7 @@ export interface ScenarioDraft {
   modelLevel: ModelLevel;
   revenueChanges: Record<string, number>;
   expenseChanges: Record<string, number>;
+  effectParameters: Record<string, number>;
   incomeTax: IncomeTaxSettings;
   assumptions: string[];
   modelVersion: string;

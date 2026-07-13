@@ -3,7 +3,7 @@ import { Moon, Redo2, Save, SlidersHorizontal, Sun, Undo2 } from "lucide-react";
 import { haushaltsKompassDarkLogo, haushaltsKompassLightLogo } from "../branding";
 import "../branding-theme.css";
 
-export type AppRoute = "/" | "/dashboard" | "/bevoelkerung" | "/einkommensteuer" | "/einnahmen" | "/ausgaben" | "/vergleich" | "/transparenz";
+export type AppRoute = "/" | "/dashboard" | "/bevoelkerung" | "/einkommensteuer" | "/einnahmen" | "/ausgaben" | "/wirkungen" | "/vergleich" | "/transparenz";
 type AppTheme = "light" | "dark";
 const themeStorageKey = "haushaltskompass-theme";
 function readTheme(): AppTheme { return document.documentElement.dataset.theme === "dark" ? "dark" : "light"; }
@@ -46,6 +46,7 @@ export function AppBar({
           <button className={route === "/einkommensteuer" ? "active" : ""} onClick={() => onNavigate("/einkommensteuer")}>Einkommensteuer</button>
           <button className={route === "/einnahmen" ? "active" : ""} onClick={() => onNavigate("/einnahmen")}>Weitere Einnahmen</button>
           <button className={route === "/ausgaben" ? "active" : ""} onClick={() => onNavigate("/ausgaben")}>Ausgaben</button>
+          <button className={route === "/wirkungen" ? "active" : ""} onClick={() => onNavigate("/wirkungen")}>Wirkungen</button>
           <button className={route === "/vergleich" ? "active" : ""} onClick={() => onNavigate("/vergleich")}>Vergleich</button>
           <button className={route === "/transparenz" ? "active" : ""} onClick={() => onNavigate("/transparenz")}>Transparenz</button>
         </nav>
