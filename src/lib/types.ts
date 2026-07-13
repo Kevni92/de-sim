@@ -1,3 +1,5 @@
+import type { Sgb2ScenarioReference } from "./sgb2-policy";
+
 export type Confidence = "hoch" | "mittel" | "niedrig";
 export type SourceStatus = "amtlich" | "modell" | "annahme";
 export type EvidenceStatus = SourceStatus | "unbekannt";
@@ -191,6 +193,7 @@ export interface ScenarioDraft {
   sourceIds: string[];
   populationRunId: string | null;
   populationModelVersion: string | null;
+  sgb2: Sgb2ScenarioReference;
 }
 
 export interface ScenarioState extends ScenarioDraft { id: string; createdAt: string; updatedAt: string; }
