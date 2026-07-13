@@ -1,4 +1,21 @@
+.line-panel li:not(:has(.line-row-main:disabled)) {
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+
 .line-panel li.changed:not(:has(.line-row-main:disabled)) {
+  background: color-mix(in srgb, var(--primary-soft) 50%, transparent);
+}
+
+.line-panel li:not(:has(.line-row-main:disabled)):hover {
+  background: var(--subtle);
+}
+
+.line-panel li.changed:not(:has(.line-row-main:disabled)):hover {
+  background: color-mix(in srgb, var(--primary-soft) 78%, var(--surface));
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.line-panel li:not(:has(.line-row-main:disabled)):hover .line-row-main {
   background: transparent;
 }
 
