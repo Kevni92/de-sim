@@ -1,3 +1,4 @@
+html:has(.population-page), body:has(.population-page) { overflow-x: clip; }
 .population-page { padding: 24px 0 56px; display: grid; gap: 18px; }
 .population-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .population-header > div > span { color: var(--primary); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
