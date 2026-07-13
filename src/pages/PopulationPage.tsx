@@ -6,6 +6,8 @@ import type { PopulationGenerationOptions, PopulationRun } from "../lib/types";
 const distributionTabs = [
   ["ageGroup", "Alter"], ["householdType", "Haushaltsformen"], ["employmentStatus", "Erwerbsstatus"],
   ["incomeDecile", "Einkommensdezile"], ["federalState", "Bundesländer"], ["housingStatus", "Wohnen"],
+  ["sgb2BenefitUnitType", "SGB-II-BG-Typen"], ["sgb2PersonStatus", "SGB-II-Personen"],
+  ["sgb2IncomeBand", "SGB-II-Einkommen"], ["sgb2Region", "SGB-II-Regionen"], ["sgb2BenefitMonths", "Bezugsmonate"],
 ] as const;
 
 export function PopulationPage({
@@ -38,12 +40,13 @@ export function PopulationPage({
   }, [activeRun]);
 
   const summary = activeRun?.summary;
+  const sgb2Summary = activeRun?.sgb2Summary;
   const distributionItems = summary?.distributions[distribution] ?? [];
 
   return (
     <main className="content-width population-page">
       <header className="population-header">
-        <div><span>Milestone 7 · vollständig synthetische Datenbasis</span><h1>Bevölkerung</h1><p>Deterministisch erzeugte und gewichtete Personen und Haushalte für gemeinsame Verteilungs-, Reichweiten- und Steuerberechnungen.</p></div>
+        <div><span>Bevölkerungsmodell · SGB-II-Erweiterung</span><h1>Bevölkerung</h1><p>Deterministisch erzeugte und gewichtete Personen, Haushalte und Bedarfsgemeinschaften für Verteilungs-, Steuer- und Leistungsberechnungen.</p></div>
         <button className="button secondary" onClick={() => onOpenSource("source-population-model")}><Info size={14} /> Methode und Quellen</button>
       </header>
 
@@ -57,32 +60,35 @@ export function PopulationPage({
             <Metric label="Synthetische Haushalte" value={formatInteger(summary?.householdCount)} note="konsistent verknüpft" />
             <Metric label="Gewichtete Bevölkerung" value={formatMillion(summary?.weightedPopulation)} note="Kalibrierungsziel" />
             <Metric label="Gewichtete Haushalte" value={formatMillion(summary?.weightedHouseholds)} note="Kalibrierungsziel" />
+            <Metric label="Gewichtete Bedarfsgemeinschaften" value={formatMillion(sgb2Summary?.weightedBenefitUnits)} note="modellierter Jahresbestand" />
+            <Metric label="SGB-II-Personen" value={formatMillion(sgb2Summary?.weightedSgb2Persons)} note="gewichtete Mitglieder" />
+            <Metric label="Mittlere Bezugsdauer" value={formatMonths(sgb2Summary?.averageBenefitMonths)} note="unterjährige Zu- und Abgänge" />
             <Metric label="Datenstand" value={String(activeRun?.metadata.dataYear ?? "–")} note={activeRun?.metadata.baselineId ?? "Baseline"} />
-            <Metric label="Seed" value={activeRun?.metadata.seed ?? "–"} note={activeRun?.metadata.modelVersion ?? "Modellversion"} />
+            <Metric label="Seed" value={activeRun?.metadata.seed ?? "–"} note={activeRun?.metadata.sgb2ModelVersion ?? activeRun?.metadata.modelVersion ?? "Modellversion"} />
           </div>
           {activeRun && <p className="population-boundary"><strong>Modellgrenze:</strong> {activeRun.metadata.limitations.join(" ")}</p>}
         </article>
 
         <article className="card-flat population-generator">
-          <div className="section-title"><div><h2>Bevölkerung erzeugen</h2><p>Gleicher Seed, gleiche Baseline und gleiche Modellversion ergeben dieselben synthetischen Datensätze.</p></div></div>
+          <div className="section-title"><div><h2>Bevölkerung erzeugen</h2><p>Gleicher Seed, gleiche Baseline und gleiche Modellversion ergeben dieselben Personen, Haushalte und Bedarfsgemeinschaften.</p></div></div>
           <label><span>Seed</span><input aria-label="Seed der Bevölkerung" value={seed} onChange={(event) => setSeed(event.target.value)} /></label>
           <label><span>Stichprobengröße</span><select aria-label="Stichprobengröße" value={sampleSize} onChange={(event) => setSampleSize(Number(event.target.value))}><option value={2_000}>2.000 Personen</option><option value={5_000}>5.000 Personen</option><option value={10_000}>10.000 Personen · Standard</option><option value={25_000}>25.000 Personen</option><option value={50_000}>50.000 Personen</option></select></label>
           <label><span>Baseline</span><select aria-label="Bevölkerungsbaseline" value={DEFAULT_BASELINE_ID} disabled><option value={DEFAULT_BASELINE_ID}>Deutschland 2024/2025 · Version 1</option></select></label>
           <button className="button primary population-generate" disabled={generating || !seed.trim()} onClick={() => onGenerate({ seed: seed.trim(), sampleSize, baselineId: DEFAULT_BASELINE_ID })}>{generating ? <><RefreshCw className="spin" size={15} /> Generierung läuft im Worker</> : <><RefreshCw size={15} /> Neu erzeugen</>}</button>
-          <small>Standard: 10.000 Personen. Die UI erhält nur Zusammenfassungen; Einzelpersonen verbleiben im lokalen Worker und in IndexedDB.</small>
+          <small>Standard: 10.000 Personen. Einzelpersonen und Bedarfsgemeinschaften verbleiben im lokalen Worker und in IndexedDB; die UI erhält nur Aggregate und Qualitätsberichte.</small>
         </article>
       </section>
 
       <section className="card-flat population-distributions">
-        <header><div><h2>Gewichtete Verteilungen</h2><p>Gemeinsame Aggregationsschicht des aktiven Laufs.</p></div><button className="source-badge" onClick={() => onOpenSource("source-population-microcensus")}><Info size={11} /> Nachweis</button></header>
+        <header><div><h2>Gewichtete Verteilungen</h2><p>Haushalts- und SGB-II-Strukturen bleiben getrennt nachvollziehbar.</p></div><button className="source-badge" onClick={() => onOpenSource(distribution.startsWith("sgb2") ? "source-sgb2-statistics" : "source-population-microcensus")}><Info size={11} /> Nachweis</button></header>
         <div className="population-tabs" role="tablist" aria-label="Verteilungsansichten">{distributionTabs.map(([id, label]) => <button key={id} role="tab" aria-selected={distribution === id} className={distribution === id ? "active" : ""} onClick={() => setDistribution(id)}>{label}</button>)}</div>
         <div className="population-bars">{distributionItems.map((item) => <div className="population-bar-row" key={item.id}><span>{labelFor(item.label)}</span><div><i style={{ width: `${Math.max(1, item.share * 100)}%` }} /></div><strong>{formatPercent(item.share)}</strong></div>)}</div>
       </section>
 
       <section className="population-lower-grid">
         <article className="card-flat population-calibration">
-          <header><div><h2>Kalibrierungsbericht</h2><p>Ziel, synthetischer Istwert und toleranzbezogene Abweichung.</p></div>{activeRun && <StatusBadge status={activeRun.metadata.quality.status} />}</header>
-          <div className="population-table-wrap"><table><thead><tr><th>Dimension</th><th>Kategorie</th><th>Ziel</th><th>Modell</th><th>Abweichung</th><th>Status</th><th>Quelle</th></tr></thead><tbody>{activeRun?.calibration.map((entry) => <tr key={entry.id} className={entry.status === "warnung" ? "warning" : ""}><td>{entry.dimension}</td><td>{labelFor(entry.category)}</td><td>{formatPercent(entry.target)}</td><td>{formatPercent(entry.actual)}</td><td>{formatSignedPercent(entry.relativeDeviation)}</td><td><StatusBadge status={entry.status} compact /></td><td><button className="table-source" onClick={() => onOpenSource(entry.sourceId)}>Quelle</button></td></tr>)}</tbody></table></div>
+          <header><div><h2>Kalibrierungsbericht</h2><p>Ziel, synthetischer Istwert, Toleranz und Quelle einschließlich SGB-II-Strukturen.</p></div>{activeRun && <StatusBadge status={activeRun.metadata.quality.status} />}</header>
+          <div className="population-table-wrap"><table><thead><tr><th>Dimension</th><th>Kategorie</th><th>Ziel</th><th>Modell</th><th>Abweichung</th><th>Status</th><th>Quelle</th></tr></thead><tbody>{activeRun?.calibration.map((entry) => <tr key={entry.id} className={entry.status === "warnung" ? "warning" : ""}><td>{entry.dimension}</td><td>{labelFor(entry.category)}</td><td>{entry.unit === "anzahl" ? formatInteger(entry.target) : formatPercent(entry.target)}</td><td>{entry.unit === "anzahl" ? formatInteger(entry.actual) : formatPercent(entry.actual)}</td><td>{formatSignedPercent(entry.relativeDeviation)}</td><td><StatusBadge status={entry.status} compact /></td><td><button className="table-source" onClick={() => onOpenSource(entry.sourceId)}>Quelle</button></td></tr>)}</tbody></table></div>
         </article>
 
         <aside className="card-flat population-runs">
@@ -93,8 +99,8 @@ export function PopulationPage({
 
       <section className="card-flat population-transparency">
         <div><h2>Transparenz und Datenschutz</h2><p>Keine Namen, Adressen, Geburtsdaten, Arbeitgeber oder andere identifizierende Merkmale werden erzeugt. Die Daten sind vollständig synthetisch und dienen ausschließlich der Modellrechnung.</p></div>
-        <ul><li><strong>Amtlich beobachtet:</strong> ausgewählte Randverteilungen und Aggregate.</li><li><strong>Modelliert:</strong> gemeinsame Verteilungen, Einkommen, Vermögen, Schulden und Abhängigkeiten.</li><li><strong>Unsicherheit:</strong> Kalibrierung ersetzt keine repräsentative multivariate Mikrodatenbasis.</li></ul>
-        <div className="population-source-actions"><button className="button secondary small" onClick={() => onOpenSource("source-population-destatis")}>Bevölkerung</button><button className="button secondary small" onClick={() => onOpenSource("source-population-microcensus")}>Mikrozensus</button><button className="button secondary small" onClick={() => onOpenSource("source-population-phf")}>PHF Vermögen</button><button className="button secondary small" onClick={() => onOpenSource("source-population-model")}>Modellkern</button></div>
+        <ul><li><strong>Amtlich beobachtet:</strong> ausgewählte Randverteilungen und SGB-II-Aggregate.</li><li><strong>Modelliert:</strong> gemeinsame Verteilungen, Bedarfsgemeinschaften, Einkommen, Wohnkosten, Vermögen und Bezugsdauer.</li><li><strong>Unsicherheit:</strong> Kalibrierung ersetzt keine repräsentative multivariate Mikrodatenbasis und keine Einzelfallprüfung.</li></ul>
+        <div className="population-source-actions"><button className="button secondary small" onClick={() => onOpenSource("source-population-destatis")}>Bevölkerung</button><button className="button secondary small" onClick={() => onOpenSource("source-population-microcensus")}>Mikrozensus</button><button className="button secondary small" onClick={() => onOpenSource("source-sgb2-statistics")}>SGB-II-Statistik</button><button className="button secondary small" onClick={() => onOpenSource("source-population-phf")}>PHF Vermögen</button><button className="button secondary small" onClick={() => onOpenSource("source-population-model")}>Modellkern</button></div>
       </section>
     </main>
   );
@@ -104,6 +110,7 @@ function Metric({ label, value, note }: { label: string; value: string; note: st
 function StatusBadge({ status, compact = false }: { status: "innerhalb-toleranz" | "warnung"; compact?: boolean }) { return <span className={`population-status ${status} ${compact ? "compact" : ""}`}>{status === "innerhalb-toleranz" ? <CheckCircle2 size={compact ? 11 : 13} /> : <AlertTriangle size={compact ? 11 : 13} />}{status === "innerhalb-toleranz" ? "innerhalb Toleranz" : "Warnung"}</span>; }
 function formatInteger(value?: number) { return value == null ? "–" : Math.round(value).toLocaleString("de-DE"); }
 function formatMillion(value?: number) { return value == null ? "–" : `${(value / 1_000_000).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Mio.`; }
+function formatMonths(value?: number) { return value == null ? "–" : `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })} Monate`; }
 function formatPercent(value: number) { return value.toLocaleString("de-DE", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
 function formatSignedPercent(value: number) { return `${value > 0 ? "+" : value < 0 ? "−" : "±"}${Math.abs(value).toLocaleString("de-DE", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
-function labelFor(value: string) { return ({ alleinlebend: "Alleinlebend", "paar-ohne-kinder": "Paar ohne Kinder", "paar-mit-kindern": "Paar mit Kindern", alleinerziehend: "Alleinerziehend", mehrpersonen: "Mehrpersonenhaushalt", rentnerhaushalt: "Rentnerhaushalt", erwerbstaetig: "Erwerbstätig", arbeitslos: "Arbeitslos", rente: "Rente", bildung: "Bildung", "nicht-erwerbstaetig": "Nicht erwerbstätig", grossstadt: "Großstadt", staedtisch: "Städtisch", laendlich: "Ländlich", miete: "Miete", eigentum: "Eigentum" } as Record<string, string>)[value] ?? (value.match(/^\d+$/) ? `Dezil ${value}` : value); }
+function labelFor(value: string) { return ({ alleinlebend: "Alleinlebend", "paar-ohne-kinder": "Paar ohne Kinder", "paar-mit-kindern": "Paar mit Kindern", alleinerziehend: "Alleinerziehend", mehrpersonen: "Mehrpersonenhaushalt", rentnerhaushalt: "Rentnerhaushalt", erwerbstaetig: "Erwerbstätig", arbeitslos: "Arbeitslos", rente: "Rente", bildung: "Bildung", "nicht-erwerbstaetig": "Nicht erwerbstätig", grossstadt: "Großstadt", staedtisch: "Städtisch", laendlich: "Ländlich", miete: "Miete", eigentum: "Eigentum", alleinstehend: "Alleinstehend", gemischt: "Gemischte Bedarfsgemeinschaft", erwerbsfaehig: "Erwerbsfähig", "nicht-erwerbsfaehig-kind": "Nicht erwerbsfähig · Kind", "nicht-erwerbsfaehig-erwachsen": "Nicht erwerbsfähig · Erwachsene", "kein-einkommen": "Kein anrechenbares Einkommen", "niedriges-erwerbseinkommen": "Niedriges Erwerbseinkommen", "sonstiges-einkommen": "Sonstiges Einkommen", "vorrangige-leistung": "Vorrangige Leistung", west: "West", ost: "Ost", sued: "Süd", stadtstaat: "Stadtstaat" } as Record<string, string>)[value] ?? (value.match(/^\d+$/) ? `Dezil ${value}` : value); }
