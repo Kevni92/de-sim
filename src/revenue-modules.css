@@ -65,6 +65,10 @@
 .revenue-overview-table > button:hover, .revenue-overview-table > button.active { background: #f1f7f7; }
 .revenue-overview-table > button strong, .revenue-overview-table > button span { font-size: 10px; font-variant-numeric: tabular-nums; }
 .revenue-overview-table > button span b { font-size: 11px; }
+.module-delta-list { display: grid; gap: 7px; margin-top: 14px; }
+.module-delta-list > span { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 9px; border: 1px solid var(--border, #d6dde5); border-radius: 5px; background: #fff; }
+.module-delta-list small { color: var(--muted, #5f6b78); font-size: 9px; }
+.module-delta-list b { font-size: 10px; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 1050px) {
   .revenue-module-layout { grid-template-columns: 1fr; }
