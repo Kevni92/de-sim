@@ -20,10 +20,20 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npx playwright install --with-deps chromium
-      - run: npm run typecheck
+      - name: Typecheck
+        shell: bash
+        run: set -o pipefail; npm run typecheck 2>&1 | tee typecheck.log
       - run: npm run build
       - run: npm run test:unit
       - run: npm run test:e2e
+      - name: Typecheck-Diagnose hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typecheck-diagnostics
+          path: typecheck.log
+          if-no-files-found: warn
+          retention-days: 7
       - name: Playwright-Bericht hochladen
         if: always()
         uses: actions/upload-artifact@v4
