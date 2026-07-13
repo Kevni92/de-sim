@@ -33,7 +33,7 @@ export function SourceDrawer({
     return () => {
       document.documentElement.style.overflow = previousHtmlOverflow;
       document.body.style.overflow = previousBodyOverflow;
-      window.scrollTo({ left: 0, top: scrollY, behavior: "instant" });
+      window.scrollTo({ left: 0, top: scrollY, behavior: "auto" });
     };
   }, [metric?.id]);
 
