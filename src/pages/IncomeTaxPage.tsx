@@ -21,7 +21,7 @@ export function IncomeTaxPage({
   onModelLevel: (level: ModelLevel) => void;
   onBack: () => void;
   onApply: () => void;
-  onOpenSource: (sourceId: string, value?: string) => void;
+  onOpenSource: (metricId: string, value?: string) => void;
 }) {
   const update = <K extends keyof IncomeTaxSettings>(key: K, value: IncomeTaxSettings[K]) => onSettings({ ...settings, [key]: value });
   return (
@@ -29,7 +29,7 @@ export function IncomeTaxPage({
       <nav className="breadcrumb"><button onClick={onBack}>Dashboard</button><ChevronRight size={12} /><span>Einkommensteuer</span></nav>
       <header className="detail-header">
         <div><h1>Einkommensteuer</h1><p>Tarif, Freibeträge und Splitting anpassen. Ergebnisse aktualisieren sich live.</p></div>
-        <div><button className="button secondary" onClick={() => onOpenSource("source-est", fmtBn(revenue))}>Annahmen und Quellen</button><button className="button primary" onClick={onApply}>Übernehmen</button></div>
+        <div><button className="button secondary" onClick={() => onOpenSource("metric-income-tax-revenue", fmtBn(revenue))}>Annahmen und Quellen</button><button className="button primary" onClick={onApply}>Übernehmen</button></div>
       </header>
 
       <div className="detail-layout">
@@ -47,22 +47,27 @@ export function IncomeTaxPage({
         <section className="detail-results">
           <div className="card-flat model-card">
             <div className="model-head"><div><h2>Modellstufe</h2><p>bestimmt, wie stark Verhaltensreaktionen berücksichtigt werden</p></div><div className="segment-control">{(["statisch", "verhalten", "langfrist"] as ModelLevel[]).map((level) => <button key={level} className={modelLevel === level ? "active" : ""} onClick={() => onModelLevel(level)}>{level === "statisch" ? "statisch" : level === "verhalten" ? "mit Verhaltenseffekt" : "Langfristszenario"}</button>)}</div></div>
-            <div className="detail-kpis"><MiniKpi label="Steueraufkommen" value={fmtBn(revenue)} delta={`${delta >= 0 ? "+" : "−"}${Math.abs(delta).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Mrd. €`} tone={delta >= 0 ? "positive" : "negative"} hint="Bandbreite ± 25 %" /><MiniKpi label="Gewinner" value="24,3 Mio." delta="Haushalte" tone="positive" /><MiniKpi label="Verlierer" value="3,1 Mio." delta="Haushalte" tone="negative" /><MiniKpi label="Median-Wirkung" value="+22 € / Monat" delta="Median" tone="neutral" /></div>
+            <div className="detail-kpis">
+              <MiniKpi label="Steueraufkommen" value={fmtBn(revenue)} delta={`${delta >= 0 ? "+" : "−"}${Math.abs(delta).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Mrd. €`} tone={delta >= 0 ? "positive" : "negative"} hint="Bandbreite ± 25 %" onSource={() => onOpenSource("metric-income-tax-revenue", fmtBn(revenue))} />
+              <MiniKpi label="Gewinner" value="24,3 Mio." delta="Haushalte" tone="positive" onSource={() => onOpenSource("metric-income-tax-distribution", "24,3 Mio. Haushalte")} />
+              <MiniKpi label="Verlierer" value="3,1 Mio." delta="Haushalte" tone="negative" onSource={() => onOpenSource("metric-income-tax-distribution", "3,1 Mio. Haushalte")} />
+              <MiniKpi label="Median-Wirkung" value="+22 € / Monat" delta="Median" tone="neutral" onSource={() => onOpenSource("metric-income-tax-distribution", "+22 € / Monat")} />
+            </div>
           </div>
 
           <section className="card-flat chart-card">
-            <header><div><h2>Tarifkurve</h2><p>Grenzsteuersatz nach zu versteuerndem Einkommen</p></div><button className="source-badge" onClick={() => onOpenSource("source-est", fmtBn(revenue))}><Info size={10} /> Quelle</button></header>
+            <header><div><h2>Tarifkurve</h2><p>Grenzsteuersatz nach zu versteuerndem Einkommen</p></div><button className="source-badge" onClick={() => onOpenSource("metric-income-tax-tariff", `${settings.entryRate.toLocaleString("de-DE")}–${settings.richRate.toLocaleString("de-DE")} %`)}><Info size={10} /> Quelle</button></header>
             <TariffChart settings={settings} />
             <div className="chart-legend"><span><i className="baseline" /> Status quo</span><span><i className="reform" /> Reform</span><span><i className="band" /> Unsicherheitsband</span></div>
           </section>
 
           <section className="card-flat chart-card">
-            <header><div><h2>Verteilung nach Einkommensdezilen</h2><p>Monatliche Nettowirkung des Reformszenarios</p></div><span className="confidence mittel"><i /><i /><i /></span></header>
+            <header><div><h2>Verteilung nach Einkommensdezilen</h2><p>Monatliche Nettowirkung des Reformszenarios</p></div><button className="source-badge" onClick={() => onOpenSource("metric-income-tax-distribution", "D1 bis D10")}><Info size={10} /> Quelle</button></header>
             <div className="distribution-bars compact">{deciles.map((item) => <div key={item.d}><span>{item.d}</span><i><b className={item.reform >= 0 ? "positive" : "negative"} style={{ left: item.reform >= 0 ? "50%" : `${50 - Math.abs(item.reform) / 120 * 50}%`, width: `${Math.abs(item.reform) / 120 * 50}%` }} /></i><em className={item.reform >= 0 ? "positive" : "negative"}>{item.reform >= 0 ? "+" : "−"}{Math.abs(item.reform)} €</em></div>)}</div>
           </section>
 
           <section className="card-flat chart-card">
-            <header><div><h2>Beispielhaushalte</h2><p>Klare Alltagssprache statt technischer Vorzeichen</p></div></header>
+            <header><div><h2>Beispielhaushalte</h2><p>Klare Alltagssprache statt technischer Vorzeichen</p></div><button className="source-badge" onClick={() => onOpenSource("metric-household-examples", "+22 € / Monat (Median)")}><Info size={10} /> Quelle</button></header>
             <div className="household-grid compact">{households.map((household) => <article className="household-card" key={household.name}><div><strong>{household.name}</strong><small>{household.income}</small></div><em className={household.delta >= 0 ? "positive" : "negative"}>{household.delta >= 0 ? "+" : "−"}{Math.abs(household.delta)} € / Monat</em><p>Du hast ungefähr {Math.abs(household.delta)} € {household.delta >= 0 ? "mehr" : "weniger"} im Monat, weil {household.reason}.</p></article>)}</div>
           </section>
         </section>
@@ -75,8 +80,8 @@ function NumberSlider({ label, value, baseline, min, max, step, unit, onChange }
   return <div className="slider-row"><div className="slider-label"><strong>{label}</strong><small>Baseline: {baseline.toLocaleString("de-DE")} {unit}</small></div><div className="slider-inputs"><input aria-label={label} type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} /><label><input aria-label={`${label} Wert`} type="number" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} /><span>{unit}</span></label></div></div>;
 }
 
-function MiniKpi({ label, value, delta, tone, hint }: { label: string; value: string; delta: string; tone: string; hint?: string }) {
-  return <article className="mini-kpi"><span>{label}</span><strong>{value}</strong><em className={tone}>{delta}</em>{hint && <small>{hint}</small>}</article>;
+function MiniKpi({ label, value, delta, tone, hint, onSource }: { label: string; value: string; delta: string; tone: string; hint?: string; onSource: () => void }) {
+  return <article className="mini-kpi"><div className="mini-kpi-head"><span>{label}</span><button className="plain-icon" aria-label={`Quelle für ${label}`} onClick={onSource}><Info size={11} /></button></div><strong>{value}</strong><em className={tone}>{delta}</em>{hint && <small>{hint}</small>}</article>;
 }
 
 function TariffChart({ settings }: { settings: IncomeTaxSettings }) {
