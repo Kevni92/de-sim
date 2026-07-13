@@ -40,7 +40,6 @@ test("verwaltet einen zentralen Entwurf mit Undo, Redo und Autosave", async ({ p
   const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
   await dialog.getByLabel("Szenariobeschreibung").fill(description);
   await dialog.getByLabel("Zeithorizont").selectOption("10");
-  await page.screenshot({ path: "test-results/milestone-2-scenario-panel.png", fullPage: true });
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
 
   await page.waitForTimeout(400);
@@ -83,20 +82,42 @@ test("exportiert, importiert und dupliziert Szenarien", async ({ page, isMobile 
   await expect(dialog.getByLabel("Szenarioname im Dialog")).toHaveValue("Importiertes Szenario (Kopie)");
 });
 
-test("zeigt Quellen und Methodik in einem Drawer", async ({ page, isMobile }) => {
+test("öffnet für Dashboard-Kennzahlen den vollständigen Nachweis", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/dashboard");
   await page.getByRole("button", { name: "Quelle" }).first().click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByText("Quelle und Methodik")).toBeVisible();
-  await expect(dialog.getByText("Institution")).toBeVisible();
-  await expect(dialog.getByText("Bekannte Grenzen")).toBeVisible();
+  await expect(dialog.getByText("Nachweis und Rechenweg")).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Gesamteinnahmen" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Berechnung" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Bekannte Grenzen" })).toBeVisible();
+});
+
+test("durchsucht das Transparenzregister und zeigt Rechenweg, Unsicherheit und Historie", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/transparenz");
+  await expect(page.getByRole("heading", { name: "Transparenzregister" })).toBeVisible();
+  await expect(page.getByText("Keine Zahl ohne Status")).toBeVisible();
+
+  await page.getByLabel("Nachweise durchsuchen").fill("Einkommensteuer");
+  const metricCard = page.locator(".metric-card").filter({ hasText: "Aufkommen der Einkommensteuer" });
+  await expect(metricCard).toBeVisible();
+  await metricCard.getByRole("button", { name: "Nachweis öffnen" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Nachweis: Aufkommen der Einkommensteuer" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Verwendete Parameter" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Unsicherheit" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Änderungsverlauf" })).toBeVisible();
+  await page.screenshot({ path: "test-results/milestone-3-transparency.png", fullPage: true });
 });
 
 test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ page, isMobile }) => {
   test.skip(isMobile, "Die kompakte App-Bar zeigt Speichern nur auf Desktop");
-  const name = `Milestone 2 ${Date.now()}`;
+  const name = `Milestone 3 ${Date.now()}`;
   await page.goto("./#/dashboard");
   await page.getByLabel("Szenarioname").fill(name);
   await page.getByRole("button", { name: /Speichern/ }).click();
@@ -115,7 +136,7 @@ test("öffnet den neutralen Szenariovergleich", async ({ page, isMobile }) => {
   await expect(page.getByText("Zentrale Politikeinstellungen")).toBeVisible();
 });
 
-test("bietet mobil Tabs, Quellen, Detailseite und Szenarioverwaltung", async ({ page, isMobile }) => {
+test("bietet mobil Tabs, Nachweise, Detailseite und Szenarioverwaltung", async ({ page, isMobile }) => {
   test.skip(!isMobile, "Mobiler Nutzerfluss");
   await page.goto("./#/dashboard");
   const tablist = page.getByRole("tablist", { name: "Dashboardbereiche" });
