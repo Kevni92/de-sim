@@ -1,16 +1,16 @@
-.mobile-menu-button,
-.mobile-nav-layer {
-  display: none;
+.app-bar .mobile-menu-button,
+.app-bar .mobile-nav-layer {
+  display: none !important;
 }
 
 @media (max-width: 980px) {
-  .mobile-menu-button {
-    display: inline-grid;
+  .app-bar .mobile-menu-button {
+    display: inline-grid !important;
     flex: 0 0 auto;
   }
 
-  .mobile-nav-layer {
-    display: block;
+  .app-bar .mobile-nav-layer {
+    display: block !important;
     position: fixed;
     inset: 64px 0 0;
     z-index: 80;
@@ -133,13 +133,13 @@
 }
 
 @media (max-width: 720px) {
-  .mobile-nav-layer {
+  .app-bar .mobile-nav-layer {
     inset: 60px 0 0;
   }
 }
 
 @media (max-width: 560px) {
-  .scenario-button {
+  .app-bar .scenario-button {
     display: none;
   }
 
