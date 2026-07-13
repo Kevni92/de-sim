@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("kennzeichnet nicht implementierte Einnahmen und Ausgaben als deaktiviert", async ({ page, isMobile }) => {
+test("kennzeichnet Dashboardzustände eindeutig", async ({ page, isMobile }) => {
   await page.goto("./#/dashboard");
 
   if (isMobile) {
@@ -40,7 +40,23 @@ test("kennzeichnet nicht implementierte Einnahmen und Ausgaben als deaktiviert",
   await expect(changedTaxRow).toHaveClass(/changed/);
   const changedBackground = await changedTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
   const neutralBackground = await wealthTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
-  expect(changedBackground).toBe(neutralBackground);
+  expect(changedBackground).not.toBe(neutralBackground);
+
+  if (!isMobile) {
+    await wealthTaxRow.locator(".plain-icon").hover();
+    const hoverBackground = await wealthTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+    const buttonBackground = await wealthTaxRow.locator(".line-row-main").evaluate((element) => getComputedStyle(element).backgroundColor);
+    expect(hoverBackground).not.toBe(neutralBackground);
+    expect(hoverBackground).not.toBe(changedBackground);
+    expect(buttonBackground).toBe("rgba(0, 0, 0, 0)");
+
+    await changedTaxRow.locator(".line-row-main").hover();
+    const changedHoverBackground = await changedTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+    expect(changedHoverBackground).not.toBe(changedBackground);
+    expect(changedHoverBackground).not.toBe(hoverBackground);
+
+    await wealthTaxRow.locator(".plain-icon").hover();
+  }
 
   if (isMobile) {
     await page.getByRole("tab", { name: "Ausgaben" }).click();
