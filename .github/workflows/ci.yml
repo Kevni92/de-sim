@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -25,13 +29,23 @@ jobs:
         run: set -o pipefail; npm run typecheck 2>&1 | tee typecheck.log
       - run: npm run build
       - run: npm run test:unit
-      - run: npm run test:e2e
+      - name: Playwright Desktop und Mobil
+        shell: bash
+        run: set -o pipefail; npm run test:e2e 2>&1 | tee playwright.log
       - name: Typecheck-Diagnose hochladen
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: typecheck-diagnostics
           path: typecheck.log
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Playwright-Diagnose hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: playwright.log
           if-no-files-found: warn
           retention-days: 7
       - name: Playwright-Bericht hochladen
