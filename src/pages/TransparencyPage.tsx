@@ -1,5 +1,6 @@
 import { BookOpenCheck, Calculator, Database, Search, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import type { EvidenceStatus, MetricRecord, SourceRecord } from "../lib/types";
 
 type Filter = "alle" | EvidenceStatus;
@@ -88,7 +89,7 @@ export function TransparencyPage({
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {
   return <article className="card-flat transparency-stat"><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></article>;
 }
 
