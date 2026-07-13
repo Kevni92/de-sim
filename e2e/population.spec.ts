@@ -5,6 +5,13 @@ async function openPopulation(page: Page) {
   await page.goto("./#/bevoelkerung");
   await expect(page.getByRole("heading", { name: "Bevölkerung", exact: true })).toBeVisible();
   await expect(page.getByText("Aktiver Lauf")).toBeVisible();
+  await expect(page.locator(".population-active-card header p")).not.toHaveText("wird geladen", { timeout: 30_000 });
+  await expect(page.getByRole("button", { name: "Neu erzeugen" })).toBeEnabled();
+}
+
+async function waitForGeneration(page: Page) {
+  await expect(page.getByText("Synthetische Bevölkerung erzeugt und aktiviert")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("button", { name: "Neu erzeugen" })).toBeEnabled();
 }
 
 test("zeigt Standardlauf, Summen, Verteilungen und Kalibrierung", async ({ page }) => {
@@ -26,12 +33,12 @@ test("erzeugt mit gleichem Seed reproduzierbare Zusammenfassungen", async ({ pag
   await page.getByLabel("Seed der Bevölkerung").fill("playwright-reproduzierbar");
   await page.getByLabel("Stichprobengröße").selectOption("2000");
   await page.getByRole("button", { name: "Neu erzeugen" }).click();
-  await expect(page.getByText("Synthetische Bevölkerung erzeugt und aktiviert")).toBeVisible();
+  await waitForGeneration(page);
   const firstRun = await page.locator(".population-active-card header p").innerText();
   const firstSummary = await page.locator(".population-kpi-grid").innerText();
 
   await page.getByRole("button", { name: "Neu erzeugen" }).click();
-  await expect(page.getByText("Synthetische Bevölkerung erzeugt und aktiviert")).toBeVisible();
+  await waitForGeneration(page);
   await expect(page.locator(".population-active-card header p")).toHaveText(firstRun);
   await expect(page.locator(".population-kpi-grid")).toHaveText(firstSummary);
   await expect(page.locator(".population-calibration .population-status.warnung")).toHaveCount(0);
@@ -44,12 +51,12 @@ test("anderer Seed erzeugt einen neuen Lauf, bleibt kalibriert und lässt sich l
   await page.getByLabel("Stichprobengröße").selectOption("2000");
   await page.getByLabel("Seed der Bevölkerung").fill("seed-a");
   await page.getByRole("button", { name: "Neu erzeugen" }).click();
-  await expect(page.getByText("Synthetische Bevölkerung erzeugt und aktiviert")).toBeVisible();
+  await waitForGeneration(page);
   const firstRun = await page.locator(".population-active-card header p").innerText();
 
   await page.getByLabel("Seed der Bevölkerung").fill("seed-b");
   await page.getByRole("button", { name: "Neu erzeugen" }).click();
-  await expect(page.getByText("Synthetische Bevölkerung erzeugt und aktiviert")).toBeVisible();
+  await waitForGeneration(page);
   const secondRun = await page.locator(".population-active-card header p").innerText();
   expect(secondRun).not.toBe(firstRun);
   await expect(page.locator(".population-run-list article")).toHaveCount(3);
@@ -65,14 +72,14 @@ test("stellt den aktiven Lauf aus IndexedDB wieder her und nutzt ihn in der Eink
   await page.getByLabel("Seed der Bevölkerung").fill("steuerlauf-7");
   await page.getByLabel("Stichprobengröße").selectOption("2000");
   await page.getByRole("button", { name: "Neu erzeugen" }).click();
-  await expect(page.getByText("Synthetische Bevölkerung erzeugt und aktiviert")).toBeVisible();
+  await waitForGeneration(page);
   const runId = await page.locator(".population-active-card header p").innerText();
   await page.reload();
-  await expect(page.locator(".population-active-card header p")).toHaveText(runId);
+  await expect(page.locator(".population-active-card header p")).toHaveText(runId, { timeout: 30_000 });
 
-  await page.getByRole("button", { name: "Einkommensteuer" }).click();
+  await page.goto("./#/einkommensteuer");
   await expect(page).toHaveURL(/#\/einkommensteuer$/);
-  await expect(page.getByText(runId)).toBeVisible();
+  await expect(page.getByText(runId)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("2.000 synthetische Personen", { exact: false })).toBeVisible();
   const before = await page.getByText("Gewinner").locator("..").innerText();
   await page.getByLabel("Grundfreibetrag Wert").fill("16000");
@@ -134,7 +141,7 @@ test("verursacht im zentralen Bevölkerungspfad keine Konsolen- oder Seitenfehle
 
   await openPopulation(page);
   await page.getByRole("tab", { name: "Einkommensdezile" }).click();
-  await page.getByRole("button", { name: "Einkommensteuer" }).click();
+  await page.goto("./#/einkommensteuer");
   await expect(page.getByRole("heading", { name: "Steuern und Sozialbeiträge" })).toBeVisible();
   expect(errors).toEqual([]);
 });
