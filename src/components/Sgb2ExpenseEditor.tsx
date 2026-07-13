@@ -54,7 +54,7 @@ function FieldEditor({ field, reference, onReference, onOpenSource }: {
   const inputValue = sgb2UiInputValue(parameter, value);
   const min = parameter.constraints?.min == null ? undefined : sgb2UiInputValue(parameter, parameter.constraints.min);
   const max = parameter.constraints?.max == null ? undefined : sgb2UiInputValue(parameter, parameter.constraints.max);
-  const step = parameter.unit === "cent-pro-monat" ? 1 : parameter.unit === "anteil" ? 0.1 : sgb2UiInputStep(parameter);
+  const step = parameter.unit === "cent-pro-monat" ? 0.01 : parameter.unit === "anteil" ? 0.1 : sgb2UiInputStep(parameter);
   const changed = Math.abs(value - parameter.value) > 1e-9;
 
   return <article className={`sgb2-field ${changed ? "changed" : ""}`} data-parameter-id={field.id}>
