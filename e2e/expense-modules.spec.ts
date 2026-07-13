@@ -11,13 +11,17 @@ async function openSourceDrawer(button: Locator, dialog: Locator) {
 
 test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter live", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
+  test.setTimeout(120_000);
+  await page.goto("./#/bevoelkerung");
+  await page.getByLabel("Stichprobengröße").selectOption("2000");
+  await page.getByRole("button", { name: "Neu erzeugen" }).click();
+  await expect(page.getByText("2.000").first()).toBeVisible({ timeout: 45_000 });
   await page.goto("./#/dashboard");
   await page.getByRole("button", { name: "Bürgergeld bearbeiten" }).click();
   await expect(page).toHaveURL(/#\/ausgaben$/);
   await expect(page.getByRole("heading", { name: "Ausgaben und Leistungen" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Bürgergeld und Unterkunft" })).toBeVisible();
   await expect(page.getByTestId("sgb2-editor")).toBeVisible();
-
   await page.getByLabel("Regelbedarfe Prozent der Baseline").fill("105");
   await page.getByRole("button", { name: "Experte" }).click();
   await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("591.15");
