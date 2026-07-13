@@ -19,6 +19,7 @@
     "sgb2-claim.test.ts",
     "sgb2-housing.test.ts",
     "sgb2-aggregation.test.ts",
+    "sgb2-ui.test.ts",
     "../src/lib/population-model.ts",
     "../src/lib/income-tax.ts",
     "../src/lib/income-tax-population.d.ts",
@@ -34,6 +35,7 @@
     "../src/lib/sgb2-housing.ts",
     "../src/lib/sgb2-aggregation-contracts.ts",
     "../src/lib/sgb2-aggregation.ts",
+    "../src/lib/sgb2-ui.ts",
     "../src/lib/scenario-state.ts",
     "../src/lib/types.ts"
   ]
