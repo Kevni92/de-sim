@@ -66,7 +66,7 @@ export function RevenueModulesPage({
               const moduleResult = results.find((item) => item.id === module.id)!;
               return (
                 <button key={module.id} className={module.id === selectedId ? "active" : ""} onClick={() => onSelect(module.id)} aria-current={module.id === selectedId ? "page" : undefined}>
-                  <span><strong>{module.label}</strong><small>{module.legalBasis}</small></span>
+                  <span><strong>{module.label}</strong><small>{module.id === "verm" ? "Hypothetisches Szenario · Baseline 0" : module.legalBasis}</small></span>
                   <span className="module-list-value"><b>{fmtBn(moduleResult.value)}</b><em className={moduleResult.delta >= 0 ? "positive" : "negative"}>{fmtDiff(moduleResult.delta)}</em></span>
                 </button>
               );
