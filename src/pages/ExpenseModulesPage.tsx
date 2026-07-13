@@ -1,5 +1,8 @@
 import { ModuleMetric, ModuleModelLevelCard, ModulePageHeader, ModuleSummaryHeader } from "../components/ModuleDetailComponents";
+import { Sgb2ExpenseEditor } from "../components/Sgb2ExpenseEditor";
 import { defaultExpenseParameters, expenseModuleDefinitionById, expenseModuleDefinitions, expenseParameterKey, type ExpenseModuleId, type ExpenseModuleResult } from "../lib/expense-modules";
+import type { Sgb2ScenarioReference } from "../lib/sgb2-policy";
+import type { Sgb2UiPreviewResult } from "../lib/sgb2-ui";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
 import type { ModelLevel } from "../lib/types";
 
@@ -8,14 +11,20 @@ type Props = {
   results: ExpenseModuleResult[];
   parameters: Record<string, number>;
   modelLevel: ModelLevel;
+  sgb2: Sgb2ScenarioReference;
+  sgb2Preview: Sgb2UiPreviewResult | null;
+  sgb2PreviewLoading: boolean;
+  sgb2PreviewError: string;
+  populationAvailable: boolean;
   onSelect: (id: ExpenseModuleId) => void;
   onParameters: (parameters: Record<string, number>) => void;
+  onSgb2: (reference: Sgb2ScenarioReference) => void;
   onModelLevel: (level: ModelLevel) => void;
   onBack: () => void;
   onOpenSource: (metricId: string, value?: string) => void;
 };
 
-export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel, onSelect, onParameters, onModelLevel, onBack, onOpenSource }: Props) {
+export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel, sgb2, sgb2Preview, sgb2PreviewLoading, sgb2PreviewError, populationAvailable, onSelect, onParameters, onSgb2, onModelLevel, onBack, onOpenSource }: Props) {
   const definition = expenseModuleDefinitionById[selectedId];
   const result = results.find((item) => item.id === selectedId) ?? results[0];
   const updateParameter = (key: string, value: number) => onParameters({ ...parameters, [expenseParameterKey(selectedId, key)]: value });
@@ -45,9 +54,9 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
             badge={`Konfidenz ${definition.confidence}`}
             badgeTone={definition.confidence}
             title={definition.label}
-            description={definition.description}
+            description={selectedId === "social" ? "Regelbedarfe, Mehrbedarfe, Einkommen sowie regional anerkannte Unterkunft und Heizung werden personengenau berechnet und gewichtet aggregiert." : definition.description}
             onOpenSource={() => onOpenSource(`metric-expense-${selectedId}`, `${fmtBn(result.value)} · ${fmtDiff(result.delta)}`)}
-            onReset={resetModule}
+            onReset={selectedId === "social" ? undefined : resetModule}
           />
           <div className="revenue-kpi-grid">
             <ModuleMetric label="Baseline" value={fmtBn(result.baseline)} note={definition.legalBasis} />
@@ -57,26 +66,36 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
           </div>
         </section>
 
-        <section className="revenue-editor-grid">
-          <article className="card-flat revenue-parameters"><div className="section-title"><div><h3>Szenarioparameter</h3><p>Änderungen werden im zentralen Szenario gespeichert und wirken sofort auf Dashboard und Saldo.</p></div></div><div className="parameter-list">{definition.parameters.map((item) => {
-            const key = expenseParameterKey(selectedId, item.key); const value = parameters[key] ?? item.baseline;
-            return <label className="revenue-parameter" key={item.key}><span><strong>{item.label}</strong><small>{item.description}</small></span><div className="parameter-controls"><input aria-label={`${item.label} Regler`} type="range" min={item.min} max={item.max} step={item.step} value={value} onChange={(event) => updateParameter(item.key, Number(event.target.value))} /><input aria-label={`${item.label} Wert`} type="number" min={item.min} max={item.max} step={item.step} value={value} onChange={(event) => updateParameter(item.key, Number(event.target.value))} /><b>{item.unit}</b></div></label>;
-          })}</div></article>
+        {selectedId === "social" ? <Sgb2ExpenseEditor
+          reference={sgb2}
+          preview={sgb2Preview}
+          loading={sgb2PreviewLoading}
+          error={sgb2PreviewError}
+          populationAvailable={populationAvailable}
+          onReference={onSgb2}
+          onOpenSource={onOpenSource}
+        /> : <>
+          <section className="revenue-editor-grid">
+            <article className="card-flat revenue-parameters"><div className="section-title"><div><h3>Szenarioparameter</h3><p>Änderungen werden im zentralen Szenario gespeichert und wirken sofort auf Dashboard und Saldo.</p></div></div><div className="parameter-list">{definition.parameters.map((item) => {
+              const key = expenseParameterKey(selectedId, item.key); const value = parameters[key] ?? item.baseline;
+              return <label className="revenue-parameter" key={item.key}><span><strong>{item.label}</strong><small>{item.description}</small></span><div className="parameter-controls"><input aria-label={`${item.label} Regler`} type="range" min={item.min} max={item.max} step={item.step} value={value} onChange={(event) => updateParameter(item.key, Number(event.target.value))} /><input aria-label={`${item.label} Wert`} type="number" min={item.min} max={item.max} step={item.step} value={value} onChange={(event) => updateParameter(item.key, Number(event.target.value))} /><b>{item.unit}</b></div></label>;
+            })}</div></article>
 
-          <aside className="revenue-side-stack">
-            <ModuleModelLevelCard
-              description="Direkte Haushaltswirkung und Folgewirkung bleiben getrennt."
-              ariaLabel="Modellstufe Ausgabenmodul"
-              modelLevel={modelLevel}
-              onModelLevel={onModelLevel}
-              modelLabel={modelLabel}
-              modelDescription={modelDescription}
-            />
-            <article className="card-flat incidence-card"><div className="section-title"><div><h3>Begünstigte und Leistungskanäle</h3><p>Modellierte Verteilung des Aggregats, keine individuellen Ansprüche.</p></div></div><div className="incidence-bar" role="img" aria-label={`Begünstigtenstruktur für ${definition.label}`}>{result.beneficiaries.map((item) => <i key={item.label} style={{ width: `${item.share}%` }} title={`${item.label}: ${item.share} %`} />)}</div><ul>{result.beneficiaries.map((item) => <li key={item.label}><span>{item.label}</span><strong>{item.share} %</strong></li>)}</ul><p className="uncertainty-note">Ergebnisband: ± {result.uncertaintyPercent} %. Folgewirkungen sind keine Prognose.</p></article>
-          </aside>
-        </section>
+            <aside className="revenue-side-stack">
+              <ModuleModelLevelCard
+                description="Direkte Haushaltswirkung und Folgewirkung bleiben getrennt."
+                ariaLabel="Modellstufe Ausgabenmodul"
+                modelLevel={modelLevel}
+                onModelLevel={onModelLevel}
+                modelLabel={modelLabel}
+                modelDescription={modelDescription}
+              />
+              <article className="card-flat incidence-card"><div className="section-title"><div><h3>Begünstigte und Leistungskanäle</h3><p>Modellierte Verteilung des Aggregats, keine individuellen Ansprüche.</p></div></div><div className="incidence-bar" role="img" aria-label={`Begünstigtenstruktur für ${definition.label}`}>{result.beneficiaries.map((item) => <i key={item.label} style={{ width: `${item.share}%` }} title={`${item.label}: ${item.share} %`} />)}</div><ul>{result.beneficiaries.map((item) => <li key={item.label}><span>{item.label}</span><strong>{item.share} %</strong></li>)}</ul><p className="uncertainty-note">Ergebnisband: ± {result.uncertaintyPercent} %. Folgewirkungen sind keine Prognose.</p></article>
+            </aside>
+          </section>
 
-        {result.components.length > 0 && <section className="card-flat expense-component-card"><div className="section-title"><div><h3>Getrennte Teilaggregate</h3><p>Einzeln berechnet und erst danach zusammengeführt.</p></div></div><div className="expense-component-grid">{result.components.map((component) => <article key={component.id}><span>{component.label}</span><strong>{fmtBn(component.value)}</strong><small>{fmtBn(component.baseline)} Baseline · {fmtDiff(component.value - component.baseline)}</small></article>)}</div></section>}
+          {result.components.length > 0 && <section className="card-flat expense-component-card"><div className="section-title"><div><h3>Getrennte Teilaggregate</h3><p>Einzeln berechnet und erst danach zusammengeführt.</p></div></div><div className="expense-component-grid">{result.components.map((component) => <article key={component.id}><span>{component.label}</span><strong>{fmtBn(component.value)}</strong><small>{fmtBn(component.baseline)} Baseline · {fmtDiff(component.value - component.baseline)}</small></article>)}</div></section>}
+        </>}
 
         <section className="card-flat revenue-overview-table"><div className="section-title"><div><h3>Gesamtwirkung der Ausgabenmodule</h3><p>Getrennte Berechnung, konsistente Übernahme in den Staatshaushalt.</p></div></div><div className="revenue-table-head"><span>Modul</span><span>Baseline</span><span>Direkt</span><span>Folgewirkung</span><span>Szenario</span></div>{results.map((item) => <button key={item.id} onClick={() => onSelect(item.id)} className={item.id === selectedId ? "active" : ""}><strong>{item.label}</strong><span>{fmtBn(item.baseline)}</span><span className={item.staticDelta <= 0 ? "positive" : "negative"}>{fmtDiff(item.staticDelta)}</span><span className={item.feedbackAdjustment <= 0 ? "positive" : "negative"}>{fmtDiff(item.feedbackAdjustment)}</span><span><b>{fmtBn(item.value)}</b></span></button>)}</section>
       </div>
