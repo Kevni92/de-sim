@@ -4,7 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Transparenter Simulator für Staatshaushalt und politische Wirkungen." />
-    <title>Deutschland-Simulator</title>
+    <meta id="theme-color" name="theme-color" content="#f4f7fa" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,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" />
+    <title>HaushaltsKompass</title>
+    <script>
+      (() => {
+        try {
+          const storedTheme = localStorage.getItem("haushaltskompass-theme");
+          const theme = storedTheme === "dark" || storedTheme === "light"
+            ? storedTheme
+            : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.style.colorScheme = theme;
+          document.getElementById("theme-color")?.setAttribute("content", theme === "dark" ? "#0e141d" : "#f4f7fa");
+        } catch {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
