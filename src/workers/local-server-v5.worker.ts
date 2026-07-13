@@ -5,10 +5,19 @@ const DB_NAME = "de-sim-local-server";
 const DB_VERSION = 4;
 const SOURCES = "sources";
 const METRICS = "metrics";
+const SCENARIOS = "scenarios";
+const DRAFTS = "drafts";
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(SOURCES)) db.createObjectStore(SOURCES, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(METRICS)) db.createObjectStore(METRICS, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(SCENARIOS)) db.createObjectStore(SCENARIOS, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(DRAFTS)) db.createObjectStore(DRAFTS, { keyPath: "id" });
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
