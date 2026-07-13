@@ -21,7 +21,7 @@ class LocalServerClient {
   private pending = new Map<string, { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }>();
 
   constructor() {
-    this.worker = new Worker(new URL("../workers/local-server-v5.worker.ts", import.meta.url), { type: "module" });
+    this.worker = new Worker(new URL("../workers/local-server-v6.worker.ts", import.meta.url), { type: "module" });
     this.worker.addEventListener("message", (event: MessageEvent<LocalResponse>) => {
       const request = this.pending.get(event.data.id);
       if (!request) return;
@@ -42,33 +42,13 @@ class LocalServerClient {
     });
   }
 
-  listSources() {
-    return this.call<SourceRecord[]>({ type: "sources:list" });
-  }
-
-  listMetrics() {
-    return this.call<MetricRecord[]>({ type: "metrics:list" });
-  }
-
-  listScenarios() {
-    return this.call<ScenarioState[]>({ type: "scenarios:list" });
-  }
-
-  saveScenario(scenario: ScenarioState) {
-    return this.call<ScenarioState>({ type: "scenarios:save", payload: scenario });
-  }
-
-  deleteScenario(scenarioId: string) {
-    return this.call<null>({ type: "scenarios:delete", payload: { scenarioId } });
-  }
-
-  getActiveDraft() {
-    return this.call<ActiveScenarioDraft | null>({ type: "draft:get" });
-  }
-
-  saveActiveDraft(draft: ActiveScenarioDraft) {
-    return this.call<ActiveScenarioDraft>({ type: "draft:save", payload: draft });
-  }
+  listSources() { return this.call<SourceRecord[]>({ type: "sources:list" }); }
+  listMetrics() { return this.call<MetricRecord[]>({ type: "metrics:list" }); }
+  listScenarios() { return this.call<ScenarioState[]>({ type: "scenarios:list" }); }
+  saveScenario(scenario: ScenarioState) { return this.call<ScenarioState>({ type: "scenarios:save", payload: scenario }); }
+  deleteScenario(scenarioId: string) { return this.call<null>({ type: "scenarios:delete", payload: { scenarioId } }); }
+  getActiveDraft() { return this.call<ActiveScenarioDraft | null>({ type: "draft:get" }); }
+  saveActiveDraft(draft: ActiveScenarioDraft) { return this.call<ActiveScenarioDraft>({ type: "draft:save", payload: draft }); }
 }
 
 export const localServer = new LocalServerClient();

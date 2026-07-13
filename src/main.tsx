@@ -6,6 +6,7 @@ import "./milestone2.css";
 import "./transparency.css";
 import "./income-tax.css";
 import "./revenue-modules.css";
+import "./expense-modules.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
