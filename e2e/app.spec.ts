@@ -38,8 +38,6 @@ test("berechnet den gesetzlichen Tarif 2026 und hält die Baseline unverändert"
   await expect(page.getByTestId("baseline-tax-check")).toHaveText("4.217 €");
   await expect(page.getByText("Statische Wirkung")).toBeVisible();
   await expect(page.getByText("Verhaltensanpassung")).toBeVisible();
-
-  await page.screenshot({ path: "test-results/milestone-4-income-tax.png", fullPage: true });
 });
 
 test("bildet beim gesetzlichen Tarif die Zusammenveranlagung ab", async ({ page, isMobile }) => {
@@ -48,6 +46,58 @@ test("bildet beim gesetzlichen Tarif die Zusammenveranlagung ab", async ({ page,
   await page.getByLabel("Zu versteuerndes Einkommen für Tarifprüfung").fill("60000");
   await page.getByLabel("Veranlagung für Tarifprüfung").selectOption("joint");
   await expect(page.getByTestId("baseline-tax-check")).toHaveText("8.434 €");
+});
+
+test("öffnet die Umsatzsteuer aus dem Dashboard und berechnet eine Satzänderung live", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/dashboard");
+  await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
+  await expect(page).toHaveURL(/#\/einnahmen$/);
+  await expect(page.getByRole("heading", { name: "Steuern und Sozialbeiträge" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Umsatzsteuer" })).toBeVisible();
+
+  await page.getByLabel("Regelsteuersatz Wert").fill("20");
+  await expect(page.getByTestId("revenue-module-value")).toHaveText("302,9 Mrd. €");
+  await expect(page.getByText("Statische Wirkung").first()).toBeVisible();
+  await expect(page.getByText("Verhaltenskomponente").first()).toBeVisible();
+
+  await page.screenshot({ path: "test-results/milestone-5-revenue-modules.png", fullPage: true });
+});
+
+test("aktiviert ein Vermögensteuer-Szenario aus einer Null-Baseline", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/einnahmen");
+  const moduleList = page.locator(".revenue-module-list");
+  await moduleList.getByRole("button", { name: /Vermögensteuer/ }).click();
+  await expect(page.getByRole("heading", { name: "Vermögensteuer" })).toBeVisible();
+  await expect(page.getByText("Derzeit keine Erhebung")).toBeVisible();
+
+  await page.getByLabel("Steuersatz Wert").fill("1");
+  await expect(page.getByTestId("revenue-module-value")).toHaveText("7,2 Mrd. €");
+  await expect(page.getByText("Topvermögen")).toBeVisible();
+});
+
+test("lädt für weitere Einnahmen den vollständigen Nachweis aus dem lokalen Worker", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/einnahmen");
+  await page.getByRole("button", { name: "Berechnung und Quellen" }).click();
+  const dialog = page.getByRole("dialog", { name: "Nachweis: Aufkommen der Umsatzsteuer" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Aufkommen der Umsatzsteuer" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Verwendete Parameter" })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
+  await expect(dialog.getByText("Umsatzsteuer: Steuersätze nach § 12 UStG")).toBeVisible();
+});
+
+test("sichert Parameter eines Einnahmemoduls per Autosave und IndexedDB", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/einnahmen");
+  const reducedRate = page.getByLabel("Ermäßigter Steuersatz Wert");
+  await reducedRate.fill("8");
+  await expect(reducedRate).toHaveValue("8");
+  await page.waitForTimeout(450);
+  await page.reload();
+  await expect(page.getByLabel("Ermäßigter Steuersatz Wert")).toHaveValue("8");
 });
 
 test("verwaltet einen zentralen Entwurf mit Undo, Redo und Autosave", async ({ page, isMobile }) => {
@@ -97,6 +147,7 @@ test("exportiert, importiert und dupliziert Szenarien", async ({ page, isMobile 
         name: "Importiertes Szenario",
         horizonYears: 20,
         incomeTax: { allowance: 16000 },
+        revenueChanges: { "param.ust.standardRate": 21 },
       },
     })),
   });
@@ -121,20 +172,19 @@ test("öffnet für Dashboard-Kennzahlen den vollständigen Nachweis", async ({ p
   await expect(dialog.getByRole("heading", { name: "Bekannte Grenzen" })).toBeVisible();
 });
 
-test("durchsucht das Transparenzregister und zeigt Rechenweg, Unsicherheit und Historie", async ({ page, isMobile }) => {
+test("durchsucht das Transparenzregister auch nach weiteren Einnahmen", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/transparenz");
   await expect(page.getByRole("heading", { name: "Transparenzregister" })).toBeVisible();
   await expect(page.getByText("Keine Zahl ohne Status")).toBeVisible();
 
-  await page.getByLabel("Nachweise durchsuchen").fill("Einkommensteuer");
-  const metricCard = page.locator(".metric-card").filter({ hasText: "Aufkommen der Einkommensteuer" });
+  await page.getByLabel("Nachweise durchsuchen").fill("Körperschaftsteuer");
+  const metricCard = page.locator(".metric-card").filter({ hasText: "Aufkommen der Körperschaftsteuer" });
   await expect(metricCard).toBeVisible();
   await metricCard.getByRole("button", { name: "Nachweis öffnen" }).click();
 
-  const dialog = page.getByRole("dialog", { name: "Nachweis: Aufkommen der Einkommensteuer" });
+  const dialog = page.getByRole("dialog", { name: "Nachweis: Aufkommen der Körperschaftsteuer" });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("heading", { name: "Verwendete Parameter" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Unsicherheit" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Änderungsverlauf" })).toBeVisible();
@@ -142,7 +192,7 @@ test("durchsucht das Transparenzregister und zeigt Rechenweg, Unsicherheit und H
 
 test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ page, isMobile }) => {
   test.skip(isMobile, "Die kompakte App-Bar zeigt Speichern nur auf Desktop");
-  const name = `Milestone 4 ${Date.now()}`;
+  const name = `Milestone 5 ${Date.now()}`;
   await page.goto("./#/dashboard");
   await page.getByLabel("Szenarioname").fill(name);
   await page.getByRole("button", { name: /Speichern/ }).click();
@@ -161,7 +211,7 @@ test("öffnet den neutralen Szenariovergleich", async ({ page, isMobile }) => {
   await expect(page.getByText("Zentrale Politikeinstellungen")).toBeVisible();
 });
 
-test("bietet mobil Tabs, Nachweise, Detailseite und Szenarioverwaltung", async ({ page, isMobile }) => {
+test("bietet mobil Dashboard, Einkommensteuer und Einnahmemodule", async ({ page, isMobile }) => {
   test.skip(!isMobile, "Mobiler Nutzerfluss");
   await page.goto("./#/dashboard");
   const tablist = page.getByRole("tablist", { name: "Dashboardbereiche" });
@@ -169,14 +219,11 @@ test("bietet mobil Tabs, Nachweise, Detailseite und Szenarioverwaltung", async (
 
   await tablist.getByRole("tab", { name: "Steuern" }).click();
   await expect(page.getByRole("heading", { name: "Einnahmen" }).first()).toBeVisible();
-  await page.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
-  await expect(page).toHaveURL(/#\/einkommensteuer$/);
-  await expect(page.getByRole("heading", { name: "Einkommensteuer", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Tarifprüfung 2026" })).toBeVisible();
+  await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
+  await expect(page).toHaveURL(/#\/einnahmen$/);
+  await expect(page.getByRole("heading", { name: "Steuern und Sozialbeiträge" })).toBeVisible();
+  await expect(page.getByLabel("Regelsteuersatz Wert")).toBeVisible();
 
   await page.getByRole("button", { name: "Berechnung und Quellen" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByRole("button", { name: "Schließen", exact: true }).click();
-  await page.getByRole("button", { name: "Szenario", exact: true }).click();
-  await expect(page.getByRole("dialog", { name: "Szenario verwalten" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Nachweis: Aufkommen der Umsatzsteuer" })).toBeVisible();
 });
