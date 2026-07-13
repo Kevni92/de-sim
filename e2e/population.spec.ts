@@ -1,6 +1,7 @@
-import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
+import { expect, test, type Page } from "@playwright/test";
 
-async function openPopulation(page: Parameters<typeof test>[0] extends never ? never : any) {
+async function openPopulation(page: Page) {
   await page.goto("./#/bevoelkerung");
   await expect(page.getByRole("heading", { name: "Bevölkerung", exact: true })).toBeVisible();
   await expect(page.getByText("Aktiver Lauf")).toBeVisible();
@@ -73,6 +74,38 @@ test("stellt den aktiven Lauf aus IndexedDB wieder her und nutzt ihn in der Eink
   await page.getByLabel("Grundfreibetrag Wert").fill("16000");
   await expect(page.getByLabel("Grundfreibetrag Wert")).toHaveValue("16000");
   await expect.poll(async () => page.getByText("Gewinner").locator("..").innerText()).not.toBe(before);
+});
+
+test("exportiert die Laufreferenz und meldet eine fehlende importierte Referenz", async ({ page }) => {
+  await openPopulation(page);
+  const runId = await page.locator(".population-active-card header p").innerText();
+  await page.getByRole("button", { name: "Szenario", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Szenario verwalten" })).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "JSON exportieren" }).click();
+  const download = await downloadPromise;
+  const downloadPath = await download.path();
+  expect(downloadPath).not.toBeNull();
+  const exported = JSON.parse(await readFile(downloadPath!, "utf8")) as {
+    schemaVersion: number;
+    scenario: { populationRunId: string | null; populationModelVersion: string | null };
+  };
+  expect(exported.schemaVersion).toBe(2);
+  expect(exported.scenario.populationRunId).toBe(runId);
+  expect(exported.scenario.populationModelVersion).toBe("synthetic-population-0.7.0");
+
+  const missingReference = {
+    ...exported,
+    scenario: { ...exported.scenario, populationRunId: "population-fehlt-lokal" },
+  };
+  await page.getByLabel("Szenario-JSON auswählen").setInputFiles({
+    name: "fehlende-bevoelkerung.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(missingReference)),
+  });
+  await expect(page).toHaveURL(/#\/bevoelkerung$/);
+  await expect(page.getByRole("alert")).toContainText("lokal nicht vorhanden");
 });
 
 test("öffnet den Bevölkerungsnachweis und bleibt mobil bedienbar", async ({ page, isMobile }) => {
