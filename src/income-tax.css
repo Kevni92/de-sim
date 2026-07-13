@@ -1,0 +1,68 @@
+.income-tax-page .detail-header { align-items: flex-end; }
+.legal-badge { width: fit-content; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--primary-soft); padding: 5px 8px; color: var(--primary); font-size: 10px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+
+.income-tax-law-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)) auto; align-items: center; gap: 0; margin-bottom: 14px; overflow: hidden; }
+.income-tax-law-summary > div { min-height: 67px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--line); padding: 11px 14px; }
+.income-tax-law-summary span { color: var(--muted-foreground); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.income-tax-law-summary strong { margin-top: 5px; font-size: 15px; }
+.income-tax-law-summary > button { margin: 0 14px; white-space: nowrap; }
+
+.parameter-panel > header div { min-width: 0; }
+.parameter-panel > header p { margin: 4px 0 0; color: var(--muted-foreground); font-size: 9.5px; line-height: 1.45; }
+.parameter-note { margin: 0; border-top: 1px solid var(--line); background: var(--subtle); padding: 12px 14px; color: var(--muted-foreground); font-size: 9.5px; line-height: 1.55; }
+
+.mini-kpi-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.mini-kpi-head > span { color: var(--muted-foreground); font-size: 9px; letter-spacing: .05em; text-transform: uppercase; }
+.mini-kpi-head .plain-icon { flex: 0 0 auto; }
+.model-breakdown { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin-top: 8px; }
+.model-breakdown span { display: flex; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--subtle); padding: 8px 9px; color: var(--muted-foreground); font-size: 9.5px; }
+.model-breakdown b { color: var(--foreground); font-weight: 700; }
+
+.tax-check-card { overflow: hidden; }
+.tax-check-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 12px 14px; }
+.tax-check-card > header > div { display: flex; align-items: flex-start; gap: 9px; }
+.tax-check-card h2 { margin-bottom: 3px; font-size: 12.5px; }
+.tax-check-card header p { margin: 0; color: var(--muted-foreground); font-size: 10px; }
+.calculator-icon { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 5px; background: var(--primary-soft); color: var(--primary); }
+.tax-check-inputs { display: grid; grid-template-columns: minmax(0,2fr) minmax(150px,1fr); gap: 10px; padding: 13px 14px; }
+.tax-check-inputs label { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 5px 8px; align-items: center; }
+.tax-check-inputs label > span { grid-column: 1 / -1; color: var(--muted-foreground); font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.tax-check-inputs input, .tax-check-inputs select { width: 100%; height: 36px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); padding: 0 10px; color: var(--foreground); font-size: 12px; }
+.tax-check-inputs small { color: var(--muted-foreground); font-size: 10px; }
+.tax-check-results { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.tax-check-results > div { min-height: 86px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--line); padding: 11px 14px; }
+.tax-check-results > div:last-child { border-right: 0; background: var(--primary-soft); }
+.tax-check-results span { color: var(--muted-foreground); font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.tax-check-results strong { margin-top: 6px; color: var(--foreground); font-size: 18px; }
+.tax-check-results small { margin-top: 4px; color: var(--muted-foreground); font-size: 9.5px; }
+.tax-check-disclaimer { margin: 0; padding: 10px 14px; color: var(--muted-foreground); font-size: 9.5px; line-height: 1.5; }
+
+.budget-model-compare { display: grid; gap: 7px; margin-top: 12px; }
+.budget-model-compare span { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); padding: 7px 0; color: var(--muted-foreground); font-size: 10px; }
+.budget-model-compare b { color: var(--foreground); font-size: 12px; }
+.distribution-summary { margin: 13px 0 0; border-top: 1px solid var(--line); padding-top: 11px; color: var(--muted-foreground); font-size: 10.5px; }
+.distribution-summary strong { color: var(--foreground); }
+
+@media (max-width: 980px) {
+  .income-tax-law-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .income-tax-law-summary > div:nth-child(2) { border-right: 0; }
+  .income-tax-law-summary > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .income-tax-law-summary > button { grid-column: 1 / -1; width: fit-content; margin-block: 10px; }
+}
+
+@media (max-width: 720px) {
+  .income-tax-page .detail-header { align-items: stretch; }
+  .model-breakdown, .tax-check-results { grid-template-columns: 1fr; }
+  .model-breakdown span { min-height: 38px; }
+  .tax-check-results > div { min-height: 72px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .tax-check-results > div:last-child { border-bottom: 0; }
+  .tax-check-inputs { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .income-tax-law-summary { grid-template-columns: 1fr; }
+  .income-tax-law-summary > div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .income-tax-law-summary > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .tax-check-card > header { align-items: stretch; flex-direction: column; }
+  .tax-check-card > header .source-badge { width: fit-content; }
+}
