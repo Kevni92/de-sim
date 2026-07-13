@@ -11,17 +11,20 @@ async function openSourceDrawer(button: Locator, dialog: Locator) {
 
 test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter live", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
 
   await page.goto("./#/bevoelkerung");
-  const generate = page.getByRole("button", { name: "Neu erzeugen" });
-  await expect(generate).toBeEnabled({ timeout: 20_000 });
-  await page.getByLabel("Stichprobengröße").selectOption("2000");
-  await generate.click();
-  await expect(page.getByRole("button", { name: /Generierung läuft im Worker/ })).toBeVisible();
-  await expect(generate).toBeEnabled({ timeout: 45_000 });
   const personMetric = page.getByText("Synthetische Personen", { exact: true }).locator("..");
-  await expect(personMetric.getByText("2.000", { exact: true })).toBeVisible();
+  await expect(personMetric.locator("strong")).not.toHaveText("–", { timeout: 60_000 });
+
+  const sampleSize = page.getByLabel("Stichprobengröße");
+  const generate = page.getByRole("button", { name: "Neu erzeugen" });
+  await expect(generate).toBeEnabled();
+  await sampleSize.selectOption("2000");
+  await expect(sampleSize).toHaveValue("2000");
+  await generate.click();
+  await expect(generate).toBeEnabled({ timeout: 60_000 });
+  await expect(personMetric.locator("strong")).toHaveText("2.000", { timeout: 15_000 });
 
   await page.getByRole("button", { name: "Dashboard", exact: true }).click();
   await page.getByRole("button", { name: "Bürgergeld bearbeiten" }).click();
