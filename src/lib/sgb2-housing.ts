@@ -227,6 +227,8 @@ export function calculateSgb2HousingCosts(
   let uncertaintyClass = dataset.uncertaintyClass;
 
   const graceMonths = cents(numericParameter(context, "sgb2.housing.grace-period-months"), "Karenzzeit");
+  const graceCapFactor = numericParameter(context, "sgb2.housing.grace-cap-factor");
+  if (graceCapFactor < 1) throw new Error("Karenzzeitdeckel muss mindestens dem einfachen örtlichen Richtwert entsprechen.");
   const transitionMonths = cents(numericParameter(context, "sgb2.housing.cost-reduction-transition-months"), "Kostensenkungszeitraum");
   const graceElapsed = monthsSince(facts.benefitStartMonth, month);
   const transitionElapsed = monthsSince(facts.costReductionStartMonth, month);
@@ -247,7 +249,15 @@ export function calculateSgb2HousingCosts(
     fallbackTrace.push(`Modellindex ${Math.round(factor * 100)} wurde auf tatsächliche Unterkunfts- und Heizkosten angewendet.`);
   } else {
     if (grossCold.value === null) throw new Error(`Regionaldatensatz ${dataset.id} enthält für Haushaltsgröße ${householdSize} keinen Bruttokaltmietrichtwert.`);
-    recognizedGrossColdRentCents = hardshipActive || graceActive || transitionActive ? actualGrossColdRentCents : Math.min(actualGrossColdRentCents, grossCold.value);
+    if (hardshipActive || transitionActive) {
+      recognizedGrossColdRentCents = actualGrossColdRentCents;
+    } else if (graceActive) {
+      const graceCapCents = cents(grossCold.value * graceCapFactor, "Karenzzeitdeckel Unterkunft");
+      recognizedGrossColdRentCents = Math.min(actualGrossColdRentCents, graceCapCents);
+      fallbackTrace.push(`Während der Karenzzeit gilt ab Juli 2026 ein Deckel von ${graceCapFactor} × örtlichem Bruttokaltmietrichtwert (${graceCapCents} Cent).`);
+    } else {
+      recognizedGrossColdRentCents = Math.min(actualGrossColdRentCents, grossCold.value);
+    }
 
     if (hardshipActive || transitionActive) {
       recognizedHeatingCostsCents = actualHeatingCostsCents;
@@ -287,6 +297,7 @@ export function calculateSgb2HousingCosts(
     ...grossCold.parameterIds,
     ...heat.parameterIds,
     "sgb2.housing.grace-period-months",
+    "sgb2.housing.grace-cap-factor",
     "sgb2.housing.cost-reduction-transition-months",
     ...(dataset.modelCostIndexParameterId ? [dataset.modelCostIndexParameterId] : []),
   ]));
