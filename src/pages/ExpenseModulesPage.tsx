@@ -2,7 +2,7 @@ import { ModuleMetric, ModuleModelLevelCard, ModulePageHeader, ModuleSummaryHead
 import { Sgb2ExpenseEditor } from "../components/Sgb2ExpenseEditor";
 import { defaultExpenseParameters, expenseModuleDefinitionById, expenseModuleDefinitions, expenseParameterKey, type ExpenseModuleId, type ExpenseModuleResult } from "../lib/expense-modules";
 import type { Sgb2ScenarioReference } from "../lib/sgb2-policy";
-import type { Sgb2UiPreviewResult } from "../lib/sgb2-ui";
+import { resetSgb2Ui, type Sgb2UiPreviewResult } from "../lib/sgb2-ui";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
 import type { ModelLevel } from "../lib/types";
 
@@ -56,7 +56,7 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
             title={definition.label}
             description={selectedId === "social" ? "Regelbedarfe, Mehrbedarfe, Einkommen sowie regional anerkannte Unterkunft und Heizung werden personengenau berechnet und gewichtet aggregiert." : definition.description}
             onOpenSource={() => onOpenSource(`metric-expense-${selectedId}`, `${fmtBn(result.value)} · ${fmtDiff(result.delta)}`)}
-            onReset={selectedId === "social" ? undefined : resetModule}
+            onReset={selectedId === "social" ? () => onSgb2(resetSgb2Ui(sgb2)) : resetModule}
           />
           <div className="revenue-kpi-grid">
             <ModuleMetric label="Baseline" value={fmtBn(result.baseline)} note={definition.legalBasis} />
