@@ -162,7 +162,7 @@ function constrainedValue(parameter: Sgb2Parameter, value: number) {
   const min = parameter.constraints?.min ?? Number.NEGATIVE_INFINITY;
   const max = parameter.constraints?.max ?? Number.POSITIVE_INFINITY;
   const constrained = Math.min(max, Math.max(min, value));
-  return parameter.constraints?.integer ? Math.round(constrained) : constrained;
+  return parameter.constraints?.integer ? Math.round(constrained) : Math.round(constrained * 1_000_000_000_000) / 1_000_000_000_000;
 }
 
 export function setSgb2UiParameter(reference: Sgb2ScenarioReference, parameterId: string, value: number): Sgb2ScenarioReference {
@@ -186,7 +186,8 @@ export function sgb2UiGroupPercent(reference: Sgb2ScenarioReference, groupId: Sg
     const current = resolvedSgb2UiValue(reference, id);
     return typeof baseline === "number" && baseline !== 0 && typeof current === "number" ? current / baseline * 100 : 100;
   });
-  const percent = ratios.reduce((sum, value) => sum + value, 0) / ratios.length;
+  const rawPercent = ratios.reduce((sum, value) => sum + value, 0) / ratios.length;
+  const percent = Math.round(rawPercent * 1_000_000_000) / 1_000_000_000;
   return { percent, mixed: ratios.some((value) => Math.abs(value - percent) > 0.05) };
 }
 
