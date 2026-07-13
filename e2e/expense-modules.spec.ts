@@ -12,7 +12,18 @@ async function openSourceDrawer(button: Locator, dialog: Locator) {
 test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter live", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
   test.setTimeout(120_000);
-  await page.goto("./#/dashboard");
+
+  await page.goto("./#/bevoelkerung");
+  const generate = page.getByRole("button", { name: "Neu erzeugen" });
+  await expect(generate).toBeEnabled({ timeout: 20_000 });
+  await page.getByLabel("Stichprobengröße").selectOption("2000");
+  await generate.click();
+  await expect(page.getByRole("button", { name: /Generierung läuft im Worker/ })).toBeVisible();
+  await expect(generate).toBeEnabled({ timeout: 45_000 });
+  const personMetric = page.getByText("Synthetische Personen", { exact: true }).locator("..");
+  await expect(personMetric.getByText("2.000", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
   await page.getByRole("button", { name: "Bürgergeld bearbeiten" }).click();
   await expect(page).toHaveURL(/#\/ausgaben$/);
   await expect(page.getByRole("heading", { name: "Ausgaben und Leistungen" })).toBeVisible();
@@ -21,7 +32,7 @@ test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter liv
   await page.getByLabel("Regelbedarfe Prozent der Baseline").fill("105");
   await page.getByRole("button", { name: "Experte" }).click();
   await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("591.15");
-  await expect(page.getByText("Betroffene BG")).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText("Betroffene BG")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("Leistungsbestandteile")).toBeVisible();
   await expect(page.getByText("Nettofinanzierung")).toBeVisible();
   await page.screenshot({ path: "test-results/sgb2-expense-ui.png", fullPage: true });
