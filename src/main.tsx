@@ -2,6 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import "./styles.css";
+import "./milestone2.css";
+import "./transparency.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
