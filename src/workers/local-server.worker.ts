@@ -1,4 +1,4 @@
-import type { LocalRequest, LocalResponse, ScenarioState, SourceRecord } from "../lib/types";
+import type { ActiveScenarioDraft, LocalRequest, LocalResponse, ScenarioState, SourceRecord } from "../lib/types";
 
 const workerScope = globalThis as unknown as {
   addEventListener(type: "message", listener: (event: MessageEvent<LocalRequest>) => void): void;
@@ -6,9 +6,11 @@ const workerScope = globalThis as unknown as {
 };
 
 const DB_NAME = "de-sim-local-server";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const SOURCES = "sources";
 const SCENARIOS = "scenarios";
+const DRAFTS = "drafts";
+const ACTIVE_DRAFT_ID = "active";
 
 const seedSources: SourceRecord[] = [
   {
@@ -48,6 +50,7 @@ function openDb(): Promise<IDBDatabase> {
       const db = request.result;
       if (!db.objectStoreNames.contains(SOURCES)) db.createObjectStore(SOURCES, { keyPath: "id" });
       if (!db.objectStoreNames.contains(SCENARIOS)) db.createObjectStore(SCENARIOS, { keyPath: "id" });
+      if (!db.objectStoreNames.contains(DRAFTS)) db.createObjectStore(DRAFTS, { keyPath: "id" });
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -61,46 +64,61 @@ function requestValue<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
+function transactionComplete(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error ?? new Error("IndexedDB-Transaktion abgebrochen"));
+  });
+}
+
 async function seed(db: IDBDatabase) {
   const count = await requestValue(db.transaction(SOURCES).objectStore(SOURCES).count());
   if (count > 0) return;
-  const tx = db.transaction(SOURCES, "readwrite");
-  seedSources.forEach((source) => tx.objectStore(SOURCES).put(source));
-  await new Promise<void>((resolve, reject) => {
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  const transaction = db.transaction(SOURCES, "readwrite");
+  seedSources.forEach((source) => transaction.objectStore(SOURCES).put(source));
+  await transactionComplete(transaction);
 }
 
 async function handle(request: LocalRequest): Promise<LocalResponse> {
   try {
     const db = await openDb();
     await seed(db);
+
     if (request.type === "sources:list") {
-      const data = await requestValue(db.transaction(SOURCES).objectStore(SOURCES).getAll());
+      const data = await requestValue(db.transaction(SOURCES).objectStore(SOURCES).getAll()) as SourceRecord[];
       return { id: request.id, ok: true, data };
     }
+
     if (request.type === "scenarios:list") {
       const data = await requestValue(db.transaction(SCENARIOS).objectStore(SCENARIOS).getAll()) as ScenarioState[];
       data.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
       return { id: request.id, ok: true, data };
     }
+
     if (request.type === "scenarios:save") {
-      const tx = db.transaction(SCENARIOS, "readwrite");
-      tx.objectStore(SCENARIOS).put(request.payload);
-      await new Promise<void>((resolve, reject) => {
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
+      const transaction = db.transaction(SCENARIOS, "readwrite");
+      transaction.objectStore(SCENARIOS).put(request.payload);
+      await transactionComplete(transaction);
       return { id: request.id, ok: true, data: request.payload };
     }
-    const tx = db.transaction(SCENARIOS, "readwrite");
-    tx.objectStore(SCENARIOS).delete(request.payload.scenarioId);
-    await new Promise<void>((resolve, reject) => {
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-    return { id: request.id, ok: true, data: null };
+
+    if (request.type === "scenarios:delete") {
+      const transaction = db.transaction(SCENARIOS, "readwrite");
+      transaction.objectStore(SCENARIOS).delete(request.payload.scenarioId);
+      await transactionComplete(transaction);
+      return { id: request.id, ok: true, data: null };
+    }
+
+    if (request.type === "draft:get") {
+      const record = await requestValue(db.transaction(DRAFTS).objectStore(DRAFTS).get(ACTIVE_DRAFT_ID)) as { id: string; payload: ActiveScenarioDraft } | undefined;
+      return { id: request.id, ok: true, data: record?.payload ?? null };
+    }
+
+    const transaction = db.transaction(DRAFTS, "readwrite");
+    transaction.objectStore(DRAFTS).put({ id: ACTIVE_DRAFT_ID, payload: request.payload });
+    await transactionComplete(transaction);
+    return { id: request.id, ok: true, data: request.payload };
   } catch (error) {
     return { id: request.id, ok: false, error: error instanceof Error ? error.message : "Unbekannter Fehler" };
   }
