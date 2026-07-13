@@ -24,5 +24,5 @@ test("speichert ein Szenario dauerhaft in IndexedDB", async ({ page }) => {
   await page.getByRole("button", { name: /Speichern/ }).click();
   await expect(page.getByRole("status")).toContainText("lokal gespeichert");
   await page.reload();
-  await expect(page.getByRole("button", { name: new RegExp(name) })).toBeVisible();
+  await expect(page.locator(".saved-row > button:first-child", { hasText: name })).toBeVisible();
 });
