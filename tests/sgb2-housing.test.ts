@@ -87,14 +87,23 @@ test("Berliner Zuschläge für jede weitere Person werden für Miete, Fläche un
   assert.equal(result.recognizedHeatingCostsCents, 26_220);
 });
 
-test("Karenzzeit erkennt tatsächliche Bruttokaltmiete an, prüft Heizkosten aber getrennt", () => {
-  const result = calculateSgb2HousingCosts(unit(), defaultSgb2ScenarioReference, {
+test("Karenzzeit nutzt ab Juli 2026 höchstens das Eineinhalbfache des örtlichen Richtwerts und prüft Heizung getrennt", () => {
+  const ordinary = calculateSgb2HousingCosts(unit(), defaultSgb2ScenarioReference, {
     ...berlinHeatingFacts,
     benefitStartMonth: "2026-01",
   });
-  assert.equal(result.recognitionStatus, "grace-period");
-  assert.equal(result.recognizedGrossColdRentCents, 50_000);
-  assert.equal(result.recognizedHeatingCostsCents, 11_500);
+  const extreme = calculateSgb2HousingCosts(unit(), defaultSgb2ScenarioReference, {
+    ...berlinHeatingFacts,
+    benefitStartMonth: "2026-01",
+    actualBaseRentCents: 90_000,
+    actualColdOperatingCostsCents: 10_000,
+  });
+  assert.equal(ordinary.recognitionStatus, "grace-period");
+  assert.equal(ordinary.recognizedGrossColdRentCents, 50_000);
+  assert.equal(ordinary.recognizedHeatingCostsCents, 11_500);
+  assert.equal(extreme.recognizedGrossColdRentCents, 67_350);
+  assert.equal(extreme.unrecognizedHousingCents, 32_650);
+  assert.ok(extreme.parameterIds.includes("sgb2.housing.grace-cap-factor"));
 });
 
 test("Expliziter Kostensenkungszeitraum und Härtefall verhindern vorübergehend eine Kappung", () => {
