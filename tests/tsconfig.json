@@ -15,6 +15,7 @@
     "population-model.test.ts",
     "effects-model.test.ts",
     "sgb2-policy.test.ts",
+    "sgb2-population.test.ts",
     "../src/lib/population-model.ts",
     "../src/lib/income-tax.ts",
     "../src/lib/income-tax-population.d.ts",
@@ -22,6 +23,7 @@
     "../src/lib/effect-contracts.ts",
     "../src/lib/effect-registry.ts",
     "../src/lib/sgb2-policy.ts",
+    "../src/lib/sgb2-population.ts",
     "../src/lib/scenario-state.ts",
     "../src/lib/types.ts"
   ]
