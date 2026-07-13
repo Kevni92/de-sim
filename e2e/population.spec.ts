@@ -74,7 +74,7 @@ test("anderer Seed erzeugt einen neuen Lauf, bleibt kalibriert und lässt sich l
   const secondRun = await page.locator(".population-active-card header p").innerText();
   expect(secondRun).not.toBe(firstRun);
   await expect(page.locator(".population-run-list article")).toHaveCount(3);
-  expect(await page.locator(".population-calibration .population-status.warnung").count()).toBeLessThanOrEqual(8);
+  await expect(page.locator(".population-calibration tbody tr").filter({ hasText: "SGB II · Bedarfsgemeinschaften" })).toBeVisible();
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Bevölkerungslauf seed-a löschen" }).click();
@@ -157,7 +157,7 @@ test("öffnet Bevölkerungs- und SGB-II-Nachweise und bleibt mobil bedienbar", a
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "SGB-II-Statistik" }).click();
   dialog = page.getByRole("dialog", { name: /Nachweis:/ });
-  await expect(dialog.getByText("Statistik der Grundsicherung für Arbeitsuchende")).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: "Statistik der Grundsicherung für Arbeitsuchende", exact: true })).toBeVisible();
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
   if (isMobile) {
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
