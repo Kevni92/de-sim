@@ -204,8 +204,8 @@ export type LocalRequest =
   | { id: string; type: "draft:get" }
   | { id: string; type: "draft:save"; payload: ActiveScenarioDraft }
   | { id: string; type: "population:generate"; payload: PopulationGenerationOptions }
-  | { id: string; type: "population:get-active" }
-  | { id: string; type: "population:list-runs" }
+  | { id: string; type: "population:get-active"; payload?: undefined }
+  | { id: string; type: "population:list-runs"; payload?: undefined }
   | { id: string; type: "population:activate"; payload: { runId: string } }
   | { id: string; type: "population:get-summary"; payload: { runId?: string } }
   | { id: string; type: "population:get-calibration"; payload: { runId?: string } }
