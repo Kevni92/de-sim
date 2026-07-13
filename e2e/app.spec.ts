@@ -9,6 +9,7 @@ test("führt vom Onboarding in das vollständige Desktop-Dashboard", async ({ pa
   await expect(page.getByRole("heading", { name: "Einnahmen" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ausgaben" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Wasserfall Budgetsaldo" }).first()).toBeVisible();
+  await page.screenshot({ path: "test-results/milestone-1-dashboard.png", fullPage: true });
 });
 
 test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ page, isMobile }) => {
