@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Milestone 3 – Transparenzregister</title>
+  <desc id="desc">Vorschau des Transparenzregisters mit Kennzahlenkarten und geöffnetem Rechenweg.</desc>
+  <rect width="1440" height="900" fill="#f4f7fa"/>
+  <rect width="1440" height="64" fill="#ffffff" stroke="#d6dde5"/>
+  <rect x="32" y="18" width="29" height="29" rx="6" fill="#147d7e"/>
+  <text x="72" y="31" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#142033">Deutschland-Simulator</text>
+  <text x="72" y="47" font-family="Arial, sans-serif" font-size="10" fill="#5f6b78">Rechtsstand 2026 · Datenstand 2025 · DEMO</text>
+  <g font-family="Arial, sans-serif" font-size="13" fill="#5f6b78">
+    <text x="340" y="39">Dashboard</text><text x="430" y="39">Einkommensteuer</text><text x="570" y="39">Vergleich</text>
+  </g>
+  <rect x="642" y="16" width="94" height="32" rx="6" fill="#e1efef"/>
+  <text x="655" y="37" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#147d7e">Transparenz</text>
+
+  <text x="32" y="113" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#5f6b78">MILESTONE 3 · NACHVOLLZIEHBARKEIT</text>
+  <text x="32" y="154" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="#142033">Transparenzregister</text>
+  <text x="32" y="181" font-family="Arial, sans-serif" font-size="14" fill="#5f6b78">Definition, Rechenweg, Parameter, Originalquellen, Unsicherheit und Änderungsverlauf.</text>
+  <rect x="1040" y="92" width="368" height="92" rx="8" fill="#e1efef" stroke="#d6dde5"/>
+  <text x="1064" y="122" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#147d7e">Keine Zahl ohne Status</text>
+  <text x="1064" y="146" font-family="Arial, sans-serif" font-size="11" fill="#5f6b78">Amtliche Grundlage, Modellrechnung und</text>
+  <text x="1064" y="164" font-family="Arial, sans-serif" font-size="11" fill="#5f6b78">Annahme bleiben sichtbar getrennt.</text>
+
+  <g font-family="Arial, sans-serif">
+    <g transform="translate(32 210)"><rect width="240" height="76" rx="8" fill="#fff" stroke="#d6dde5"/><text x="18" y="34" font-size="22" font-weight="700" fill="#142033">3</text><text x="18" y="55" font-size="10" fill="#5f6b78">Amtliche Grundlagen</text></g>
+    <g transform="translate(284 210)"><rect width="240" height="76" rx="8" fill="#fff" stroke="#d6dde5"/><text x="18" y="34" font-size="22" font-weight="700" fill="#142033">4</text><text x="18" y="55" font-size="10" fill="#5f6b78">Modellrechnungen</text></g>
+    <g transform="translate(536 210)"><rect width="240" height="76" rx="8" fill="#fff" stroke="#d6dde5"/><text x="18" y="34" font-size="22" font-weight="700" fill="#142033">5</text><text x="18" y="55" font-size="10" fill="#5f6b78">Explizite Annahmen</text></g>
+    <g transform="translate(788 210)"><rect width="240" height="76" rx="8" fill="#fff" stroke="#d6dde5"/><text x="18" y="34" font-size="22" font-weight="700" fill="#142033">5</text><text x="18" y="55" font-size="10" fill="#5f6b78">Originalquellen</text></g>
+  </g>
+
+  <rect x="32" y="302" width="996" height="566" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <text x="50" y="334" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#142033">Kennzahlen und Rechenwege</text>
+  <rect x="690" y="316" width="242" height="34" rx="6" fill="#fff" stroke="#d6dde5"/>
+  <text x="708" y="338" font-family="Arial, sans-serif" font-size="11" fill="#5f6b78">Einkommensteuer suchen</text>
+  <rect x="944" y="316" width="70" height="34" rx="6" fill="#fff" stroke="#d6dde5"/>
+  <text x="959" y="338" font-family="Arial, sans-serif" font-size="11" fill="#142033">Alle</text>
+
+  <g font-family="Arial, sans-serif">
+    <g transform="translate(48 370)"><rect width="300" height="224" rx="8" fill="#fff" stroke="#d6dde5"/><rect x="14" y="14" width="58" height="22" rx="11" fill="#e1efef"/><text x="27" y="29" font-size="9" font-weight="700" fill="#147d7e">MODELL</text><text x="14" y="58" font-size="10" fill="#5f6b78">EINKOMMENSTEUER</text><text x="14" y="82" font-size="15" font-weight="700" fill="#142033">Aufkommen der Einkommensteuer</text><text x="14" y="108" font-size="10" fill="#5f6b78">Geschätztes jährliches Aufkommen im</text><text x="14" y="124" font-size="10" fill="#5f6b78">aktiven Szenario.</text><rect x="14" y="140" width="272" height="50" rx="6" fill="#eef2f6"/><text x="24" y="158" font-size="9" fill="#5f6b78">AKTUELLER WERT</text><text x="24" y="179" font-size="16" font-weight="700" fill="#142033">339,8 Mrd. €</text><rect x="14" y="200" width="272" height="30" rx="6" fill="#fff" stroke="#d6dde5"/><text x="98" y="220" font-size="11" font-weight="700" fill="#142033">Nachweis öffnen</text></g>
+    <g transform="translate(360 370)"><rect width="300" height="224" rx="8" fill="#fff" stroke="#d6dde5"/><rect x="14" y="14" width="60" height="22" rx="11" fill="#e2f0ea"/><text x="25" y="29" font-size="9" font-weight="700" fill="#18704d">AMTLICH</text><text x="14" y="58" font-size="10" fill="#5f6b78">STAATSHAUSHALT</text><text x="14" y="82" font-size="15" font-weight="700" fill="#142033">Gesamtausgaben</text><text x="14" y="108" font-size="10" fill="#5f6b78">Summe der ausgewiesenen direkten</text><text x="14" y="124" font-size="10" fill="#5f6b78">Ausgabenblöcke.</text><rect x="14" y="140" width="272" height="50" rx="6" fill="#eef2f6"/><text x="24" y="158" font-size="9" fill="#5f6b78">AKTUELLER WERT</text><text x="24" y="179" font-size="16" font-weight="700" fill="#142033">482,3 Mrd. €</text><rect x="14" y="200" width="272" height="30" rx="6" fill="#fff" stroke="#d6dde5"/><text x="98" y="220" font-size="11" font-weight="700" fill="#142033">Nachweis öffnen</text></g>
+    <g transform="translate(672 370)"><rect width="300" height="224" rx="8" fill="#fff" stroke="#d6dde5"/><rect x="14" y="14" width="62" height="22" rx="11" fill="#f8ecd8"/><text x="25" y="29" font-size="9" font-weight="700" fill="#b36b00">ANNAHME</text><text x="14" y="58" font-size="10" fill="#5f6b78">HAUSHALTE UND VERTEILUNG</text><text x="14" y="82" font-size="15" font-weight="700" fill="#142033">Verteilungswirkung</text><text x="14" y="108" font-size="10" fill="#5f6b78">Monatliche Nettowirkung nach</text><text x="14" y="124" font-size="10" fill="#5f6b78">Einkommensdezilen.</text><rect x="14" y="140" width="272" height="50" rx="6" fill="#eef2f6"/><text x="24" y="158" font-size="9" fill="#5f6b78">AKTUELLER WERT</text><text x="24" y="179" font-size="16" font-weight="700" fill="#142033">D1 bis D10</text><rect x="14" y="200" width="272" height="30" rx="6" fill="#fff" stroke="#d6dde5"/><text x="98" y="220" font-size="11" font-weight="700" fill="#142033">Nachweis öffnen</text></g>
+  </g>
+
+  <rect x="1010" y="0" width="430" height="900" fill="#fff" stroke="#d6dde5"/>
+  <text x="1034" y="42" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#5f6b78">NACHWEIS UND RECHENWEG</text>
+  <text x="1034" y="70" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#142033">Aufkommen der Einkommensteuer</text>
+  <rect x="1034" y="88" width="94" height="22" rx="11" fill="#e1efef"/><text x="1050" y="103" font-family="Arial, sans-serif" font-size="9" font-weight="700" fill="#147d7e">MODELLRECHNUNG</text>
+  <text x="1034" y="146" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#5f6b78">ANGEZEIGTER SZENARIOWERT</text>
+  <text x="1034" y="178" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#142033">339,8 Mrd. €</text>
+  <text x="1034" y="224" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#142033">Berechnung</text>
+  <rect x="1034" y="238" width="376" height="54" rx="6" fill="#142033"/>
+  <text x="1048" y="260" font-family="monospace" font-size="10" fill="#eef5f8">Aufkommen = Baseline + Tarifeffekte</text>
+  <text x="1048" y="278" font-family="monospace" font-size="10" fill="#eef5f8">× Modellstufenfaktor</text>
+  <text x="1034" y="326" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#142033">Verwendete Parameter</text>
+  <g font-family="Arial, sans-serif" font-size="10"><text x="1034" y="350" fill="#5f6b78">Grundfreibetrag</text><text x="1200" y="350" font-weight="700" fill="#142033">13.500 €</text><line x1="1034" y1="360" x2="1410" y2="360" stroke="#d6dde5"/><text x="1034" y="382" fill="#5f6b78">Modellstufenfaktor</text><text x="1200" y="382" font-weight="700" fill="#142033">0,85</text></g>
+  <text x="1034" y="426" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#142033">Unsicherheit</text>
+  <rect x="1034" y="442" width="376" height="72" rx="6" fill="#f8ecd8" stroke="#d6dde5"/>
+  <text x="1050" y="468" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#b36b00">−25 %                    +25 %</text>
+  <line x1="1050" y1="483" x2="1392" y2="483" stroke="#b36b00" stroke-width="6" stroke-linecap="round"/>
+  <text x="1034" y="558" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#142033">Originalquellen</text>
+  <rect x="1034" y="574" width="376" height="72" rx="6" fill="#fff" stroke="#d6dde5"/>
+  <text x="1048" y="598" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#142033">Datensammlung zur Steuerpolitik</text>
+  <text x="1048" y="617" font-family="Arial, sans-serif" font-size="9" fill="#5f6b78">Bundesministerium der Finanzen · 2025</text>
+  <text x="1034" y="690" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#142033">Änderungsverlauf</text>
+  <line x1="1040" y1="710" x2="1040" y2="790" stroke="#147d7e" stroke-width="3"/>
+  <text x="1054" y="728" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#142033">0.3.0 · 13.07.2026</text>
+  <text x="1054" y="748" font-family="Arial, sans-serif" font-size="10" fill="#5f6b78">Transparenzregister und versionierter</text>
+  <text x="1054" y="764" font-family="Arial, sans-serif" font-size="10" fill="#5f6b78">Rechenweg ergänzt.</text>
+</svg>

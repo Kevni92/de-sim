@@ -1,7 +1,15 @@
-import type { ActiveScenarioDraft, LocalRequest, LocalResponse, ScenarioState, SourceRecord } from "./types";
+import type {
+  ActiveScenarioDraft,
+  LocalRequest,
+  LocalResponse,
+  MetricRecord,
+  ScenarioState,
+  SourceRecord,
+} from "./types";
 
 type LocalRequestInput =
   | { type: "sources:list" }
+  | { type: "metrics:list" }
   | { type: "scenarios:list" }
   | { type: "scenarios:save"; payload: ScenarioState }
   | { type: "scenarios:delete"; payload: { scenarioId: string } }
@@ -36,6 +44,10 @@ class LocalServerClient {
 
   listSources() {
     return this.call<SourceRecord[]>({ type: "sources:list" });
+  }
+
+  listMetrics() {
+    return this.call<MetricRecord[]>({ type: "metrics:list" });
   }
 
   listScenarios() {
