@@ -16,7 +16,8 @@ import type {
   SourceRecord,
 } from "./types";
 
-type LocalRequestInput = Omit<LocalRequest, "id">;
+type WithoutId<T> = T extends unknown ? Omit<T, "id"> : never;
+type LocalRequestInput = WithoutId<LocalRequest>;
 
 class WorkerRpcClient {
   private pending = new Map<string, { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }>();
