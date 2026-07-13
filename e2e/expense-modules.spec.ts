@@ -1,4 +1,13 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
+
+async function openSourceDrawer(button: Locator, dialog: Locator) {
+  await expect(button).toBeVisible();
+  await expect.poll(async () => {
+    if (await dialog.isVisible()) return true;
+    await button.click();
+    return dialog.isVisible();
+  }, { timeout: 10_000, intervals: [200, 400, 800] }).toBe(true);
+}
 
 test("öffnet Bürgergeld aus dem Dashboard und berechnet Änderungen live", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
@@ -29,9 +38,8 @@ test("hält Migration und Asyl in getrennten Teilaggregaten", async ({ page, isM
 test("lädt Ausgabennachweise aus dem lokalen Worker", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/ausgaben");
-  await page.getByRole("button", { name: "Berechnung und Quellen" }).click();
   const dialog = page.getByRole("dialog", { name: "Nachweis: Ausgaben für Bürgergeld und Unterkunft" });
-  await expect(dialog).toBeVisible();
+  await openSourceDrawer(page.getByRole("button", { name: "Berechnung und Quellen" }), dialog);
   await expect(dialog.getByRole("heading", { name: "Verwendete Parameter" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
   await expect(dialog.getByText("Regelbedarfe im Bürgergeld und in der Sozialhilfe 2026")).toBeVisible();

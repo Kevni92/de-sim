@@ -1,5 +1,6 @@
 import { Copy, CopyPlus, Download, FilePlus2, Upload, X } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { localServer } from "../lib/local-server-client";
 import type { ModelLevel, ScenarioDraft, TimeHorizon } from "../lib/types";
 
 export function ScenarioPanel({
@@ -28,26 +29,29 @@ export function ScenarioPanel({
   onCopy: () => void;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const closeAndPersist = () => {
+    void localServer.saveActiveDraft({ activeScenarioId, scenario }).finally(onClose);
+  };
 
   useEffect(() => {
     if (!open) return;
-    const listener = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    const listener = (event: KeyboardEvent) => event.key === "Escape" && closeAndPersist();
     document.addEventListener("keydown", listener);
     return () => document.removeEventListener("keydown", listener);
-  }, [open, onClose]);
+  }, [open, activeScenarioId, scenario]);
 
   if (!open) return null;
 
   return (
     <div className="drawer-layer" role="dialog" aria-modal="true" aria-label="Szenario verwalten">
-      <button className="drawer-backdrop" onClick={onClose} aria-label="Szenarioverwaltung schließen" />
+      <button className="drawer-backdrop" onClick={closeAndPersist} aria-label="Szenarioverwaltung schließen" />
       <aside className="scenario-drawer">
         <header>
           <div>
             <span className="eyebrow">Zentrales Szenariomodell</span>
             <h2>Szenario verwalten</h2>
           </div>
-          <button className="icon-button" onClick={onClose} aria-label="Schließen"><X size={15} /></button>
+          <button className="icon-button" onClick={closeAndPersist} aria-label="Schließen"><X size={15} /></button>
         </header>
 
         <div className="scenario-scroll">

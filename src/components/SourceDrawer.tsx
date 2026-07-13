@@ -22,6 +22,21 @@ export function SourceDrawer({
     return () => document.removeEventListener("keydown", listener);
   }, [metric, onClose]);
 
+  useEffect(() => {
+    if (!metric) return;
+    const scrollY = window.scrollY;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      window.scrollTo({ left: 0, top: scrollY, behavior: "auto" });
+    };
+  }, [metric?.id]);
+
   if (!metric) return null;
 
   const linkedSources = metric.sourceIds
