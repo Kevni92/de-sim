@@ -1,15 +1,3 @@
-import type { IncomeTaxSettings, ModelLevel } from "./types";
-
-export const baselineIncomeTax: IncomeTaxSettings = {
-  allowance: 11_784,
-  entryRate: 14,
-  topRate: 42,
-  topThreshold: 66_761,
-  richRate: 45,
-  childAllowance: 6_384,
-  spouseSplitting: true,
-};
-
 export const revenueItems = [
   { id: "est", label: "Einkommensteuer", statusQuo: 358.2, icon: "wallet", confidence: "mittel" as const, interactive: true },
   { id: "ust", label: "Umsatzsteuer", statusQuo: 291.4, icon: "shopping", confidence: "hoch" as const },
@@ -45,41 +33,6 @@ export const expenseItems = [
   { id: "eu", label: "EU-Beitrag", statusQuo: 34.6, icon: "stars", confidence: "hoch" as const },
   { id: "zinsen", label: "Zinsen", statusQuo: 39.2, icon: "badgepercent", confidence: "hoch" as const },
 ];
-
-export const households = [
-  { name: "Single", income: "2.500 € brutto / Monat", delta: 18, reason: "vom höheren Grundfreibetrag profitiert" },
-  { name: "Alleinerziehend", income: "1 Kind · 2.200 € brutto", delta: 31, reason: "Grund- und Kinderfreibetrag kombiniert wirken" },
-  { name: "Paar mit zwei Kindern", income: "5.500 € brutto gemeinsam", delta: 56, reason: "Freibeträge und Splitting berücksichtigt werden" },
-  { name: "Hoheinkommen", income: "12.000 € brutto / Monat", delta: -74, reason: "die höhere Tarifwirkung überwiegt" },
-];
-
-export const deciles = [
-  { d: "D1", statusQuo: 0, reform: 4 },
-  { d: "D2", statusQuo: 3, reform: 12 },
-  { d: "D3", statusQuo: 8, reform: 22 },
-  { d: "D4", statusQuo: 11, reform: 34 },
-  { d: "D5", statusQuo: 14, reform: 49 },
-  { d: "D6", statusQuo: 18, reform: 68 },
-  { d: "D7", statusQuo: 22, reform: 91 },
-  { d: "D8", statusQuo: 25, reform: 112 },
-  { d: "D9", statusQuo: 28, reform: 74 },
-  { d: "D10", statusQuo: 31, reform: -38 },
-];
-
-export function estimateIncomeTaxRevenue(settings: IncomeTaxSettings, model: ModelLevel) {
-  const base = 358.2;
-  const dAllowance = (settings.allowance - baselineIncomeTax.allowance) * -0.00035;
-  const dEntry = (settings.entryRate - baselineIncomeTax.entryRate) * 3.1;
-  const dTop = (settings.topRate - baselineIncomeTax.topRate) * 4.2;
-  const dThreshold = (settings.topThreshold - baselineIncomeTax.topThreshold) * -0.00028;
-  const dRich = (settings.richRate - baselineIncomeTax.richRate) * 0.9;
-  const dSplitting = settings.spouseSplitting ? 0 : 18.6;
-  const dChild = (settings.childAllowance - baselineIncomeTax.childAllowance) * -0.00021;
-  let delta = dAllowance + dEntry + dTop + dThreshold + dRich + dSplitting + dChild;
-  if (model === "verhalten") delta *= 0.9;
-  if (model === "langfrist") delta *= 0.75;
-  return { value: base + delta, delta };
-}
 
 export function fmtBn(value: number) {
   return `${value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mrd. €`;
