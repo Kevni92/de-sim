@@ -1,8 +1,9 @@
-/// <reference lib="webworker" />
-
 import type { LocalRequest, LocalResponse, ScenarioState, SourceRecord } from "../lib/types";
 
-declare const self: DedicatedWorkerGlobalScope;
+const workerScope = globalThis as unknown as {
+  addEventListener(type: "message", listener: (event: MessageEvent<LocalRequest>) => void): void;
+  postMessage(message: LocalResponse): void;
+};
 
 const DB_NAME = "de-sim-local-server";
 const DB_VERSION = 1;
@@ -105,6 +106,6 @@ async function handle(request: LocalRequest): Promise<LocalResponse> {
   }
 }
 
-self.addEventListener("message", async (event: MessageEvent<LocalRequest>) => {
-  self.postMessage(await handle(event.data));
+workerScope.addEventListener("message", async (event) => {
+  workerScope.postMessage(await handle(event.data));
 });
