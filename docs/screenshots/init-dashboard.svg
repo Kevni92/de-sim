@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <rect width="1440" height="900" fill="#f4f7fa"/>
+  <rect width="1440" height="64" fill="#fff" stroke="#d6dde5"/>
+  <rect x="24" y="17" width="30" height="30" rx="6" fill="#147d7e"/>
+  <text x="64" y="31" font-family="Arial" font-size="15" font-weight="700" fill="#142033">Deutschland-Simulator</text>
+  <text x="64" y="47" font-family="Arial" font-size="10" fill="#5f6b78">Rechtsstand 2026 · Datenstand 2025 · DEMO</text>
+  <rect x="316" y="16" width="114" height="32" rx="6" fill="#e1efef"/><text x="351" y="36" font-family="Arial" font-size="13" font-weight="700" fill="#147d7e">Dashboard</text>
+  <rect x="1130" y="15" width="160" height="34" rx="6" fill="#fff" stroke="#d6dde5"/><text x="1144" y="36" font-family="Arial" font-size="13" fill="#142033">Reformentwurf A</text>
+  <rect x="1300" y="15" width="116" height="34" rx="6" fill="#fff" stroke="#d6dde5"/><text x="1325" y="36" font-family="Arial" font-size="13" fill="#142033">Speichern</text>
+  <g font-family="Arial">
+    <rect x="24" y="76" width="330" height="88" rx="8" fill="#fff" stroke="#d6dde5"/><text x="40" y="100" font-size="10" font-weight="700" fill="#5f6b78">EINNAHMEN</text><text x="40" y="130" font-size="22" font-weight="700" fill="#142033">1.430,0 Mrd. €</text><text x="40" y="149" font-size="12" font-weight="700" fill="#a33b3b">−18,4 Mrd. €</text>
+    <rect x="364" y="76" width="330" height="88" rx="8" fill="#fff" stroke="#d6dde5"/><text x="380" y="100" font-size="10" font-weight="700" fill="#5f6b78">AUSGABEN</text><text x="380" y="130" font-size="22" font-weight="700" fill="#142033">482,3 Mrd. €</text>
+    <rect x="704" y="76" width="330" height="88" rx="8" fill="#fff" stroke="#d6dde5"/><text x="720" y="100" font-size="10" font-weight="700" fill="#5f6b78">SALDO</text><text x="720" y="130" font-size="22" font-weight="700" fill="#142033">947,7 Mrd. €</text><text x="720" y="149" font-size="12" font-weight="700" fill="#a33b3b">−18,4 Mrd. €</text>
+    <rect x="1044" y="76" width="372" height="88" rx="8" fill="#fff" stroke="#d6dde5"/><text x="1060" y="100" font-size="10" font-weight="700" fill="#5f6b78">SCHULDENSTAND</text><text x="1060" y="130" font-size="22" font-weight="700" fill="#142033">2.634,0 Mrd. €</text>
+  </g>
+  <rect x="24" y="180" width="286" height="690" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <rect x="324" y="180" width="756" height="555" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <rect x="1094" y="180" width="322" height="690" rx="8" fill="#fff" stroke="#d6dde5"/>
+  <g font-family="Arial" fill="#142033"><text x="40" y="208" font-size="10" font-weight="700" fill="#5f6b78">STAATSEINNAHMEN</text><text x="40" y="233" font-size="18" font-weight="700">Einnahmen</text><text x="1110" y="208" font-size="10" font-weight="700" fill="#5f6b78">STAATSAUSGABEN</text><text x="1110" y="233" font-size="18" font-weight="700">Ausgaben</text></g>
+  <g font-family="Arial" font-size="12" fill="#142033">
+    <text x="76" y="282" font-weight="700">Einkommensteuer</text><text x="76" y="300" font-size="10" fill="#5f6b78">339,8 Mrd. €</text><text x="262" y="282" fill="#a33b3b">−18,4</text>
+    <text x="76" y="340" font-weight="700">Umsatzsteuer</text><text x="76" y="358" font-size="10" fill="#5f6b78">291,4 Mrd. €</text>
+    <text x="76" y="398" font-weight="700">Sozialbeiträge</text><text x="76" y="416" font-size="10" fill="#5f6b78">620,0 Mrd. €</text>
+    <text x="1146" y="282" font-weight="700">Rente</text><text x="1146" y="300" font-size="10" fill="#5f6b78">128,4 Mrd. €</text>
+    <text x="1146" y="340" font-weight="700">Gesundheit</text><text x="1146" y="358" font-size="10" fill="#5f6b78">92,1 Mrd. €</text>
+    <text x="1146" y="398" font-weight="700">Familie und Kitas</text><text x="1146" y="416" font-size="10" fill="#5f6b78">63,7 Mrd. €</text>
+  </g>
+  <rect x="340" y="190" width="120" height="28" rx="6" fill="#e1efef"/><text x="376" y="208" font-family="Arial" font-size="12" font-weight="700" fill="#147d7e">Budget</text>
+  <text x="340" y="252" font-family="Arial" font-size="20" font-weight="700" fill="#142033">Wirkung des Reformentwurfs</text><text x="340" y="274" font-family="Arial" font-size="11" fill="#5f6b78">Status quo und Szenario werden getrennt dargestellt.</text>
+  <rect x="340" y="294" width="505" height="230" fill="#fff" stroke="#d6dde5"/><rect x="384" y="388" width="100" height="136" fill="#34495e"/><rect x="542" y="351" width="100" height="173" fill="#a33b3b"/><rect x="700" y="338" width="100" height="186" fill="#34495e"/>
+  <rect x="862" y="294" width="194" height="230" rx="6" fill="#eef2f6" stroke="#d6dde5"/><text x="878" y="322" font-family="Arial" font-size="10" font-weight="700" fill="#5f6b78">KLARTEXT</text><text x="878" y="350" font-family="Arial" font-size="12" fill="#394657"><tspan x="878">Der Staat nimmt</tspan><tspan x="878" dy="20" font-weight="700">18,4 Milliarden Euro</tspan><tspan x="878" dy="20" font-weight="700">weniger pro Jahr</tspan><tspan x="878" dy="20">ein.</tspan></text>
+  <text x="340" y="558" font-family="Arial" font-size="13" font-weight="700" fill="#142033">Verteilung nach Einkommensgruppen</text>
+  <g fill="#18704d"><rect x="370" y="580" width="150" height="10"/><rect x="370" y="602" width="260" height="10"/><rect x="370" y="624" width="380" height="10"/><rect x="370" y="646" width="510" height="10"/><rect x="370" y="668" width="640" height="10"/></g>
+  <rect x="324" y="750" width="756" height="120" rx="8" fill="#fff" stroke="#d6dde5"/><text x="340" y="776" font-family="Arial" font-size="10" font-weight="700" fill="#5f6b78">LOKALER WORKER · INDEXEDDB</text><text x="340" y="802" font-family="Arial" font-size="18" font-weight="700" fill="#142033">Gespeicherte Szenarien</text><text x="340" y="846" font-family="Arial" font-size="12" font-weight="700" fill="#142033">Reformentwurf A</text>
+</svg>
