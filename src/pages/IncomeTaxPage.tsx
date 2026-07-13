@@ -9,12 +9,13 @@ import {
 } from "../lib/income-tax";
 import { revenueModuleDefinitions, type RevenueModuleId, type RevenueModuleResult } from "../lib/revenue-modules";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
-import type { IncomeTaxSettings, ModelLevel } from "../lib/types";
+import type { IncomeTaxSettings, ModelLevel, PopulationRun } from "../lib/types";
 
 export function IncomeTaxPage({
   settings,
   modelLevel,
   result,
+  populationRun,
   revenueResults,
   onSettings,
   onModelLevel,
@@ -25,6 +26,7 @@ export function IncomeTaxPage({
   settings: IncomeTaxSettings;
   modelLevel: ModelLevel;
   result: IncomeTaxResult;
+  populationRun: PopulationRun | null;
   revenueResults: RevenueModuleResult[];
   onSettings: (next: IncomeTaxSettings) => void;
   onModelLevel: (level: ModelLevel) => void;
@@ -37,11 +39,17 @@ export function IncomeTaxPage({
   return (
     <main className="content-width revenue-modules-page income-tax-page">
       <ModulePageHeader
-        eyebrow="Milestone 4 · Einkommensteuer"
+        eyebrow="Milestone 7 · Einkommensteuer auf synthetischer Bevölkerung"
         title="Steuern und Sozialbeiträge"
-        description="Acht getrennte Module mit einheitlichem Aufbau für Baseline, Szenario, Erstwirkung, Modellstufe und Nachweise."
+        description="Gesetzlicher Tarifkern und gewichtete Verteilungsrechnung nutzen denselben aktiven, vollständig synthetischen Bevölkerungslauf."
         onBack={onBack}
       />
+
+      <section className="card-flat income-tax-population-banner" aria-label="Verwendeter Bevölkerungslauf">
+        <div><span>Verwendete Datenbasis</span><strong>{populationRun?.metadata.id ?? "Fallback-Referenzpopulation"}</strong><small>{populationRun ? `${populationRun.metadata.sampleSize.toLocaleString("de-DE")} synthetische Personen · ${formatNumber(populationRun.metadata.weightedPopulation / 1_000_000)} Mio. gewichtet · Datenstand ${populationRun.metadata.dataYear}` : "Der referenzierte lokale Lauf ist nicht verfügbar."}</small></div>
+        <div><span>Kalibrierung</span><strong className={populationRun?.metadata.quality.status === "warnung" ? "negative" : "positive"}>{populationRun?.metadata.quality.status === "warnung" ? "Warnung" : populationRun ? "innerhalb Toleranz" : "nicht verfügbar"}</strong><small>{populationRun?.metadata.modelVersion ?? "Fallback"}</small></div>
+        <button className="button secondary small" onClick={() => onOpenSource("source-population-model", populationRun?.metadata.id ?? "Fallback")}><Info size={13} /> Bevölkerung nachweisen</button>
+      </section>
 
       <section className="revenue-module-layout">
         <aside className="card-flat revenue-module-list" aria-label="Einnahmemodule">
@@ -69,7 +77,7 @@ export function IncomeTaxPage({
               badge="Gesetzliche Baseline 2026"
               badgeTone="hoch"
               title="Einkommensteuer"
-              description="Gesetzlichen Tarif 2026 mit einem transparenten Reformszenario vergleichen. Die tarifliche Steuer wird auf Basis des zu versteuernden Einkommens berechnet."
+              description="Gesetzlichen Tarif 2026 mit einem transparenten Reformszenario vergleichen. Tarifberechnung und Bevölkerungsaggregation bleiben getrennte, versionierte Komponenten."
               onOpenSource={() => onOpenSource("metric-income-tax-revenue", fmtBn(result.value))}
               onReset={() => onSettings({ ...statutoryIncomeTax2026 })}
             />
@@ -93,7 +101,7 @@ export function IncomeTaxPage({
                 <NumberSlider label="Kinderfreibetrag" value={settings.childAllowance} baseline={statutoryIncomeTax2026.childAllowance} min={0} max={15_000} step={100} unit="€ / Kind" onChange={(value) => update("childAllowance", value)} />
                 <div className="revenue-parameter income-tax-switch-parameter"><span><strong>Ehegattensplitting</strong><small>Baseline 2026: aktiviert</small></span><button role="switch" aria-label="Ehegattensplitting" aria-checked={settings.spouseSplitting} className={`switch ${settings.spouseSplitting ? "active" : ""}`} onClick={() => update("spouseSplitting", !settings.spouseSplitting)}><span /></button></div>
               </div>
-              <p className="parameter-note">Kinderfreibetrag und Splitting werden in den Referenzhaushalten vereinfacht abgebildet. Die Günstigerprüfung mit Kindergeld ist noch nicht Bestandteil dieses Moduls.</p>
+              <p className="parameter-note">Kinderfreibetrag und Splitting werden in den synthetischen Haushalten vereinfacht abgebildet. Die Günstigerprüfung mit Kindergeld ist noch nicht Bestandteil dieses Moduls.</p>
             </article>
 
             <aside className="revenue-side-stack">
@@ -120,12 +128,12 @@ export function IncomeTaxPage({
           </section>
 
           <section className="card-flat income-tax-impact-card">
-            <div className="section-title"><div><h3>Verteilungswirkung</h3><p>Gewichtete Ergebnisse der kalibrierten Referenzpopulation.</p></div></div>
+            <div className="section-title"><div><h3>Verteilungswirkung</h3><p>Gewichtete Ergebnisse des aktiven synthetischen Bevölkerungslaufs.</p></div></div>
             <div className="revenue-kpi-grid">
-              <ModuleMetric label="Gewinner" value={`${formatNumber(result.winnersM)} Mio.`} note="Steuerfälle" tone="positive" onSource={() => onOpenSource("metric-income-tax-distribution", `${formatNumber(result.winnersM)} Mio.`)} />
-              <ModuleMetric label="Verlierer" value={`${formatNumber(result.losersM)} Mio.`} note="Steuerfälle" tone="negative" onSource={() => onOpenSource("metric-income-tax-distribution", `${formatNumber(result.losersM)} Mio.`)} />
+              <ModuleMetric label="Gewinner" value={`${formatNumber(result.winnersM)} Mio.`} note="gewichtete Haushalte" tone="positive" onSource={() => onOpenSource("metric-income-tax-distribution", `${formatNumber(result.winnersM)} Mio.`)} />
+              <ModuleMetric label="Verlierer" value={`${formatNumber(result.losersM)} Mio.`} note="gewichtete Haushalte" tone="negative" onSource={() => onOpenSource("metric-income-tax-distribution", `${formatNumber(result.losersM)} Mio.`)} />
               <ModuleMetric label="Median-Wirkung" value={formatSignedEuro(result.medianMonthlyChange, " / Monat")} note="gewichteter Median" tone={result.medianMonthlyChange >= 0 ? "positive" : "negative"} onSource={() => onOpenSource("metric-household-examples", formatSignedEuro(result.medianMonthlyChange, " / Monat"))} />
-              <ModuleMetric label="Kalibrierte Steuerfälle" value={`${formatNumber(result.taxUnitsM)} Mio.`} note="Referenzpopulation" />
+              <ModuleMetric label="Betroffene Steuerfälle" value={`${formatNumber(result.taxUnitsM)} Mio.`} note="synthetisch gewichtet" />
             </div>
           </section>
 
@@ -143,7 +151,7 @@ export function IncomeTaxPage({
           </section>
 
           <section className="card-flat chart-card">
-            <header><div><h2>Referenzhaushalte</h2><p>Direkter Vergleich aus gesetzlichem Tarif und Reformszenario</p></div><button className="source-badge" onClick={() => onOpenSource("metric-household-examples", formatSignedEuro(result.medianMonthlyChange, " / Monat"))}><Info size={10} /> Nachweis</button></header>
+            <header><div><h2>Referenzhaushalte</h2><p>Direkter Tarifvergleich für verständliche Beispiele; nicht die aktiven synthetischen Einzelfälle.</p></div><button className="source-badge" onClick={() => onOpenSource("metric-household-examples", formatSignedEuro(result.medianMonthlyChange, " / Monat"))}><Info size={10} /> Nachweis</button></header>
             <div className="household-grid compact">{result.households.map((household) => <article className="household-card" key={household.id}><div><strong>{household.name}</strong><small>{household.description}</small></div><em className={household.monthlyChange >= 0 ? "positive" : "negative"}>{formatSignedEuro(household.monthlyChange, " / Monat")}</em><p>Baseline: {formatEuro(household.baselineTax)} · Reform: {formatEuro(household.reformTax)} pro Jahr.</p><span>{household.joint ? "Zusammenveranlagung" : "Einzelveranlagung"}</span></article>)}</div>
           </section>
         </div>
@@ -204,27 +212,12 @@ function modelLabel(level: ModelLevel) {
   if (level === "verhalten") return "mit Verhalten";
   return "langfristig";
 }
-
 function modelDescription(level: ModelLevel) {
   if (level === "statisch") return "gesetzlicher Tarifvergleich ohne Reaktion";
   if (level === "verhalten") return "moderate Reaktion des zu versteuernden Einkommens";
   return "stärkere mittelfristige Anpassung";
 }
-
-function formatNumber(value: number) {
-  return value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-}
-
-function formatEuro(value: number) {
-  return `${Math.round(value).toLocaleString("de-DE")} €`;
-}
-
-function formatSignedEuro(value: number, suffix = "") {
-  const sign = value > 0 ? "+" : value < 0 ? "−" : "±";
-  return `${sign}${Math.abs(Math.round(value)).toLocaleString("de-DE")} €${suffix}`;
-}
-
-function formatRate(tax: number, income: number) {
-  if (income <= 0) return "0,0 %";
-  return `${(tax / income * 100).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
-}
+function formatNumber(value: number) { return value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+function formatEuro(value: number) { return `${Math.round(value).toLocaleString("de-DE")} €`; }
+function formatSignedEuro(value: number, suffix = "") { const sign = value > 0 ? "+" : value < 0 ? "−" : "±"; return `${sign}${Math.abs(Math.round(value)).toLocaleString("de-DE")} €${suffix}`; }
+function formatRate(tax: number, income: number) { if (income <= 0) return "0,0 %"; return `${(tax / income * 100).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`; }
