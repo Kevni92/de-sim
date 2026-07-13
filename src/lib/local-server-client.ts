@@ -1,10 +1,12 @@
-import type { LocalRequest, LocalResponse, ScenarioState, SourceRecord } from "./types";
+import type { ActiveScenarioDraft, LocalRequest, LocalResponse, ScenarioState, SourceRecord } from "./types";
 
 type LocalRequestInput =
   | { type: "sources:list" }
   | { type: "scenarios:list" }
   | { type: "scenarios:save"; payload: ScenarioState }
-  | { type: "scenarios:delete"; payload: { scenarioId: string } };
+  | { type: "scenarios:delete"; payload: { scenarioId: string } }
+  | { type: "draft:get" }
+  | { type: "draft:save"; payload: ActiveScenarioDraft };
 
 class LocalServerClient {
   private worker: Worker;
@@ -46,6 +48,14 @@ class LocalServerClient {
 
   deleteScenario(scenarioId: string) {
     return this.call<null>({ type: "scenarios:delete", payload: { scenarioId } });
+  }
+
+  getActiveDraft() {
+    return this.call<ActiveScenarioDraft | null>({ type: "draft:get" });
+  }
+
+  saveActiveDraft(draft: ActiveScenarioDraft) {
+    return this.call<ActiveScenarioDraft>({ type: "draft:save", payload: draft });
   }
 }
 
