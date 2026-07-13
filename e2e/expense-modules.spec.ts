@@ -2,11 +2,8 @@ import { expect, test, type Locator } from "@playwright/test";
 
 async function openSourceDrawer(button: Locator, dialog: Locator) {
   await expect(button).toBeVisible();
-  await expect.poll(async () => {
-    if (await dialog.isVisible()) return true;
-    await button.click();
-    return dialog.isVisible();
-  }, { timeout: 10_000, intervals: [200, 400, 800] }).toBe(true);
+  await button.click();
+  await expect(dialog).toBeVisible({ timeout: 30_000 });
 }
 
 test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter live", async ({ page, isMobile }) => {
@@ -36,7 +33,7 @@ test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter liv
   await page.getByRole("button", { name: "Experte" }).click();
   await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("591.15");
   await expect(page.getByText("Betroffene BG")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText("Leistungsbestandteile")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Leistungsbestandteile" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Nettofinanzierung" })).toBeVisible();
   await page.screenshot({ path: "test-results/sgb2-expense-ui.png", fullPage: true });
 });
