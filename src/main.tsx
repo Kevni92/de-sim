@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import "./styles.css";
 import "./dashboard-disabled.css";
+import "./evidence-tooltips.css";
 import "./milestone2.css";
 import "./transparency.css";
 import "./income-tax.css";
