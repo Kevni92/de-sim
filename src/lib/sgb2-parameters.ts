@@ -70,6 +70,10 @@ export const sgb2Parameters: Sgb2Parameter[] = [
     notes: "Karenzzeit wird nur angewendet, wenn ein Leistungsbeginn als Laufzeitfakt vorliegt; Heizkosten bleiben getrennt geprüft.",
     constraints: { min: 0, max: 36, integer: true },
   }),
+  numericParameter("sgb2.housing.grace-cap-factor", 1.5, "anteil", SGB2_SOURCE_IDS.law, {
+    notes: "Ab Juli 2026 werden Unterkunftskosten auch während der Karenzzeit höchstens bis zum Eineinhalbfachen der abstrakten örtlichen Angemessenheitsgrenze anerkannt.",
+    constraints: { min: 1, max: 3 },
+  }),
   numericParameter("sgb2.housing.cost-reduction-transition-months", 6, "monate", SGB2_SOURCE_IDS.law, {
     notes: "Modellparameter für einen ausdrücklich gestarteten Kostensenkungszeitraum.",
     constraints: { min: 0, max: 24, integer: true },
