@@ -37,7 +37,7 @@ test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter liv
   await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("591.15");
   await expect(page.getByText("Betroffene BG")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("Leistungsbestandteile")).toBeVisible();
-  await expect(page.getByText("Nettofinanzierung")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nettofinanzierung" })).toBeVisible();
   await page.screenshot({ path: "test-results/sgb2-expense-ui.png", fullPage: true });
 });
 
