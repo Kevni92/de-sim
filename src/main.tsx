@@ -4,6 +4,7 @@ import { App } from "./App";
 import "./styles.css";
 import "./milestone2.css";
 import "./transparency.css";
+import "./income-tax.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
