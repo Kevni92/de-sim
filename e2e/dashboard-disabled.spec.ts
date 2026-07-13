@@ -7,11 +7,20 @@ test("kennzeichnet nicht implementierte Einnahmen und Ausgaben als deaktiviert",
     await page.getByRole("tab", { name: "Steuern" }).click();
   }
 
-  const revenuePanel = page.getByRole("complementary", { name: "Einnahmen" });
+  let revenuePanel = page.getByRole("complementary", { name: "Einnahmen" });
+  await revenuePanel.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
+  await page.getByLabel("Regelsteuersatz Wert").fill("20");
+  await page.getByRole("button", { name: "Zurück zum Dashboard" }).click();
+
+  if (isMobile) {
+    await page.getByRole("tab", { name: "Steuern" }).click();
+  }
+
+  revenuePanel = page.getByRole("complementary", { name: "Einnahmen" });
   const tradeTaxRow = revenuePanel.locator("li").filter({ hasText: "Gewerbesteuer" });
   const tradeTaxButton = tradeTaxRow.locator(".line-row-main");
   const wealthTaxRow = revenuePanel.locator("li").filter({ hasText: "Vermögensteuer" });
-  const corporateTaxRow = revenuePanel.locator("li").filter({ hasText: "Körperschaftsteuer" });
+  const changedTaxRow = revenuePanel.locator("li").filter({ hasText: "Umsatzsteuer" });
 
   await expect(tradeTaxButton).toBeDisabled();
   expect(await tradeTaxRow.evaluate((element) => getComputedStyle(element).backgroundImage)).toContain("repeating-linear-gradient");
@@ -28,8 +37,8 @@ test("kennzeichnet nicht implementierte Einnahmen und Ausgaben als deaktiviert",
   await expect(wealthTaxRow.locator(".line-row-main")).toBeEnabled();
   await expect(wealthTaxRow).toHaveCSS("background-image", "none");
 
-  await expect(corporateTaxRow).toHaveClass(/changed/);
-  const changedBackground = await corporateTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await expect(changedTaxRow).toHaveClass(/changed/);
+  const changedBackground = await changedTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
   const neutralBackground = await wealthTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
   expect(changedBackground).toBe(neutralBackground);
 
