@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-test("führt vom Onboarding in das vollständige Dashboard", async ({ page }) => {
+test("führt vom Onboarding in das vollständige Desktop-Dashboard", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./");
   await expect(page.getByRole("heading", { name: "Ein neutraler Blick auf den deutschen Staatshaushalt." })).toBeVisible();
   await page.getByRole("button", { name: "Simulation starten" }).click();
@@ -10,7 +11,8 @@ test("führt vom Onboarding in das vollständige Dashboard", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Wasserfall Budgetsaldo" }).first()).toBeVisible();
 });
 
-test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ page }) => {
+test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/dashboard");
   await page.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
   await expect(page).toHaveURL(/#\/einkommensteuer$/);
@@ -22,7 +24,8 @@ test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ pag
   await expect(page.getByText("Du hast ungefähr").first()).toBeVisible();
 });
 
-test("zeigt Quellen und Methodik in einem Drawer", async ({ page }) => {
+test("zeigt Quellen und Methodik in einem Drawer", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/dashboard");
   await page.getByRole("button", { name: "Quelle" }).first().click();
   const dialog = page.getByRole("dialog");
@@ -32,7 +35,8 @@ test("zeigt Quellen und Methodik in einem Drawer", async ({ page }) => {
   await expect(dialog.getByText("Bekannte Grenzen")).toBeVisible();
 });
 
-test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ page }) => {
+test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Die kompakte App-Bar zeigt Speichern erst in einem späteren Mobilfluss");
   const name = `Milestone 1 ${Date.now()}`;
   await page.goto("./#/dashboard");
   await page.getByLabel("Szenarioname").fill(name);
@@ -43,7 +47,8 @@ test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ pag
   await expect(savedRow.getByRole("button").first()).toBeVisible();
 });
 
-test("öffnet den neutralen Szenariovergleich", async ({ page }) => {
+test("öffnet den neutralen Szenariovergleich", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
   await page.goto("./#/dashboard");
   await page.getByRole("button", { name: "Vergleich öffnen" }).click();
   await expect(page).toHaveURL(/#\/vergleich$/);
@@ -51,11 +56,18 @@ test("öffnet den neutralen Szenariovergleich", async ({ page }) => {
   await expect(page.getByText("Zentrale Politikeinstellungen")).toBeVisible();
 });
 
-test("bietet auf Mobilgeräten die vier Dashboard-Tabs", async ({ page, isMobile }) => {
-  test.skip(!isMobile, "nur im mobilen Projekt relevant");
+test("bietet mobil Tabs, Quellen und die Einkommensteuer-Detailseite", async ({ page, isMobile }) => {
+  test.skip(!isMobile, "Mobiler Nutzerfluss");
   await page.goto("./#/dashboard");
   const tablist = page.getByRole("tablist", { name: "Dashboardbereiche" });
   await expect(tablist).toBeVisible();
+
   await tablist.getByRole("tab", { name: "Steuern" }).click();
   await expect(page.getByRole("heading", { name: "Einnahmen" }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
+  await expect(page).toHaveURL(/#\/einkommensteuer$/);
+  await expect(page.getByRole("heading", { name: "Einkommensteuer", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Annahmen und Quellen" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
 });
