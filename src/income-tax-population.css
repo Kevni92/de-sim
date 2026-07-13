@@ -1,0 +1,16 @@
+.income-tax-population-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(180px, .7fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--primary);
+}
+.income-tax-population-banner > div { display: grid; gap: 3px; min-width: 0; }
+.income-tax-population-banner span,
+.income-tax-population-banner small { color: var(--text-muted); font-size: 11px; }
+.income-tax-population-banner strong { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .income-tax-population-banner { grid-template-columns: 1fr; }
+  .income-tax-population-banner .button { width: 100%; justify-content: center; }
+}
