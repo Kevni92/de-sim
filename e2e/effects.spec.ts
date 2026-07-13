@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("Wirkungs-Engine trennt Zeitpfad, Unsicherheit und unberechnete Bereiche", async ({ page }, testInfo) => {
-  await page.goto("#/wirkungen");
+  await page.goto("./#/wirkungen");
   await expect(page.getByRole("heading", { name: "Indirekte und langfristige Wirkungen" })).toBeVisible();
   await expect(page.getByText("Keine sichere Prognose.")).toBeVisible();
   await expect(page.getByText("Kita-Verfügbarkeit und Betreuung", { exact: true }).first()).toBeVisible();
