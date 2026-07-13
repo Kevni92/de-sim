@@ -11,8 +11,11 @@
 
   .app-bar .mobile-nav-layer {
     display: block !important;
-    position: fixed;
-    inset: 64px 0 0;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    height: calc(100dvh - 64px);
     z-index: 80;
   }
 
@@ -134,7 +137,7 @@
 
 @media (max-width: 720px) {
   .app-bar .mobile-nav-layer {
-    inset: 60px 0 0;
+    height: calc(100dvh - 60px);
   }
 }
 
