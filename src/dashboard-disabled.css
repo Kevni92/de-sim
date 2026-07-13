@@ -1,0 +1,27 @@
+.line-panel li.uncertain {
+  background-image: none;
+}
+
+.line-panel li:has(.line-row-main:disabled) {
+  --disabled-line-foreground: color-mix(in srgb, var(--muted-foreground) 64%, white);
+  background-image: repeating-linear-gradient(45deg, transparent 0 4px, rgba(179,107,0,.06) 4px 5px);
+}
+
+.line-panel li:has(.line-row-main:disabled) .line-row-main,
+.line-panel li:has(.line-row-main:disabled) .line-copy small,
+.line-panel li:has(.line-row-main:disabled) .line-copy small b {
+  color: var(--disabled-line-foreground);
+}
+
+.line-panel li:has(.line-row-main:disabled) .line-side em {
+  color: var(--disabled-line-foreground) !important;
+}
+
+.line-panel li:has(.line-row-main:disabled) .category-icon,
+.line-panel li:has(.line-row-main:disabled) .confidence {
+  opacity: .58;
+}
+
+.line-panel .line-row-main:disabled:hover {
+  background: transparent;
+}
