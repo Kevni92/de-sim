@@ -44,6 +44,7 @@ test("kennzeichnet Dashboardzustände eindeutig", async ({ page, isMobile }) => 
 
   if (!isMobile) {
     await wealthTaxRow.locator(".plain-icon").hover();
+    await page.waitForTimeout(200);
     const hoverBackground = await wealthTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
     const buttonBackground = await wealthTaxRow.locator(".line-row-main").evaluate((element) => getComputedStyle(element).backgroundColor);
     expect(hoverBackground).not.toBe(neutralBackground);
@@ -51,11 +52,13 @@ test("kennzeichnet Dashboardzustände eindeutig", async ({ page, isMobile }) => 
     expect(buttonBackground).toBe("rgba(0, 0, 0, 0)");
 
     await changedTaxRow.locator(".line-row-main").hover();
+    await page.waitForTimeout(200);
     const changedHoverBackground = await changedTaxRow.evaluate((element) => getComputedStyle(element).backgroundColor);
     expect(changedHoverBackground).not.toBe(changedBackground);
     expect(changedHoverBackground).not.toBe(hoverBackground);
 
     await wealthTaxRow.locator(".plain-icon").hover();
+    await page.waitForTimeout(200);
   }
 
   if (isMobile) {
