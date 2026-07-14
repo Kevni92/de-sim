@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppBar, type AppRoute } from "./components/AppBar";
 import { ScenarioPanel } from "./components/ScenarioPanel";
+import { calculateExpenseModules } from "./lib/expense-modules";
 import { localServer } from "./lib/local-server-client";
 import type { EffectModuleDefinition, EffectRun } from "./lib/long-term-effects";
+import { deriveReformEffectParameters, effectInputSignature } from "./lib/reform-effects";
 import { resolveCalculationFreshness } from "./lib/scenario-calculation";
-import { defaultScenarioDraft, normalizeScenarioDraft } from "./lib/scenario-state";
-import type { PopulationRun, ScenarioDraft, ScenarioState } from "./lib/types";
+import { defaultScenarioDraft, normalizeScenarioDraft, type ScenarioDraftWithPopulationBasis } from "./lib/scenario-state";
+import type { PopulationRun, ScenarioState } from "./lib/types";
 import { EffectsPage } from "./pages/EffectsPage";
 
 export function EffectsRoute() {
-  const [scenario, setScenario] = useState<ScenarioDraft>(defaultScenarioDraft);
+  const [scenario, setScenario] = useState<ScenarioDraftWithPopulationBasis>(defaultScenarioDraft);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState(0);
   const [scenarioPanelOpen, setScenarioPanelOpen] = useState(false);
@@ -20,6 +22,9 @@ export function EffectsRoute() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const calculationRequest = useRef(0);
+  const expenseResults = useMemo(() => calculateExpenseModules(scenario.expenseChanges, scenario.modelLevel), [scenario.expenseChanges, scenario.modelLevel]);
+  const calculationParameters = useMemo(() => deriveReformEffectParameters(scenario, expenseResults), [expenseResults, scenario.effectParameters, scenario.expenseChanges]);
+  const inputSignature = useMemo(() => populationRun ? effectInputSignature({ scenario, populationRunId: scenario.populationRunId ?? populationRun.metadata.id, parameters: calculationParameters }) : undefined, [calculationParameters, populationRun, scenario.dataYear, scenario.expenseChanges, scenario.horizonYears, scenario.legalYear, scenario.modelLevel, scenario.populationRunId, scenario.revenueChanges]);
 
   const navigate = (route: AppRoute) => {
     window.location.hash = route;
@@ -61,7 +66,7 @@ export function EffectsRoute() {
 
   const calculate = useCallback(async (requestId: number) => {
     const populationRunId = scenario.populationRunId ?? populationRun?.metadata.id;
-    if (!populationRunId) {
+    if (!populationRunId || !inputSignature) {
       if (requestId === calculationRequest.current) {
         setError("Für die Wirkungsrechnung ist eine verfügbare Modellbasis erforderlich.");
         setLoading(false);
@@ -77,31 +82,46 @@ export function EffectsRoute() {
         horizonYears: scenario.horizonYears,
         dataYear: scenario.dataYear,
         legalYear: scenario.legalYear,
-        parameters: scenario.effectParameters,
+        inputSignature,
+        parameters: calculationParameters,
       });
-      if (requestId === calculationRequest.current) setRun(result);
+      if (requestId === calculationRequest.current) {
+        setRun(result);
+        setScenario((current) => normalizeScenarioDraft({
+          ...current,
+          effectRunReference: {
+            runId: result.id,
+            modelVersion: result.modelVersion,
+            populationRunId: result.populationRunId,
+            modelLevel: result.modelLevel,
+            horizonYears: result.horizonYears as 1 | 5 | 10 | 20,
+            inputSignature: result.inputSignature ?? inputSignature,
+            calculatedAt: result.createdAt,
+          },
+        }));
+      }
     } catch (cause) {
       if (requestId === calculationRequest.current) setError(cause instanceof Error ? cause.message : "Wirkungen konnten nicht berechnet werden.");
     } finally {
       if (requestId === calculationRequest.current) setLoading(false);
     }
-  }, [activeScenarioId, populationRun?.metadata.id, scenario]);
+  }, [activeScenarioId, calculationParameters, inputSignature, populationRun?.metadata.id, scenario.dataYear, scenario.horizonYears, scenario.legalYear, scenario.modelLevel, scenario.populationRunId]);
 
   useEffect(() => {
-    if (!ready || !populationRun || modules.length === 0) return;
+    if (!ready || !populationRun || modules.length === 0 || !inputSignature) return;
     const requestId = ++calculationRequest.current;
     setLoading(true);
     setError("");
     const timeout = window.setTimeout(() => void calculate(requestId), 350);
     return () => window.clearTimeout(timeout);
-  }, [calculate, modules.length, populationRun, ready]);
+  }, [calculate, inputSignature, modules.length, populationRun, ready]);
 
   const retryCalculation = () => {
     const requestId = ++calculationRequest.current;
     setLoading(true);
     void calculate(requestId);
   };
-  const patch = (value: Partial<ScenarioDraft>) => setScenario((current) => normalizeScenarioDraft({ ...current, ...value }));
+  const patch = (value: Partial<ScenarioDraftWithPopulationBasis>) => setScenario((current) => normalizeScenarioDraft({ ...current, ...value }));
   const calculationStatus = resolveCalculationFreshness({
     loading: loading || !ready,
     hasResult: Boolean(run),
@@ -109,6 +129,8 @@ export function EffectsRoute() {
     runHorizonYears: run?.horizonYears,
     modelLevel: scenario.modelLevel,
     horizonYears: scenario.horizonYears,
+    runInputSignature: run?.inputSignature,
+    inputSignature,
   });
 
   return <div className="app-shell">
@@ -129,7 +151,7 @@ export function EffectsRoute() {
     <EffectsPage
       modules={modules}
       run={run}
-      parameters={scenario.effectParameters}
+      parameters={calculationParameters}
       modelLevel={scenario.modelLevel}
       horizonYears={scenario.horizonYears}
       populationRun={populationRun}

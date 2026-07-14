@@ -13,7 +13,6 @@ const navigationItems: Array<{ route: AppRoute; label: string }> = [
   { route: "/einkommensteuer", label: "Einkommensteuer" },
   { route: "/einnahmen", label: "Weitere Einnahmen" },
   { route: "/ausgaben", label: "Ausgaben" },
-  { route: "/wirkungen", label: "Wirkungen" },
   { route: "/vergleich", label: "Vergleich" },
   { route: "/transparenz", label: "Transparenz" },
 ];

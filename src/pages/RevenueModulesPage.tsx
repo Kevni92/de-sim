@@ -1,7 +1,9 @@
 import type { ChangeEvent } from "react";
+import { ContextualEffectsPanel } from "../components/ContextualEffectsPanel";
 import { ModuleCalculationContextCard, ModulePageHeader } from "../components/ModuleDetailComponents";
 import { ReformDisclosureSection, ReformResultLayout, type ReformMetric, type ReformResultStatus } from "../components/ReformResultLayout";
 import type { IncomeTaxResult } from "../lib/income-tax";
+import type { EffectRun } from "../lib/long-term-effects";
 import {
   defaultRevenueParameters,
   revenueModuleDefinitionById,
@@ -11,6 +13,8 @@ import {
   type RevenueModuleResult,
   type RevenueParameterDefinition,
 } from "../lib/revenue-modules";
+import { contextKeyForRevenue } from "../lib/reform-effects";
+import type { CalculationFreshness } from "../lib/scenario-calculation";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
 import type { ModelLevel, TimeHorizon } from "../lib/types";
 
@@ -21,9 +25,16 @@ export function RevenueModulesPage({
   parameters,
   modelLevel,
   horizonYears,
+  effectRun,
+  effectStatus,
+  effectError,
+  populationAvailable,
   onSelect,
   onNavigateIncomeTax,
   onParameters,
+  onRetryEffects,
+  onOpenAdvancedEffects,
+  onManageBasis,
   onBack,
   onOpenSource,
 }: {
@@ -33,9 +44,16 @@ export function RevenueModulesPage({
   parameters: Record<string, number>;
   modelLevel: ModelLevel;
   horizonYears: TimeHorizon;
+  effectRun: EffectRun | null;
+  effectStatus: CalculationFreshness;
+  effectError: string;
+  populationAvailable: boolean;
   onSelect: (id: RevenueModuleId) => void;
   onNavigateIncomeTax: () => void;
   onParameters: (parameters: Record<string, number>) => void;
+  onRetryEffects: () => void;
+  onOpenAdvancedEffects: () => void;
+  onManageBasis: () => void;
   onBack: () => void;
   onOpenSource: (metricId: string, value?: string) => void;
 }) {
@@ -43,6 +61,7 @@ export function RevenueModulesPage({
   const result = results.find((item) => item.id === selectedId);
   const primaryParameter = definition.parameters[0];
   const additionalParameters = definition.parameters.slice(1);
+  const effectActive = definition.parameters.some((parameter) => Math.abs(parameterValue(parameters, selectedId, parameter) - parameter.baseline) > 1e-9);
 
   const updateParameter = (key: string, value: number) => {
     onParameters({ ...parameters, [revenueParameterKey(selectedId, key)]: value });
@@ -119,15 +138,28 @@ export function RevenueModulesPage({
                 </div>
               </ReformDisclosureSection>
 
-              <ReformDisclosureSection title="Mögliche Folgewirkungen" summary="Verhaltensreaktionen bleiben sichtbar von der direkten staatlichen Wirkung getrennt." testId="reform-follow-up-section">
+              <ReformDisclosureSection title="Mögliche Folgewirkungen" summary="Aufkommensreaktion und weitere Wirkungspfade bleiben sichtbar von der direkten staatlichen Wirkung getrennt." testId="reform-follow-up-section">
                 <div className="reform-effect-grid">
-                  <article><span>Direkte staatliche Wirkung</span><strong className={result.staticDelta >= 0 ? "positive" : "negative"}>{fmtDiff(result.staticDelta)}</strong><small>ohne modellierte Verhaltensreaktion</small></article>
-                  <article><span>Modellierte Folgewirkung</span><strong className={result.behavioralAdjustment >= 0 ? "positive" : "negative"}>{fmtDiff(result.behavioralAdjustment)}</strong><small>separater Modellpfad, keine sichere Prognose</small></article>
+                  <article><span>Direkte staatliche Wirkung</span><strong className={result.staticDelta >= 0 ? "positive" : "negative"}>{fmtDiff(result.staticDelta)}</strong><small>ohne modellierte Reaktion</small></article>
+                  <article><span>Aufkommensreaktion im Einnahmenmodell</span><strong className={result.behavioralAdjustment >= 0 ? "positive" : "negative"}>{fmtDiff(result.behavioralAdjustment)}</strong><small>separater Modellpfad, keine sichere Prognose</small></article>
                 </div>
                 <ModuleCalculationContextCard
                   modelLevel={modelLevel}
                   horizonYears={horizonYears}
-                  description="Die direkte Wirkung bleibt unverändert sichtbar. Der zentrale Berechnungsrahmen steuert nur die getrennte Folgewirkung."
+                  status={effectActive ? effectStatus : "current"}
+                  description="Die direkte Wirkung bleibt unverändert sichtbar. Der zentrale Berechnungsrahmen steuert nur die getrennten Folgewirkungen."
+                />
+                <ContextualEffectsPanel
+                  contextKey={contextKeyForRevenue(selectedId)}
+                  active={effectActive}
+                  run={effectRun}
+                  status={effectStatus}
+                  basisAvailable={populationAvailable}
+                  error={effectError}
+                  onRetry={onRetryEffects}
+                  onOpenSource={onOpenSource}
+                  onOpenAdvanced={onOpenAdvancedEffects}
+                  onManageBasis={onManageBasis}
                 />
               </ReformDisclosureSection>
 
