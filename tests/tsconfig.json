@@ -21,6 +21,7 @@
     "sgb2-aggregation.test.ts",
     "sgb2-ui.test.ts",
     "sgb2-release-validation.test.ts",
+    "scenario-calculation.test.ts",
     "../src/lib/population-model.ts",
     "../src/lib/income-tax.ts",
     "../src/lib/income-tax-population.d.ts",
@@ -38,6 +39,7 @@
     "../src/lib/sgb2-aggregation.ts",
     "../src/lib/sgb2-release-validation.ts",
     "../src/lib/sgb2-ui.ts",
+    "../src/lib/scenario-calculation.ts",
     "../src/lib/scenario-state.ts",
     "../src/lib/types.ts"
   ]
