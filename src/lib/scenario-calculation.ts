@@ -24,7 +24,7 @@ export const MODEL_LEVEL_OPTIONS: readonly ModelLevelOption[] = [
   {
     value: "verhalten",
     label: "Mit kurzfristigen Reaktionen",
-    description: "Dokumentierte kurzfristige Verhaltens- und begrenzte Folgewirkungen.",
+    description: "Dokumentierte kurzfristige Verhaltensanpassung und begrenzte Folgewirkungen.",
     caution: "Reaktionen werden getrennt von der direkten Wirkung ausgewiesen und bleiben Modellschätzungen.",
   },
   {
