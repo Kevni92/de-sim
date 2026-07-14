@@ -6,14 +6,10 @@ async function openSourceDrawer(button: Locator, dialog: Locator) {
   await expect(dialog).toBeVisible({ timeout: 30_000 });
 }
 
-test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter live", async ({ page, isMobile }) => {
-  test.skip(isMobile, "Desktop-Nutzerfluss");
-  test.setTimeout(180_000);
-
+async function generateReferencePopulation(page: import("@playwright/test").Page) {
   await page.goto("./#/bevoelkerung");
   const personMetric = page.getByText("Synthetische Personen", { exact: true }).locator("..");
   await expect(personMetric.locator("strong")).not.toHaveText("–", { timeout: 60_000 });
-
   const sampleSize = page.getByLabel("Stichprobengröße");
   const generate = page.getByRole("button", { name: "Neu erzeugen" });
   await expect(generate).toBeEnabled();
@@ -22,19 +18,36 @@ test("öffnet Bürgergeld aus dem Dashboard und berechnet konkrete Parameter liv
   await generate.click();
   await expect(generate).toBeEnabled({ timeout: 60_000 });
   await expect(personMetric.locator("strong")).toHaveText("2.000", { timeout: 15_000 });
+}
 
+test("öffnet Bürgergeld aus dem Dashboard und validiert den Referenzlauf", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  test.setTimeout(180_000);
+
+  await generateReferencePopulation(page);
   await page.getByRole("button", { name: "Dashboard", exact: true }).click();
   await page.getByRole("button", { name: "Bürgergeld bearbeiten" }).click();
   await expect(page).toHaveURL(/#\/ausgaben$/);
   await expect(page.getByRole("heading", { name: "Ausgaben und Leistungen" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Bürgergeld und Unterkunft" })).toBeVisible();
   await expect(page.getByTestId("sgb2-editor")).toBeVisible();
+
+  const reproducibilityKey = page.getByTestId("sgb2-reproducibility-key");
+  await expect(reproducibilityKey).toHaveText(/^sgb2-[0-9a-f]{8}$/, { timeout: 60_000 });
+  const baselineKey = await reproducibilityKey.textContent();
+  await expect(page.getByRole("heading", { name: "Reproduzierbarkeit und amtlicher Abgleich" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amtlicher Abgleich", exact: true })).toBeVisible();
+  await expect(page.getByText("Regelbedarf und Mehrbedarfe", { exact: true })).toBeVisible();
+  await expect(page.getByText("Bundesanteil Unterkunft und Heizung", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Quelle und Abgrenzung" })).toHaveCount(2);
+
   await page.getByLabel("Regelbedarfe Prozent der Baseline").fill("105");
   await page.getByRole("button", { name: "Experte" }).click();
   await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("591.15");
   await expect(page.getByText("Betroffene BG")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("heading", { name: "Leistungsbestandteile" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Nettofinanzierung" })).toBeVisible();
+  await expect(reproducibilityKey).toHaveText(baselineKey ?? "");
   await page.screenshot({ path: "test-results/sgb2-expense-ui.png", fullPage: true });
 });
 
@@ -95,13 +108,16 @@ test("sichert konkrete Bürgergeldparameter per Worker und IndexedDB", async ({ 
   await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("600");
 });
 
-test("stellt Bürgergeldeditor auf Mobilgeräten responsiv dar", async ({ page, isMobile }) => {
+test("stellt Bürgergeld-Release-Abnahme auf Mobilgeräten responsiv dar", async ({ page, isMobile }) => {
   test.skip(!isMobile, "Mobiler Nutzerfluss");
+  test.setTimeout(180_000);
+  await generateReferencePopulation(page);
   await page.goto("./#/ausgaben");
   await expect(page.getByTestId("sgb2-editor")).toBeVisible();
   await expect(page.getByLabel("Regelbedarfe Prozent der Baseline")).toBeVisible();
-  await page.getByRole("button", { name: "Experte" }).click();
-  await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toBeVisible();
+  await expect(page.getByTestId("sgb2-reproducibility-key")).toHaveText(/^sgb2-[0-9a-f]{8}$/, { timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "Reproduzierbarkeit und amtlicher Abgleich" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amtlicher Abgleich", exact: true })).toBeVisible();
 });
 
 test("öffnet Ausgabenmodule in der mobilen Dashboard-Navigation", async ({ page, isMobile }) => {

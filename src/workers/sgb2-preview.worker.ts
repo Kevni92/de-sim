@@ -2,6 +2,7 @@ import { buildSgb2MonthlySettlements, defaultSgb2FinancingRules, type Sgb2Aggreg
 import { calculateSgb2BenefitUnitClaim } from "../lib/sgb2-claim";
 import { calculateSgb2HousingCosts } from "../lib/sgb2-housing";
 import { defaultSgb2PolicyBundle, defaultSgb2ScenarioReference, type Sgb2ScenarioReference } from "../lib/sgb2-policy";
+import { buildSgb2ReleaseValidation } from "../lib/sgb2-release-validation";
 import type { Sgb2UiPreviewResult } from "../lib/sgb2-ui";
 import type { Sgb2BenefitUnit, Sgb2PersonProfile } from "../lib/types";
 
@@ -193,6 +194,7 @@ function summarize(
 }
 
 async function calculatePreview(runId: string, reference: Sgb2ScenarioReference): Promise<Sgb2UiPreviewResult> {
+  const startedAt = performance.now();
   const db = await openDb();
   const [units, profiles] = await Promise.all([
     indexValues<Sgb2BenefitUnit>(db, BENEFIT_UNITS, runId),
@@ -251,6 +253,21 @@ async function calculatePreview(runId: string, reference: Sgb2ScenarioReference)
   });
   const affectedBenefitUnits = sortedUnits.filter((unit) => affectedUnits.has(unit.id)).reduce((sum, unit) => sum + unit.weight, 0);
   const affectedPersons = profiles.filter((profile) => affectedUnits.has(profile.benefitUnitId)).reduce((sum, profile) => sum + profile.weight, 0);
+  const durationMs = performance.now() - startedAt;
+  const releaseValidation = buildSgb2ReleaseValidation({
+    runId,
+    policyVersionId: defaultSgb2PolicyBundle.policy.id,
+    modelVersion: defaultSgb2PolicyBundle.policy.modelVersion,
+    periodFrom: baseline.periodFrom,
+    periodTo: baseline.periodTo,
+    paymentCents: baseline.paymentCents,
+    components: baseline.components,
+    uncertaintyClass: baseline.uncertaintyClass,
+    durationMs,
+    samplePersons: profiles.length,
+    sampleBenefitUnits: sortedUnits.length,
+    simulatedBenefitUnitMonths: baselineClaims.length,
+  });
 
   return {
     runId,
@@ -269,9 +286,10 @@ async function calculatePreview(runId: string, reference: Sgb2ScenarioReference)
       scenarioCents: paymentCents,
     })),
     calibrationAdjustmentCents: 0,
-    sourceIds: scenario.sourceIds,
+    sourceIds: unique([...scenario.sourceIds, ...releaseValidation.comparisons.map((item) => item.sourceId)]),
     uncertaintyClass: scenario.uncertaintyClass,
     limitations: scenario.limitations,
+    releaseValidation,
   };
 }
 
