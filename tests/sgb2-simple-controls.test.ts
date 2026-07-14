@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { defaultSgb2ScenarioReference } from "../src/lib/sgb2-policy";
 import { setSimpleControl, simpleControlState, typicalMonthlyDeltaCents } from "../src/lib/sgb2-simple-controls";
-import { getSgb2Parameter, resolvedSgb2UiValue, setSgb2UiParameter, sgb2UiGroups } from "../src/lib/sgb2-ui";
+import { getSgb2Parameter, resolvedSgb2UiValue, setSgb2UiParameter, sgb2UiFields, sgb2UiGroups } from "../src/lib/sgb2-ui";
 
 test("Regelbedarfsänderung schreibt alle konkreten Regelbedarfe", () => {
   const changed = setSimpleControl(defaultSgb2ScenarioReference, "standard-needs", 5);
@@ -35,6 +35,14 @@ test("abweichende Expertenwerte bleiben im Standardmodus erkennbar", () => {
   const state = simpleControlState(expert, "standard-needs");
   assert.equal(state.mixed, true);
   assert.ok(state.value > 0);
+});
+
+test("Leistungsminderungen bleiben als eigene Expertengruppe erreichbar", () => {
+  const group = (sgb2UiGroups as Array<{ id: string; parameterIds: string[] }>).find((item) => item.id === "reductions");
+  assert.ok(group);
+  assert.ok(group.parameterIds.includes("sgb2.reduction.first-breach-rate"));
+  assert.ok(group.parameterIds.includes("sgb2.reduction.default-duration-months"));
+  assert.ok((sgb2UiFields as Array<{ id: string; section: string }>).some((field) => field.id === "sgb2.reduction.missed-appointment-rate" && field.section === "reductions"));
 });
 
 test("typische Monatswirkung wird aus gewichteten Bezugsmonaten abgeleitet", () => {
