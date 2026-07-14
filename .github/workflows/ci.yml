@@ -25,9 +25,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund
+      - name: npm-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+      - run: npm install --no-audit --no-fund --prefer-offline
       - name: Typecheck
         shell: bash
         run: set -o pipefail; npm run typecheck 2>&1 | tee typecheck.log
@@ -61,14 +65,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci --no-audit --no-fund
+      - name: npm-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+      - run: npm install --no-audit --no-fund --prefer-offline
       - name: Playwright-Browser cachen
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('package.json') }}
       - name: Chromium und Systemabhängigkeiten bereitstellen
         run: npx playwright install --with-deps chromium
       - name: Playwright Desktop und Mobil
