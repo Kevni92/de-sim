@@ -18,14 +18,14 @@ test("ordnet Wirkungen automatisch Reformmodulen und Vergleichsebenen zu", async
   await page.goto("./#/ausgaben");
   await page.getByRole("button", { name: /Kitas und Familienleistungen/ }).click();
   await page.getByLabel("Betreuungsplätze Wert").fill("112");
-  await page.getByLabel("Qualitätsindex Wert").fill("120");
+  await page.getByLabel("Personal- und Qualitätskosten Wert").fill("120");
 
   const effectsPanel = page.getByTestId("context-effects-panel");
   await expect(effectsPanel).toHaveAttribute("data-status", "current", { timeout: 120_000 });
   const familyCard = page.getByTestId("context-effect-family-kita-path");
   await expect(familyCard.getByText("Kita-Verfügbarkeit und Betreuung", { exact: true })).toBeVisible();
   await expect(familyCard.getByText("Modellierter Pfad, ohne direkte Budgetwirkung", { exact: true })).toBeVisible();
-  await expect(familyCard.getByText(/Haushalte|Personen/)).toBeVisible();
+  await expect(familyCard.locator(".context-effect-meta")).toContainText(/Haushalte|Personen/);
 
   const dependencyCard = page.getByTestId("context-effect-family-labour-detail");
   await expect(dependencyCard).toContainText("nicht zusätzlich summiert");
