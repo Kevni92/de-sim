@@ -1,17 +1,38 @@
-import type { Sgb2ScenarioReference } from "./sgb2-policy";
+import { defaultSgb2PolicyBundle, type Sgb2ScenarioReference } from "./sgb2-policy";
 import {
   getSgb2Parameter,
   resolvedSgb2UiValue,
   setSgb2UiGroupPercent,
   setSgb2UiParameter,
+  sgb2UiFields,
   sgb2UiGroupPercent,
   sgb2UiGroups,
   sgb2UiInputValue,
+  type Sgb2UiField,
+  type Sgb2UiGroup,
   type Sgb2UiPreviewResult,
 } from "./sgb2-ui";
 
 export type Sgb2SimpleControlId = "standard-needs" | "income-free-amount" | "housing-recognition" | "additional-needs";
 export type Sgb2SimpleControlState = { value: number; mixed: boolean };
+
+type ExtendedGroup = Omit<Sgb2UiGroup, "id"> & { id: string };
+type ExtendedField = Omit<Sgb2UiField, "section"> & { section: string };
+
+const reductionLabels: Record<string, string> = {
+  "sgb2.reduction.first-breach-rate": "Erste Pflichtverletzung",
+  "sgb2.reduction.repeated-breach-rate": "Wiederholte Pflichtverletzung",
+  "sgb2.reduction.further-breach-rate": "Weitere Pflichtverletzung",
+  "sgb2.reduction.missed-appointment-rate": "Versäumter Termin",
+  "sgb2.reduction.default-duration-months": "Regeldauer der Minderung",
+};
+const reductionIds = defaultSgb2PolicyBundle.parameters.filter((parameter) => parameter.id.startsWith("sgb2.reduction.")).map((parameter) => parameter.id).sort();
+const extendedGroups = sgb2UiGroups as unknown as ExtendedGroup[];
+const extendedFields = sgb2UiFields as unknown as ExtendedField[];
+if (reductionIds.length && !extendedGroups.some((group) => group.id === "reductions")) {
+  extendedGroups.push({ id: "reductions", label: "Leistungsminderungen", description: "Prozentsätze und Dauer bei Pflichtverletzungen oder versäumten Terminen. Keine Einzelfallentscheidung.", parameterIds: reductionIds });
+  reductionIds.forEach((id) => extendedFields.push({ id, label: reductionLabels[id] ?? id, description: "Konkreter gesetzlicher Parameter einer möglichen Leistungsminderung.", section: "reductions" }));
+}
 
 const housingRecognitionIds = sgb2UiGroups
   .find((group) => group.id === "housing")!
@@ -24,10 +45,7 @@ function percentState(reference: Sgb2ScenarioReference, ids: string[]) {
     return baseline === 0 ? 100 : (resolvedSgb2UiValue(reference, id) as number) / baseline * 100;
   });
   const percent = ratios.length ? ratios.reduce((sum, value) => sum + value, 0) / ratios.length : 100;
-  return {
-    percent,
-    mixed: ratios.some((value) => Math.abs(value - percent) > 0.05),
-  };
+  return { percent, mixed: ratios.some((value) => Math.abs(value - percent) > 0.05) };
 }
 
 function setPercent(reference: Sgb2ScenarioReference, ids: string[], percent: number) {
@@ -54,10 +72,7 @@ export function simpleControlState(reference: Sgb2ScenarioReference, id: Sgb2Sim
   const otherIncomeChanged = sgb2UiGroups.find((group) => group.id === "income-allowances")!.parameterIds
     .filter((candidate) => candidate !== parameterId)
     .some((candidate) => Math.abs((resolvedSgb2UiValue(reference, candidate) as number) - (getSgb2Parameter(candidate).value as number)) > 1e-9);
-  return {
-    value: sgb2UiInputValue(parameter, resolvedSgb2UiValue(reference, parameterId) as number),
-    mixed: otherIncomeChanged,
-  };
+  return { value: sgb2UiInputValue(parameter, resolvedSgb2UiValue(reference, parameterId) as number), mixed: otherIncomeChanged };
 }
 
 export function setSimpleControl(reference: Sgb2ScenarioReference, id: Sgb2SimpleControlId, value: number) {
