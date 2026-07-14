@@ -144,7 +144,7 @@ test("ersetzt eine nicht rekonstruierbare Importreferenz nur nach bewusster Ents
   await expect(status.getByRole("button", { name: "Identische Modellbasis neu erzeugen" })).toHaveCount(0);
   await status.getByRole("button", { name: "Standard-Modellbasis verwenden" }).click();
   await waitForReadyBasis(page);
-  await expect(page.getByRole("status")).toContainText("bewusst übernommen");
+  await expect(page.locator(".toast")).toContainText("bewusst übernommen");
 });
 
 test("exportiert Laufreferenz und Rekonstruktionsmetadaten", async ({ page, isMobile }) => {
