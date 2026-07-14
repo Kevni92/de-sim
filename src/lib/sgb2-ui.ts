@@ -1,4 +1,5 @@
 import { defaultSgb2PolicyBundle, type Sgb2Parameter, type Sgb2ScenarioReference } from "./sgb2-policy";
+import type { Sgb2ReleaseValidationResult } from "./sgb2-release-validation";
 
 export type Sgb2UiMode = "simple" | "expert";
 export type Sgb2UiGroupId = "standard-needs" | "additional-needs" | "income-allowances" | "housing";
@@ -47,6 +48,7 @@ export interface Sgb2UiPreviewResult {
   sourceIds: string[];
   uncertaintyClass: "mittel" | "hoch";
   limitations: string[];
+  releaseValidation: Sgb2ReleaseValidationResult;
 }
 
 const parameters = defaultSgb2PolicyBundle.parameters;
