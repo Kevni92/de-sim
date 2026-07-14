@@ -59,7 +59,7 @@ export function ContextualEffectsPanel({
   }
 
   if (!active) {
-    return <div className="context-effects-empty" data-testid="context-effects-inactive"><strong>Noch keine abweichende Maßnahme</strong><p>Eine kontextbezogene Folgewirkung erscheint, sobald mindestens eine Stellschraube dieses Moduls von der Baseline abweicht.</p><button className="button secondary small" type="button" onClick={onOpenAdvanced}>Vollständiges Wirkungsregister</button></div>;
+    return <div className="context-effects-empty" data-testid="context-effects-inactive"><strong>Modellierte Folgewirkung</strong><p>Noch keine abweichende Maßnahme: Eine kontextbezogene Folgewirkung erscheint, sobald mindestens eine Stellschraube dieses Moduls von der Baseline abweicht.</p><button className="button secondary small" type="button" onClick={onOpenAdvanced}>Vollständiges Wirkungsregister</button></div>;
   }
 
   if (!basisAvailable) {
@@ -68,7 +68,7 @@ export function ContextualEffectsPanel({
 
   return <div className="context-effects-panel" data-testid="context-effects-panel" data-status={status}>
     <header className="context-effects-header">
-      <div><span className="eyebrow">Automatisch aus dem Szenario</span><h4>Relevante Wirkungspfade</h4><p>Direkte Budgetwirkung, mögliche Reaktion und langfristiger Pfad werden nicht zu einer einzigen Gesamtzahl vermischt.</p></div>
+      <div><span className="eyebrow">Automatisch aus dem Szenario</span><h4>Modellierte Folgewirkung</h4><p>Relevante Wirkungspfade werden getrennt von der direkten Budgetwirkung gezeigt und nicht zu einer einzigen Gesamtzahl vermischt.</p></div>
       <span className={`context-effects-freshness ${status}`} role="status" aria-live="polite">{status === "updating" && <RefreshCw className="spin" size={13} />}{calculationFreshnessLabel(status)}</span>
     </header>
 
