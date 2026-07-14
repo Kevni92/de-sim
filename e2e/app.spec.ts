@@ -80,11 +80,12 @@ test("aktiviert ein Vermögensteuer-Szenario aus einer Null-Baseline", async ({ 
   const moduleList = page.locator(".revenue-module-list");
   await moduleList.getByRole("button", { name: /Vermögensteuer/ }).click();
   await expect(page.getByRole("heading", { name: "Vermögensteuer" })).toBeVisible();
-  await expect(page.getByText("Derzeit keine Erhebung")).toBeVisible();
+  const kpiGrid = page.getByTestId("reform-kpi-grid");
+  await expect(kpiGrid.getByText("Derzeit keine Erhebung", { exact: false })).toBeVisible();
 
   await page.getByLabel("Steuersatz Wert").fill("1");
   await expect(page.getByTestId("revenue-module-value")).toHaveText("+11,0 Mrd. €");
-  await expect(page.getByText("Topvermögen")).toBeVisible();
+  await expect(kpiGrid.getByText("Topvermögen", { exact: true })).toBeVisible();
 });
 
 test("lädt für weitere Einnahmen den vollständigen Nachweis aus dem lokalen Worker", async ({ page, isMobile }) => {
