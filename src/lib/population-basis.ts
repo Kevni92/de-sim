@@ -5,7 +5,15 @@ import {
   POPULATION_MODEL_VERSION,
   populationRunIdForOptions,
 } from "./population-model";
-import type { PopulationBasisReference, PopulationGenerationOptions, PopulationRun } from "./types";
+import type { PopulationGenerationOptions, PopulationRun } from "./types";
+
+export interface PopulationBasisReference {
+  runId: string;
+  modelVersion: string | null;
+  seed: string | null;
+  sampleSize: number | null;
+  baselineId: string | null;
+}
 
 export const STANDARD_POPULATION_OPTIONS: PopulationGenerationOptions = Object.freeze({
   seed: DEFAULT_POPULATION_SEED,
