@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   source-snapshot:
@@ -21,12 +21,13 @@ jobs:
         with:
           submodules: recursive
       - name: Quellcode für lokale Prüfung archivieren
-        run: tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report -czf de-sim-source.tgz .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: de-sim-source
-          path: de-sim-source.tgz
-          retention-days: 1
+        run: |
+          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report --exclude=de-sim-source.tgz -czf de-sim-source.tgz .
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f de-sim-source.tgz
+          git commit -m "chore: lokaler Quellcode-Snapshot [skip ci]"
+          git push
 
   quality:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
