@@ -22,11 +22,11 @@ jobs:
         with:
           submodules: recursive
       - name: Quellcode für lokale Prüfung archivieren
-        run: tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report -czf de-sim-source.tgz .
+        run: tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report -czf /tmp/de-sim-source.tgz .
       - uses: actions/upload-artifact@v4
         with:
           name: de-sim-source
-          path: de-sim-source.tgz
+          path: /tmp/de-sim-source.tgz
           retention-days: 1
 
   quality:
