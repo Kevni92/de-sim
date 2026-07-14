@@ -2,35 +2,19 @@ name: Prüfung
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   push:
-    branches: [main, feat/sgb2-e2e-release]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  source-snapshot:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/sgb2-e2e-release'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Quellcode für lokale Prüfung archivieren
-        run: |
-          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report --exclude=de-sim-source.tgz -czf de-sim-source.tgz .
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -f de-sim-source.tgz
-          git commit -m "chore: lokaler Quellcode-Snapshot [skip ci]"
-          git push
-
   quality:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +46,7 @@ jobs:
           retention-days: 7
 
   e2e:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
     needs: quality
     runs-on: ubuntu-latest
     steps:
