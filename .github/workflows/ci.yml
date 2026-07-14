@@ -2,19 +2,22 @@ name: Prüfung
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   push:
     branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  quality:
+    name: Typecheck, Build und Unit-Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,102 +25,79 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
-      - run: npx playwright install --with-deps chromium
+      - name: npm-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+      - run: npm install --no-audit --no-fund --prefer-offline
       - name: Typecheck
         shell: bash
         run: set -o pipefail; npm run typecheck 2>&1 | tee typecheck.log
-      - run: npm run build
+      - name: Produktions-Build
+        shell: bash
+        run: set -o pipefail; npm run build 2>&1 | tee build.log
       - name: Unit-Tests
         shell: bash
         run: set -o pipefail; npm run test:unit 2>&1 | tee unit-tests.log
+      - name: Qualitätsdiagnose bei Fehler hochladen
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-diagnostics
+          path: |
+            typecheck.log
+            build.log
+            unit-tests.log
+          if-no-files-found: warn
+          retention-days: 7
+
+  e2e:
+    name: Playwright Desktop und Mobil
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: npm-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+      - run: npm install --no-audit --no-fund --prefer-offline
+      - name: Playwright-Browser cachen
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package.json') }}
+      - name: Chromium und Systemabhängigkeiten bereitstellen
+        run: npx playwright install --with-deps chromium
       - name: Playwright Desktop und Mobil
         shell: bash
         run: set -o pipefail; npm run test:e2e 2>&1 | tee playwright.log
-      - name: Typecheck-Diagnose hochladen
+      - name: Browser-Screenshots hochladen
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: typecheck-diagnostics
-          path: typecheck.log
+          name: browser-screenshots
+          path: test-results/**/*.png
           if-no-files-found: warn
-          retention-days: 7
-      - name: Unit-Test-Diagnose hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-diagnostics
-          path: unit-tests.log
-          if-no-files-found: warn
-          retention-days: 7
-      - name: Playwright-Diagnose hochladen
-        if: always()
+          retention-days: 14
+      - name: Playwright-Diagnose bei Fehler hochladen
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-diagnostics
-          path: playwright.log
-          if-no-files-found: warn
-          retention-days: 7
-      - name: Playwright-Bericht hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 14
-      - name: SGB-II-Ausgaben-Screenshot hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sgb2-expense-ui
-          path: test-results/sgb2-expense-ui.png
-          if-no-files-found: warn
-          retention-days: 14
-      - name: SGB-II-Populationsscreenshot hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sgb2-population-calibration
-          path: test-results/sgb2-population-calibration.png
-          if-no-files-found: warn
-          retention-days: 14
-      - name: Milestone-8-Screenshot hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: milestone-8-long-term-effects
-          path: test-results/milestone-8-long-term-effects.png
-          if-no-files-found: warn
-          retention-days: 14
-      - name: Milestone-7-Screenshot hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: milestone-7-synthetic-population
-          path: test-results/milestone-7-synthetic-population.png
-          if-no-files-found: warn
-          retention-days: 14
-      - name: UI-Screenshot hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: detail-mask-alignment
-          path: test-results/detail-mask-alignment.png
-          if-no-files-found: warn
-          retention-days: 14
-      - name: Dashboard-Screenshot hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dashboard-disabled-items
-          path: test-results/dashboard-disabled-items.png
-          if-no-files-found: warn
-          retention-days: 14
-      - name: Evidenztooltip-Screenshot hochladen
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: evidence-tooltips
-          path: test-results/evidence-tooltips.png
+          path: |
+            playwright.log
+            playwright-report/
+            test-results/
           if-no-files-found: warn
           retention-days: 14
