@@ -12,7 +12,9 @@ import {
   createScenarioHistory,
   defaultScenarioDraft,
   normalizeScenarioDraft,
+  scenarioFromJson,
   scenarioHistoryReducer,
+  scenarioToJson,
 } from "../src/lib/scenario-state";
 
 test("verwendet verbindliche Nutzerbegriffe für alle Modellstufen", () => {
@@ -52,10 +54,22 @@ test("unterscheidet aktuelle, laufende und veraltete Wirkungsrechnungen", () => 
     runHorizonYears: 20,
     modelLevel: "langfrist",
     horizonYears: 20,
+    runInputSignature: "alt",
+    inputSignature: "neu",
+  }), "stale");
+  assert.equal(resolveCalculationFreshness({
+    loading: false,
+    hasResult: true,
+    runModelLevel: "langfrist",
+    runHorizonYears: 20,
+    modelLevel: "langfrist",
+    horizonYears: 20,
+    runInputSignature: "gleich",
+    inputSignature: "gleich",
   }), "current");
 });
 
-test("normalisiert bestehende Szenarien ohne Schemaänderung", () => {
+test("normalisiert bestehende Szenarien rückwärtskompatibel", () => {
   const migrated = normalizeScenarioDraft({
     ...defaultScenarioDraft,
     modelLevel: "statisch",
@@ -89,4 +103,24 @@ test("führt Modellstufe und Zeithorizont als gemeinsame Undo- und Redo-Änderun
   const redone = scenarioHistoryReducer(undone, { type: "redo" });
   assert.equal(redone.present.modelLevel, "langfrist");
   assert.equal(redone.present.horizonYears, 20);
+});
+
+test("synchronisiert und exportiert Wirkungsreferenzen ohne Undo-Schritt", () => {
+  const reference = {
+    runId: "effect-test",
+    modelVersion: "long-term-effects-0.8.0",
+    populationRunId: "population-test",
+    modelLevel: "langfrist" as const,
+    horizonYears: 20 as const,
+    inputSignature: "signature-test",
+    calculatedAt: "2026-07-14T12:00:00.000Z",
+  };
+  const initial = createScenarioHistory(defaultScenarioDraft);
+  const synced = scenarioHistoryReducer(initial, { type: "sync", patch: { effectRunReference: reference } });
+  assert.equal(synced.past.length, 0);
+  assert.equal(synced.present.effectRunReference?.runId, reference.runId);
+  const json = scenarioToJson(synced.present);
+  const wrapper = JSON.parse(json) as { schemaVersion: number };
+  assert.equal(wrapper.schemaVersion, 6);
+  assert.deepEqual(scenarioFromJson(json).effectRunReference, reference);
 });

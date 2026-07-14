@@ -6,7 +6,6 @@ const navigationLabels = [
   "Einkommensteuer",
   "Weitere Einnahmen",
   "Ausgaben",
-  "Wirkungen",
   "Vergleich",
   "Transparenz",
 ];
@@ -35,18 +34,19 @@ test("stellt die Desktop-Navigation mobil als bedienbares Burger-Menü bereit", 
   for (const label of navigationLabels) {
     await expect(menu.getByRole("button", { name: label, exact: true })).toBeVisible();
   }
+  await expect(menu.getByRole("button", { name: "Wirkungen", exact: true })).toHaveCount(0);
   await expect(menu.getByRole("button", { name: "Dashboard", exact: true })).toHaveAttribute("aria-current", "page");
 
-  await menu.getByRole("button", { name: "Wirkungen", exact: true }).click();
-  await expect(page).toHaveURL(/#\/wirkungen$/);
+  await menu.getByRole("button", { name: "Vergleich", exact: true }).click();
+  await expect(page).toHaveURL(/#\/vergleich$/);
   await expect(menu).toBeHidden();
   await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
 
-  const effectsMenuButton = page.getByRole("button", { name: "Hauptmenü öffnen" });
-  await expect(effectsMenuButton).toBeVisible({ timeout: 45_000 });
-  await effectsMenuButton.click();
+  const comparisonMenuButton = page.getByRole("button", { name: "Hauptmenü öffnen" });
+  await expect(comparisonMenuButton).toBeVisible({ timeout: 45_000 });
+  await comparisonMenuButton.click();
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("button", { name: "Wirkungen", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(menu.getByRole("button", { name: "Vergleich", exact: true })).toHaveAttribute("aria-current", "page");
   await page.keyboard.press("Escape");
   await expect(menu).toBeHidden();
   await expect(page.getByRole("button", { name: "Hauptmenü öffnen" })).toBeFocused();

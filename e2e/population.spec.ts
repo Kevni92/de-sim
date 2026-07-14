@@ -167,7 +167,7 @@ test("exportiert Laufreferenz und Rekonstruktionsmetadaten", async ({ page, isMo
       sgb2: { populationRunId: string | null };
     };
   };
-  expect(exported.schemaVersion).toBe(5);
+  expect(exported.schemaVersion).toBe(6);
   expect(exported.scenario.populationBasis).not.toBeNull();
   expect(exported.scenario.populationBasis?.runId).toBe(exported.scenario.populationRunId);
   expect(exported.scenario.populationBasis?.modelVersion).toBe("synthetic-population-0.7.0");

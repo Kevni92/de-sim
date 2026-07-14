@@ -16,17 +16,19 @@ async function handle(request: EffectLocalRequest): Promise<EffectLocalResponse>
     const db = await open(EFFECT_DB, 1);
     if (request.type === "effects:calculate") {
       const populationDb = await open(POPULATION_DB);
-      const run = await value(populationDb.transaction(POPULATION_RUNS).objectStore(POPULATION_RUNS).get(request.payload.populationRunId));
-      if (!run) throw new Error("Der referenzierte Bevölkerungslauf ist lokal nicht vorhanden.");
+      const populationRun = await value(populationDb.transaction(POPULATION_RUNS).objectStore(POPULATION_RUNS).get(request.payload.populationRunId));
+      if (!populationRun) throw new Error("Der referenzierte Bevölkerungslauf ist lokal nicht vorhanden.");
       const [persons, households] = await Promise.all([
         populationValues<SyntheticPerson>(populationDb, PERSONS, request.payload.populationRunId),
         populationValues<SyntheticHousehold>(populationDb, HOUSEHOLDS, request.payload.populationRunId),
       ]);
       populationDb.close();
       if (!persons.length || !households.length) throw new Error("Der Bevölkerungslauf enthält keine auswertbaren Personen oder Haushalte.");
-      const result = calculateEffectRun(request.payload, persons, households);
-      const transaction = db.transaction(RUNS, "readwrite"); transaction.objectStore(RUNS).put(result); await complete(transaction);
-      return { id: request.id, ok: true, data: result };
+      const calculated: EffectRun = { ...calculateEffectRun(request.payload, persons, households), inputSignature: request.payload.inputSignature };
+      const existing = await value(db.transaction(RUNS).objectStore(RUNS).get(calculated.id)) as EffectRun | undefined;
+      if (request.payload.inputSignature && existing?.inputSignature === request.payload.inputSignature) return { id: request.id, ok: true, data: existing };
+      const transaction = db.transaction(RUNS, "readwrite"); transaction.objectStore(RUNS).put(calculated); await complete(transaction);
+      return { id: request.id, ok: true, data: calculated };
     }
     const store = db.transaction(RUNS, request.type === "effects:delete-run" ? "readwrite" : "readonly").objectStore(RUNS);
     if (request.type === "effects:list-runs") { const runs = await value(store.getAll()) as EffectRun[]; return { id: request.id, ok: true, data: runs.sort((a, b) => b.createdAt.localeCompare(a.createdAt)) }; }
