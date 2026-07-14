@@ -3,7 +3,7 @@ name: Prüfung
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, feat/sgb2-e2e-release]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   source-snapshot:
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft && github.head_ref == 'feat/sgb2-e2e-release'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/sgb2-e2e-release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
           retention-days: 1
 
   quality:
-    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
           retention-days: 7
 
   e2e:
-    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     needs: quality
     runs-on: ubuntu-latest
     steps:
