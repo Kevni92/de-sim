@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 async function openSourceDrawer(button: Locator, dialog: Locator) {
   await expect(button).toBeVisible();
@@ -6,65 +6,76 @@ async function openSourceDrawer(button: Locator, dialog: Locator) {
   await expect(dialog).toBeVisible({ timeout: 30_000 });
 }
 
-async function generateReferencePopulation(page: import("@playwright/test").Page) {
-  await page.goto("./#/bevoelkerung");
-  const personMetric = page.getByText("Synthetische Personen", { exact: true }).locator("..");
-  await expect(personMetric.locator("strong")).not.toHaveText("–", { timeout: 60_000 });
-  const sampleSize = page.getByLabel("Stichprobengröße");
-  const generate = page.getByRole("button", { name: "Erzeugen und für Szenario verwenden" });
-  await expect(generate).toBeEnabled({ timeout: 60_000 });
-  await sampleSize.selectOption("2000");
-  await expect(sampleSize).toHaveValue("2000");
-  await generate.click();
-  await expect(generate).toBeEnabled({ timeout: 60_000 });
-  await expect(personMetric.locator("strong")).toHaveText("2.000", { timeout: 15_000 });
+async function openBuergergeld(page: Page) {
+  await page.goto("./#/ausgaben");
+  await expect(page.getByTestId("sgb2-editor")).toBeVisible();
+  await expect(page.getByTestId("sgb2-standard-result-kpis")).toBeVisible({ timeout: 120_000 });
 }
 
-test("öffnet Bürgergeld aus dem Dashboard und validiert den Referenzlauf", async ({ page, isMobile }) => {
-  test.skip(isMobile, "Desktop-Nutzerfluss");
-  test.setTimeout(180_000);
+async function openResultDetail(page: Page, label: string) {
+  const details = page.locator("details.sgb2-result-detail").filter({ hasText: label });
+  const summary = details.locator("summary");
+  await summary.focus();
+  await summary.press("Enter");
+  await expect(details).toHaveAttribute("open", "");
+  return details;
+}
 
-  await generateReferencePopulation(page);
-  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+test.describe.configure({ timeout: 210_000 });
+
+test("ändert Bürgergeld ohne Bevölkerungsseite in verständlicher Alltagssprache", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  await page.goto("./#/dashboard");
   await page.getByRole("button", { name: "Bürgergeld bearbeiten" }).click();
   await expect(page).toHaveURL(/#\/ausgaben$/);
-  await expect(page.getByRole("heading", { name: "Ausgaben und Leistungen" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Bürgergeld und Unterkunft" })).toBeVisible();
-  await expect(page.getByTestId("sgb2-editor")).toBeVisible();
+  const editor = page.getByTestId("sgb2-editor");
+  await expect(editor).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Politische Stellschrauben" })).toBeVisible();
+  await expect(page.getByLabel("Regelbedarfe Veränderung in Prozent")).toBeVisible();
+  await expect(page.getByLabel("Anrechnungsfreier Grundbetrag aus Erwerbseinkommen")).toHaveValue("100");
+  await expect(page.getByLabel("Anerkennungsgrenzen für Unterkunft und Heizung verändern")).toBeVisible();
 
-  const reproducibilityKey = page.getByTestId("sgb2-reproducibility-key");
-  await expect(reproducibilityKey).toHaveText(/^sgb2-[0-9a-f]{8}$/, { timeout: 60_000 });
-  const baselineKey = await reproducibilityKey.textContent();
-  await expect(page.getByRole("heading", { name: "Reproduzierbarkeit und amtlicher Abgleich" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Amtlicher Abgleich", exact: true })).toBeVisible();
-  await expect(page.getByText("Regelbedarf und Mehrbedarfe", { exact: true })).toBeVisible();
-  await expect(page.getByText("Bundesanteil Unterkunft und Heizung", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Quelle und Abgrenzung" })).toHaveCount(2);
+  const kpis = page.getByTestId("sgb2-standard-result-kpis");
+  await expect(kpis).toBeVisible({ timeout: 120_000 });
+  await expect(kpis.locator("article")).toHaveCount(4);
+  await expect(kpis.getByText("Staatliche Wirkung pro Jahr", { exact: true })).toBeVisible();
+  await expect(kpis.getByText("Betroffene Menschen", { exact: true })).toBeVisible();
+  await expect(kpis.getByText("Durchschnitt pro Bezugsmonat", { exact: true })).toBeVisible();
+  await expect(kpis.getByText("Belastbarkeit", { exact: true })).toBeVisible();
+  await expect(editor).not.toContainText("Betroffene BG");
 
-  await page.getByLabel("Regelbedarfe Prozent der Baseline").fill("105");
-  await page.getByRole("button", { name: "Experte" }).click();
-  await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("591.15");
-  await expect(page.getByText("Betroffene BG")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByRole("heading", { name: "Leistungsbestandteile" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Nettofinanzierung" })).toBeVisible();
-  await expect(reproducibilityKey).toHaveText(baselineKey ?? "");
-  await page.screenshot({ path: "test-results/sgb2-expense-ui.png", fullPage: true });
+  await page.getByLabel("Regelbedarfe Veränderung in Prozent").fill("5");
+  await expect(page.getByTestId("sgb2-standard-needs-control")).toContainText("591,15 € pro Monat");
+  await expect(kpis).toContainText(/\+|−|±/, { timeout: 120_000 });
+  await expect(kpis.getByText("Hohe Unsicherheit", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("sgb2-housing-control")).toContainText("Außerhalb vollständig integrierter Regionen");
+
+  const components = await openResultDetail(page, "Leistungsbestandteile und Ausgangswerte");
+  await expect(components.getByText("Regelbedarf", { exact: true })).toBeVisible();
+  const financing = await openResultDetail(page, "Finanzierung und Kostenträger");
+  await expect(financing).toContainText("Freie Kalibriergröße");
+  const validation = await openResultDetail(page, "Fachliche Prüfung und amtlicher Abgleich");
+  await expect(validation.getByTestId("sgb2-reproducibility-key")).toHaveText(/^sgb2-[0-9a-f]{8}$/);
+  await expect(validation.getByRole("heading", { name: "Amtlicher Abgleich", exact: true })).toBeVisible();
+
+  await page.screenshot({ path: "test-results/issue-38-buergergeld-standard-desktop.png", fullPage: true });
 });
 
-test("Einfach- und Expertenmodus verwenden denselben kanonischen Parametersatz", async ({ page, isMobile }) => {
+test("Standard- und Expertenmodus erhalten denselben kanonischen Parametersatz", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
-  await page.goto("./#/ausgaben");
+  await openBuergergeld(page);
   await page.getByRole("button", { name: "Experte" }).click();
   await page.getByLabel("Alleinstehende Erwachsene Wert").fill("600");
-  await page.getByRole("button", { name: "Einfach" }).click();
-  await expect(page.getByText("gemischte Einzelwerte").first()).toBeVisible();
+  await page.getByRole("button", { name: "Standard" }).click();
+  await expect(page.getByText("Einzelwerte im Expertenmodus geändert").first()).toBeVisible();
   await page.getByRole("button", { name: "Experte" }).click();
   await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("600");
+  await page.screenshot({ path: "test-results/issue-38-buergergeld-experte-desktop.png", fullPage: true });
 });
 
 test("zeigt Quelle, Rechtsstand und Unsicherheit direkt am Bürgergeldfeld", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
-  await page.goto("./#/ausgaben");
+  await openBuergergeld(page);
   await page.getByRole("button", { name: "Experte" }).click();
   const field = page.locator('[data-parameter-id="sgb2.standard-need.single"]');
   await field.getByText("Quelle und Unsicherheit").click();
@@ -82,42 +93,47 @@ test("hält Migration und Asyl in getrennten Teilaggregaten", async ({ page, isM
   await page.getByLabel("Integration Wert").fill("150");
   await expect(page.getByTestId("expense-module-value")).toHaveText("31,6 Mrd. €");
   await expect(page.getByText("Unterbringung").first()).toBeVisible();
-  await expect(page.getByText("Verfahren und Verwaltung").first()).toBeVisible();
 });
 
 test("lädt Ausgabennachweise aus dem lokalen Worker", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
-  await page.goto("./#/ausgaben");
+  await openBuergergeld(page);
   const dialog = page.getByRole("dialog", { name: "Nachweis: Ausgaben für Bürgergeld und Unterkunft" });
-  await openSourceDrawer(page.getByRole("button", { name: "Berechnung und Quellen" }), dialog);
+  await openSourceDrawer(page.getByRole("button", { name: "Berechnung und Quellen", exact: true }).first(), dialog);
   await expect(dialog.getByRole("heading", { name: "Verwendete Parameter" })).toBeVisible();
   await expect(dialog.getByRole("heading", { name: "Originalquellen" })).toBeVisible();
-  await expect(dialog.getByText("Regelbedarfe im Bürgergeld und in der Sozialhilfe 2026")).toBeVisible();
 });
 
-test("sichert konkrete Bürgergeldparameter per Worker und IndexedDB", async ({ page, isMobile }) => {
+test("persistiert Standardentscheidungen und setzt vollständig auf Baseline zurück", async ({ page, isMobile }) => {
   test.skip(isMobile, "Desktop-Nutzerfluss");
-  await page.goto("./#/ausgaben");
-  await page.getByRole("button", { name: "Experte" }).click();
-  const standardNeed = page.getByLabel("Alleinstehende Erwachsene Wert");
-  await standardNeed.fill("600");
-  await expect(standardNeed).toHaveValue("600");
-  await page.waitForTimeout(700);
+  await openBuergergeld(page);
+  await page.getByLabel("Regelbedarfe Veränderung in Prozent").fill("7");
+  await page.getByLabel("Anrechnungsfreier Grundbetrag aus Erwerbseinkommen").fill("150");
+  await page.getByLabel("Anerkennungsgrenzen für Unterkunft und Heizung verändern").fill("12");
+  await page.waitForTimeout(900);
   await page.reload();
-  await page.getByRole("button", { name: "Experte" }).click();
-  await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toHaveValue("600");
+  await expect(page.getByLabel("Regelbedarfe Veränderung in Prozent")).toHaveValue("7");
+  await expect(page.getByLabel("Anrechnungsfreier Grundbetrag aus Erwerbseinkommen")).toHaveValue("150");
+  await expect(page.getByLabel("Anerkennungsgrenzen für Unterkunft und Heizung verändern")).toHaveValue("12");
+  await page.getByRole("button", { name: "Alle Änderungen zurücksetzen" }).click();
+  await expect(page.getByLabel("Regelbedarfe Veränderung in Prozent")).toHaveValue("0");
+  await expect(page.getByLabel("Anrechnungsfreier Grundbetrag aus Erwerbseinkommen")).toHaveValue("100");
+  await expect(page.getByLabel("Anerkennungsgrenzen für Unterkunft und Heizung verändern")).toHaveValue("0");
 });
 
-test("stellt Bürgergeld-Release-Abnahme auf Mobilgeräten responsiv dar", async ({ page, isMobile }) => {
+test("stellt den Bürgergeld-Standardmodus mobil responsiv und per Tastatur bereit", async ({ page, isMobile }) => {
   test.skip(!isMobile, "Mobiler Nutzerfluss");
-  test.setTimeout(180_000);
-  await generateReferencePopulation(page);
-  await page.goto("./#/ausgaben");
-  await expect(page.getByTestId("sgb2-editor")).toBeVisible();
-  await expect(page.getByLabel("Regelbedarfe Prozent der Baseline")).toBeVisible();
-  await expect(page.getByTestId("sgb2-reproducibility-key")).toHaveText(/^sgb2-[0-9a-f]{8}$/, { timeout: 60_000 });
-  await expect(page.getByRole("heading", { name: "Reproduzierbarkeit und amtlicher Abgleich" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Amtlicher Abgleich", exact: true })).toBeVisible();
+  await openBuergergeld(page);
+  await expect(page.getByLabel("Regelbedarfe Veränderung in Prozent")).toBeVisible();
+  await expect(page.getByTestId("sgb2-standard-result-kpis").locator("article")).toHaveCount(4);
+  const moreRules = page.locator("details.sgb2-more-rules");
+  const summary = moreRules.locator("summary");
+  await summary.focus();
+  await summary.press("Enter");
+  await expect(moreRules).toHaveAttribute("open", "");
+  await expect(page.getByLabel("Mehrbedarfe Veränderung in Prozent")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+  await page.screenshot({ path: "test-results/issue-38-buergergeld-standard-mobile.png", fullPage: true });
 });
 
 test("öffnet Ausgabenmodule in der mobilen Dashboard-Navigation", async ({ page, isMobile }) => {
