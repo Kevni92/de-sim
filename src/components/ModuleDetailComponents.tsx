@@ -1,5 +1,19 @@
-import { ChevronLeft, Info, RotateCcw } from "lucide-react";
-import type { ModelLevel } from "../lib/types";
+import { ChevronLeft, Clock3, Info, RotateCcw, Settings2 } from "lucide-react";
+import {
+  calculationFreshnessLabel,
+  modelLevelCaution,
+  modelLevelDescription,
+  modelLevelLabel,
+  timeHorizonLabel,
+  type CalculationFreshness,
+} from "../lib/scenario-calculation";
+import type { ModelLevel, TimeHorizon } from "../lib/types";
+
+export const SCENARIO_CALCULATION_SETTINGS_EVENT = "de-sim:open-scenario-calculation-settings";
+
+export function requestScenarioCalculationSettings() {
+  window.dispatchEvent(new Event(SCENARIO_CALCULATION_SETTINGS_EVENT));
+}
 
 export function ModulePageHeader({
   eyebrow,
@@ -81,33 +95,46 @@ export function ModuleMetric({
   );
 }
 
-export function ModuleModelLevelCard({
-  description,
-  ariaLabel,
+export function ModuleCalculationContextCard({
   modelLevel,
-  onModelLevel,
-  modelLabel,
-  modelDescription,
+  horizonYears,
+  description = "Diese Einstellung gilt für das gesamte Szenario und wird hier nicht unabhängig verändert.",
+  status = "current",
+  statusMessage,
 }: {
-  description: string;
-  ariaLabel: string;
   modelLevel: ModelLevel;
-  onModelLevel: (level: ModelLevel) => void;
-  modelLabel: (level: ModelLevel) => string;
-  modelDescription: (level: ModelLevel) => string;
+  horizonYears: TimeHorizon;
+  description?: string;
+  status?: CalculationFreshness;
+  statusMessage?: string;
 }) {
   return (
-    <article className="card-flat model-level-card">
-      <h3>Modellstufe</h3>
-      <p>{description}</p>
-      <div className="model-level-options" role="radiogroup" aria-label={ariaLabel}>
-        {(["statisch", "verhalten", "langfrist"] as const).map((level) => (
-          <button key={level} role="radio" aria-checked={modelLevel === level} className={modelLevel === level ? "active" : ""} onClick={() => onModelLevel(level)}>
-            <strong>{modelLabel(level)}</strong>
-            <small>{modelDescription(level)}</small>
-          </button>
-        ))}
+    <article className="card-flat scenario-calculation-card" data-testid="scenario-calculation-summary" data-status={status}>
+      <div className="scenario-calculation-card-head">
+        <div>
+          <h3>Berechnungsrahmen</h3>
+          <p>{description}</p>
+        </div>
+        <span className={`scenario-calculation-state ${status}`} role="status" aria-live="polite">
+          {calculationFreshnessLabel(status)}
+        </span>
       </div>
+      <dl className="scenario-calculation-values">
+        <div>
+          <dt>Berechnet</dt>
+          <dd>{modelLevelLabel(modelLevel)}</dd>
+          <small>{modelLevelDescription(modelLevel)}</small>
+        </div>
+        <div>
+          <dt><Clock3 size={13} /> Zeitraum</dt>
+          <dd>{timeHorizonLabel(horizonYears)}</dd>
+          <small>zentral für das Szenario gespeichert</small>
+        </div>
+      </dl>
+      <p className={`scenario-calculation-note ${modelLevel === "langfrist" ? "warning" : ""}`}>{statusMessage ?? modelLevelCaution(modelLevel)}</p>
+      <button className="button secondary small scenario-calculation-edit" type="button" onClick={requestScenarioCalculationSettings}>
+        <Settings2 size={13} /> Im Szenario ändern
+      </button>
     </article>
   );
 }
