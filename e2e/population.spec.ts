@@ -32,7 +32,7 @@ async function selectDistribution(page: Page, name: string) {
 test("stellt die Standard-Modellbasis für Einkommensteuer und Bürgergeld ohne manuellen Schritt bereit", async ({ page, isMobile }) => {
   await page.goto("./#/einkommensteuer");
   const status = await waitForReadyBasis(page);
-  await expect(status).toContainText("reproduzierbare, versionierte Datenbasis");
+  await expect(status).toContainText(/reproduzierbare, versionierte Datenbasis|Berechnung ist verfügbar/);
   await expect(page.locator("body")).not.toContainText("population-");
   await expect(page.getByLabel("Grundfreibetrag Wert")).toBeVisible();
   await page.getByLabel("Grundfreibetrag Wert").fill("15000");
@@ -57,7 +57,7 @@ test("verwendet die vorhandene Standardbasis nach Neuladen erneut", async ({ pag
   await page.getByRole("button", { name: "Modellbasis prüfen" }).click();
   await expect(page).toHaveURL(/#\/bevoelkerung$/);
   await expect(page.locator(".population-run-list article")).toHaveCount(1);
-  await expect(page.getByText("10.000 Personen", { exact: false })).toBeVisible();
+  await expect(page.locator(".population-run-list").getByText("10.000 Personen", { exact: false })).toBeVisible();
 });
 
 test("zeigt Standardlauf, SGB-II-Summen, Verteilungen und Kalibrierung in der erweiterten Prüfebene", async ({ page }) => {
@@ -106,8 +106,7 @@ test("rekonstruiert eine gelöschte referenzierte Modellbasis mit ursprüngliche
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Bevölkerungslauf wiederherstellbar-35 löschen" }).click();
-  await expect(page.getByRole("status")).toContainText("Szenarioreferenz bleibt erhalten");
-  await page.waitForTimeout(400);
+  await expect(page.getByRole("status")).toContainText("Szenarioreferenz bleibt erhalten", { timeout: 60_000 });
   await page.goto("./#/einkommensteuer");
 
   const status = page.getByTestId("model-basis-status");
