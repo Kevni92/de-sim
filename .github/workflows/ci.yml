@@ -21,12 +21,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Quellcode für lokale Prüfung archivieren
-        run: tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report -czf /tmp/de-sim-source.tgz .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install chromium
+      - name: Quellcode und Browser für lokale Prüfung archivieren
+        run: |
+          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report -czf /tmp/de-sim-source.tgz .
+          tar -C "$HOME/.cache" -czf /tmp/ms-playwright.tgz ms-playwright
       - uses: actions/upload-artifact@v4
         with:
           name: de-sim-source
           path: /tmp/de-sim-source.tgz
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: local-playwright-browser
+          path: /tmp/ms-playwright.tgz
           retention-days: 1
 
   quality:
