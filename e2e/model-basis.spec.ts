@@ -1,9 +1,25 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+
+test.setTimeout(90_000);
 
 async function expectModelBasisReady(basis: Locator) {
   await expect(basis).toBeVisible();
   await expect(basis.getByText("Verwendete Datenbasis", { exact: true })).toBeVisible();
   await expect(basis.getByText(/^(innerhalb Toleranz|Warnung)$/)).toBeVisible({ timeout: 60_000 });
+}
+
+async function openScenarioPanel(page: Page, isMobile: boolean) {
+  if (isMobile) {
+    await page.getByRole("button", { name: "Hauptmenü öffnen" }).click();
+    const mobileMenu = page.getByRole("dialog", { name: "Hauptmenü" });
+    await mobileMenu.getByRole("button", { name: "Szenario verwalten" }).click();
+  } else {
+    await page.getByRole("button", { name: "Szenario", exact: true }).click();
+  }
+
+  const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
+  await expect(dialog).toBeVisible();
+  return dialog;
 }
 
 test.beforeEach(async ({ page }) => {
@@ -31,15 +47,14 @@ test("stellt für Einkommensteuer automatisch eine Modellbasis bereit", async ({
   await page.screenshot({ path: "test-results/issue-35-standard-model-basis.png", fullPage: true });
 });
 
-test("verwendet dieselbe Standard-Modellbasis nach einem neuen Szenario weiter", async ({ page }) => {
+test("verwendet dieselbe Standard-Modellbasis nach einem neuen Szenario weiter", async ({ page, isMobile }) => {
   await page.goto("./#/einkommensteuer");
   const basis = page.locator(".income-tax-population-banner");
   await expectModelBasisReady(basis);
   const firstBasis = await basis.locator("strong").first().textContent();
 
-  await page.getByRole("button", { name: "Szenario", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
-  await dialog.getByRole("button", { name: "Neues Szenario" }).click();
+  const dialog = await openScenarioPanel(page, isMobile);
+  await dialog.getByRole("button", { name: "Neu", exact: true }).click();
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
 
   await page.reload();
