@@ -9,6 +9,7 @@ Dieser Ordner beschreibt die technische Arbeitsweise und die aktuelle Anwendungs
 | [`WORKFLOW.md`](WORKFLOW.md) | Verbindlicher Ablauf von Problem und Issue bis Branch, Tests, Pull Request, Review und Merge |
 | [`STACK.md`](STACK.md) | Eingesetzte Technologien, Entwicklungsbefehle, CI und Veröffentlichung |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Technische Bestandsaufnahme, Ablageorte und Regeln für architekturtreue Erweiterungen |
+| [`MODELLBASIS.md`](MODELLBASIS.md) | Automatische Standardbasis, Szenarioreferenz, Worker-Ablauf und Wiederherstellung fehlender Bevölkerungsläufe |
 
 ## Abgrenzung
 
