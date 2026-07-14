@@ -6,11 +6,23 @@ import {
   normalizeSgb2ScenarioReference,
   validateSgb2ScenarioReference,
 } from "./sgb2-policy";
-import type { ScenarioDraft, ScenarioState, TimeHorizon } from "./types";
+import type { ModelLevel, ScenarioDraft, ScenarioState, TimeHorizon } from "./types";
 
-export const SCENARIO_SCHEMA_VERSION = 5;
-export type ScenarioDraftWithPopulationBasis = ScenarioDraft & { populationBasis: PopulationBasisReference | null };
-type ScenarioInput = Partial<ScenarioDraft> & { populationBasis?: unknown };
+export const SCENARIO_SCHEMA_VERSION = 6;
+export interface EffectRunReference {
+  runId: string;
+  modelVersion: string;
+  populationRunId: string;
+  modelLevel: ModelLevel;
+  horizonYears: TimeHorizon;
+  inputSignature: string;
+  calculatedAt: string;
+}
+export type ScenarioDraftWithPopulationBasis = ScenarioDraft & {
+  populationBasis: PopulationBasisReference | null;
+  effectRunReference: EffectRunReference | null;
+};
+type ScenarioInput = Partial<ScenarioDraft> & { populationBasis?: unknown; effectRunReference?: unknown };
 
 export const defaultScenarioDraft: ScenarioDraftWithPopulationBasis = {
   name: "Reformentwurf A",
@@ -59,11 +71,17 @@ export const defaultScenarioDraft: ScenarioDraftWithPopulationBasis = {
   populationRunId: null,
   populationModelVersion: null,
   populationBasis: null,
+  effectRunReference: null,
   sgb2: cloneSgb2ScenarioReference(defaultSgb2ScenarioReference),
 };
 
 export interface ScenarioHistory { past: ScenarioDraftWithPopulationBasis[]; present: ScenarioDraftWithPopulationBasis; future: ScenarioDraftWithPopulationBasis[]; }
-export type ScenarioHistoryAction = { type: "change"; patch: Partial<ScenarioDraftWithPopulationBasis> } | { type: "replace"; scenario: ScenarioInput } | { type: "undo" } | { type: "redo" };
+export type ScenarioHistoryAction =
+  | { type: "change"; patch: Partial<ScenarioDraftWithPopulationBasis> }
+  | { type: "sync"; patch: Partial<ScenarioDraftWithPopulationBasis> }
+  | { type: "replace"; scenario: ScenarioInput }
+  | { type: "undo" }
+  | { type: "redo" };
 
 function cloneScenario(scenario: ScenarioDraftWithPopulationBasis): ScenarioDraftWithPopulationBasis {
   return {
@@ -75,6 +93,7 @@ function cloneScenario(scenario: ScenarioDraftWithPopulationBasis): ScenarioDraf
     assumptions: [...scenario.assumptions],
     sourceIds: [...scenario.sourceIds],
     populationBasis: scenario.populationBasis ? { ...scenario.populationBasis } : null,
+    effectRunReference: scenario.effectRunReference ? { ...scenario.effectRunReference } : null,
     sgb2: cloneSgb2ScenarioReference(scenario.sgb2),
   };
 }
@@ -84,7 +103,9 @@ export function scenarioHistoryReducer(state: ScenarioHistory, action: ScenarioH
   if (action.type === "undo") { const previous = state.past.at(-1); return previous ? { past: state.past.slice(0, -1), present: cloneScenario(previous), future: [cloneScenario(state.present), ...state.future].slice(0, 50) } : state; }
   if (action.type === "redo") { const next = state.future[0]; return next ? { past: [...state.past, cloneScenario(state.present)].slice(-50), present: cloneScenario(next), future: state.future.slice(1) } : state; }
   const next = action.type === "replace" ? normalizeScenarioDraft(action.scenario) : normalizeScenarioDraft({ ...state.present, ...action.patch });
-  return equalScenario(next, state.present) ? state : { past: [...state.past, cloneScenario(state.present)].slice(-50), present: cloneScenario(next), future: [] };
+  if (equalScenario(next, state.present)) return state;
+  if (action.type === "sync") return { ...state, present: cloneScenario(next) };
+  return { past: [...state.past, cloneScenario(state.present)].slice(-50), present: cloneScenario(next), future: [] };
 }
 function numberOr(value: unknown, fallback: number) { return typeof value === "number" && Number.isFinite(value) ? value : fallback; }
 function stringArray(value: unknown, fallback: string[]) { return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : fallback; }
@@ -105,6 +126,20 @@ function normalizePopulationBasis(value: unknown, legacyRunId: string | null, le
     sampleSize: nullablePositiveInteger(record?.sampleSize),
     baselineId: nullableString(record?.baselineId),
   };
+}
+function normalizeEffectRunReference(value: unknown): EffectRunReference | null {
+  const record = value && typeof value === "object" ? value as Record<string, unknown> : null;
+  const runId = nullableString(record?.runId);
+  const modelVersion = nullableString(record?.modelVersion);
+  const populationRunId = nullableString(record?.populationRunId);
+  const inputSignature = nullableString(record?.inputSignature);
+  const calculatedAt = nullableString(record?.calculatedAt);
+  const modelLevel = record?.modelLevel;
+  const horizon = record?.horizonYears;
+  if (!runId || !modelVersion || !populationRunId || !inputSignature || !calculatedAt) return null;
+  if (modelLevel !== "statisch" && modelLevel !== "verhalten" && modelLevel !== "langfrist") return null;
+  if (horizon !== 1 && horizon !== 5 && horizon !== 10 && horizon !== 20) return null;
+  return { runId, modelVersion, populationRunId, inputSignature, calculatedAt, modelLevel, horizonYears: horizon };
 }
 
 export function normalizeScenarioDraft(value: ScenarioInput | ScenarioState | null | undefined): ScenarioDraftWithPopulationBasis {
@@ -143,13 +178,14 @@ export function normalizeScenarioDraft(value: ScenarioInput | ScenarioState | nu
     populationRunId,
     populationModelVersion,
     populationBasis,
+    effectRunReference: normalizeEffectRunReference((value as ScenarioInput | undefined)?.effectRunReference),
     sgb2: normalizeSgb2ScenarioReference(value?.sgb2, hasExplicitSgb2Reference ? undefined : expenseChanges, populationRunId),
   };
 }
 export function scenarioToJson(scenario: ScenarioDraftWithPopulationBasis) { return JSON.stringify({ schemaVersion: SCENARIO_SCHEMA_VERSION, scenario }, null, 2); }
 export function scenarioFromJson(text: string): ScenarioDraftWithPopulationBasis {
   const parsed = JSON.parse(text) as { schemaVersion?: unknown; scenario?: unknown };
-  const supportedVersions = [1, 2, 3, 4, SCENARIO_SCHEMA_VERSION];
+  const supportedVersions = [1, 2, 3, 4, 5, SCENARIO_SCHEMA_VERSION];
   if (!supportedVersions.includes(parsed.schemaVersion as number) || !parsed.scenario || typeof parsed.scenario !== "object") throw new Error("Die Datei ist kein unterstütztes Deutschland-Simulator-Szenario.");
   const scenario = normalizeScenarioDraft(parsed.scenario as ScenarioInput);
   const sgb2Error = validateSgb2ScenarioReference(scenario.sgb2).find((issue) => issue.severity === "error");
