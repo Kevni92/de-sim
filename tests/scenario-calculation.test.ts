@@ -22,7 +22,7 @@ test("verwendet verbindliche Nutzerbegriffe für alle Modellstufen", () => {
     "Langfristiges Szenario",
   ]);
   assert.equal(modelLevelLabel("statisch"), "Nur direkte Wirkung");
-  assert.equal(modelLevelDescription("verhalten"), "Dokumentierte kurzfristige Verhaltens- und begrenzte Folgewirkungen.");
+  assert.equal(modelLevelDescription("verhalten"), "Dokumentierte kurzfristige Verhaltensanpassung und begrenzte Folgewirkungen.");
   assert.match(modelLevelCaution("langfrist"), /keine sichere Prognose/i);
   assert.equal(timeHorizonLabel(1), "1 Jahr");
   assert.equal(timeHorizonLabel(20), "20 Jahre");
