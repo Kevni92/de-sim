@@ -46,15 +46,16 @@ export function PopulationPage({
   return (
     <main className="content-width population-page">
       <header className="population-header">
-        <div><span>Bevölkerungsmodell · SGB-II-Erweiterung</span><h1>Bevölkerung</h1><p>Deterministisch erzeugte und gewichtete Personen, Haushalte und Bedarfsgemeinschaften für Verteilungs-, Steuer- und Leistungsberechnungen.</p></div>
+        <div><span>Erweiterte Prüfebene</span><h1>Modellbasis und Bevölkerung</h1><p>Hier lassen sich die automatisch verwendete synthetische Datenbasis, ihre Kalibrierung und gespeicherte Generationsläufe vollständig prüfen und verwalten.</p></div>
         <button className="button secondary" onClick={() => onOpenSource("source-population-model")}><Info size={14} /> Methode und Quellen</button>
       </header>
 
+      <div className="population-boundary"><strong>Hinweis:</strong> Für normale Reformabläufe ist keine manuelle Erzeugung nötig. Eine neue oder aktivierte Modellbasis kann Ergebnisse verändern und wird deshalb im Szenario referenziert.</div>
       {error && <div className="population-error" role="alert"><AlertTriangle size={16} /> {error}</div>}
 
-      <section className="population-overview" aria-label="Aktiver Bevölkerungslauf">
+      <section className="population-overview" aria-label="Aktive Modellbasis">
         <article className="card-flat population-active-card">
-          <header><div><span className="population-icon"><Database size={18} /></span><div><h2>Aktiver Lauf</h2><p>{activeRun?.metadata.id ?? "wird geladen"}</p></div></div>{activeRun && <StatusBadge status={activeRun.metadata.quality.status} />}</header>
+          <header><div><span className="population-icon"><Database size={18} /></span><div><h2>Aktive Modellbasis</h2><p>{activeRun?.metadata.id ?? "wird geladen"}</p></div></div>{activeRun && <StatusBadge status={activeRun.metadata.quality.status} />}</header>
           <div className="population-kpi-grid">
             <Metric label="Synthetische Personen" value={formatInteger(summary?.personCount)} note="gespeicherte Stichprobe" />
             <Metric label="Synthetische Haushalte" value={formatInteger(summary?.householdCount)} note="konsistent verknüpft" />
@@ -70,12 +71,12 @@ export function PopulationPage({
         </article>
 
         <article className="card-flat population-generator">
-          <div className="section-title"><div><h2>Bevölkerung erzeugen</h2><p>Gleicher Seed, gleiche Baseline und gleiche Modellversion ergeben dieselben Personen, Haushalte und Bedarfsgemeinschaften.</p></div></div>
+          <div className="section-title"><div><h2>Eigene Modellbasis erzeugen</h2><p>Gleicher Seed, gleiche Baseline und gleiche Modellversion ergeben dieselben Personen, Haushalte und Bedarfsgemeinschaften.</p></div></div>
           <label><span>Seed</span><input aria-label="Seed der Bevölkerung" value={seed} onChange={(event) => setSeed(event.target.value)} /></label>
           <label><span>Stichprobengröße</span><select aria-label="Stichprobengröße" value={sampleSize} onChange={(event) => setSampleSize(Number(event.target.value))}><option value={2_000}>2.000 Personen</option><option value={5_000}>5.000 Personen</option><option value={10_000}>10.000 Personen · Standard</option><option value={25_000}>25.000 Personen</option><option value={50_000}>50.000 Personen</option></select></label>
           <label><span>Baseline</span><select aria-label="Bevölkerungsbaseline" value={DEFAULT_BASELINE_ID} disabled><option value={DEFAULT_BASELINE_ID}>Deutschland 2024/2025 · Version 1</option></select></label>
-          <button className="button primary population-generate" disabled={generating || !seed.trim()} onClick={() => onGenerate({ seed: seed.trim(), sampleSize, baselineId: DEFAULT_BASELINE_ID })}>{generating ? <><RefreshCw className="spin" size={15} /> Generierung läuft im Worker</> : <><RefreshCw size={15} /> Neu erzeugen</>}</button>
-          <small>Standard: 10.000 Personen. Einzelpersonen und Bedarfsgemeinschaften verbleiben im lokalen Worker und in IndexedDB; die UI erhält nur Aggregate und Qualitätsberichte.</small>
+          <button className="button primary population-generate" disabled={generating || !seed.trim()} onClick={() => onGenerate({ seed: seed.trim(), sampleSize, baselineId: DEFAULT_BASELINE_ID })}>{generating ? <><RefreshCw className="spin" size={15} /> Generierung läuft im Worker</> : <><RefreshCw size={15} /> Erzeugen und für Szenario verwenden</>}</button>
+          <small>Diese Expertenfunktion ersetzt die Modellbasis des aktuellen Szenarios bewusst. Die Standardbasis mit 10.000 Personen wird in normalen Reformansichten automatisch bereitgestellt.</small>
         </article>
       </section>
 
@@ -92,8 +93,8 @@ export function PopulationPage({
         </article>
 
         <aside className="card-flat population-runs">
-          <div className="section-title"><div><h2>Gespeicherte Läufe</h2><p>Aktivieren oder lokal löschen.</p></div><span>{runs.length}</span></div>
-          <div className="population-run-list">{runs.map((run) => <article className={run.metadata.active ? "active" : ""} key={run.metadata.id}><button className="population-run-main" onClick={() => onActivate(run.metadata.id)}><strong>{run.metadata.seed}</strong><span>{formatInteger(run.metadata.sampleSize)} Personen · {new Date(run.metadata.createdAt).toLocaleString("de-DE")}</span><small>{run.metadata.id}</small></button><button className="icon-button" aria-label={`Bevölkerungslauf ${run.metadata.seed} löschen`} disabled={run.metadata.active && runs.length === 1} onClick={() => { if (window.confirm("Diesen synthetischen Bevölkerungslauf lokal löschen?")) onDelete(run.metadata.id); }}><Trash2 size={14} /></button></article>)}</div>
+          <div className="section-title"><div><h2>Gespeicherte Modellbasen</h2><p>Eine andere Basis bewusst für das aktuelle Szenario aktivieren oder lokal löschen.</p></div><span>{runs.length}</span></div>
+          <div className="population-run-list">{runs.map((run) => <article className={run.metadata.active ? "active" : ""} key={run.metadata.id}><button className="population-run-main" onClick={() => onActivate(run.metadata.id)}><strong>{run.metadata.seed}</strong><span>{formatInteger(run.metadata.sampleSize)} Personen · {new Date(run.metadata.createdAt).toLocaleString("de-DE")}</span><small>{run.metadata.id}</small></button><button className="icon-button" aria-label={`Bevölkerungslauf ${run.metadata.seed} löschen`} disabled={run.metadata.active && runs.length === 1} onClick={() => { if (window.confirm("Diesen synthetischen Bevölkerungslauf lokal löschen? Die Szenarioreferenz wird nicht stillschweigend ersetzt.")) onDelete(run.metadata.id); }}><Trash2 size={14} /></button></article>)}</div>
         </aside>
       </section>
 
