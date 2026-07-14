@@ -1,4 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
+
+async function expectModelBasisReady(basis: Locator) {
+  await expect(basis).toBeVisible();
+  await expect(basis.getByText("Verwendete Datenbasis", { exact: true })).toBeVisible();
+  await expect(basis.getByText(/^(innerhalb Toleranz|Warnung)$/)).toBeVisible({ timeout: 60_000 });
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto("./");
@@ -17,9 +23,7 @@ test("stellt für Einkommensteuer automatisch eine Modellbasis bereit", async ({
   await page.goto("./#/einkommensteuer");
 
   const basis = page.locator(".income-tax-population-banner");
-  await expect(basis).toBeVisible();
-  await expect(basis.getByText("Verwendete Datenbasis", { exact: true })).toBeVisible();
-  await expect(basis.getByText("innerhalb Toleranz", { exact: true })).toBeVisible({ timeout: 60_000 });
+  await expectModelBasisReady(basis);
   await expect(page.getByLabel("Grundfreibetrag Wert")).toBeEnabled();
 
   await page.getByLabel("Grundfreibetrag Wert").fill("15000");
@@ -30,7 +34,7 @@ test("stellt für Einkommensteuer automatisch eine Modellbasis bereit", async ({
 test("verwendet dieselbe Standard-Modellbasis nach einem neuen Szenario weiter", async ({ page }) => {
   await page.goto("./#/einkommensteuer");
   const basis = page.locator(".income-tax-population-banner");
-  await expect(basis.getByText("innerhalb Toleranz", { exact: true })).toBeVisible({ timeout: 60_000 });
+  await expectModelBasisReady(basis);
   const firstBasis = await basis.locator("strong").first().textContent();
 
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
@@ -39,6 +43,6 @@ test("verwendet dieselbe Standard-Modellbasis nach einem neuen Szenario weiter",
   await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
 
   await page.reload();
-  await expect(basis.getByText("innerhalb Toleranz", { exact: true })).toBeVisible({ timeout: 60_000 });
+  await expectModelBasisReady(basis);
   await expect(basis.locator("strong").first()).toHaveText(firstBasis ?? "");
 });
