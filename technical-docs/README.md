@@ -11,6 +11,7 @@ Dieser Ordner beschreibt die technische Arbeitsweise und die aktuelle Anwendungs
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Technische Bestandsaufnahme, Ablageorte und Regeln für architekturtreue Erweiterungen |
 | [`MODELLBASIS.md`](MODELLBASIS.md) | Automatische Standardbasis, Szenarioreferenz, Worker-Ablauf und Wiederherstellung fehlender Bevölkerungsläufe |
 | [`BERECHNUNGSRAHMEN.md`](BERECHNUNGSRAHMEN.md) | Zentrale Modellstufe und Zeithorizont, schreibgeschützte Fachseiten und Aktualitätsstatus der Wirkungsrechnung |
+| [`KONTEXTWIRKUNGEN.md`](KONTEXTWIRKUNGEN.md) | Explizite Reform-Wirkungs-Zuordnung, Überlappungsschutz, Eingabesignatur und gemeinsame Modul-/Vergleichsdarstellung |
 
 ## Abgrenzung
 
