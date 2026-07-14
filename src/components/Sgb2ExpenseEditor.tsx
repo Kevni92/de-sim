@@ -42,6 +42,17 @@ function formatWeighted(value: number) {
   return value.toLocaleString("de-DE", { maximumFractionDigits: 0 });
 }
 
+function formatPercent(value: number) {
+  const sign = value > 0 ? "+" : value < 0 ? "−" : "±";
+  return `${sign}${Math.abs(value * 100).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
+}
+
+function formatDuration(milliseconds: number) {
+  return milliseconds < 1_000
+    ? `${milliseconds.toLocaleString("de-DE")} ms`
+    : `${(milliseconds / 1_000).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s`;
+}
+
 function FieldEditor({ field, reference, onReference, onOpenSource }: {
   field: (typeof sgb2UiFields)[number];
   reference: Sgb2ScenarioReference;
@@ -147,6 +158,30 @@ export function Sgb2ExpenseEditor({ reference, preview, loading, error, populati
           <div><h4>Leistungsbestandteile</h4><div className="sgb2-result-table"><div><span>Bestandteil</span><span>Baseline</span><span>Szenario</span><span>Änderung</span></div>{preview.components.map((item) => <div key={item.id}><strong>{item.label}</strong><span>{formatBnFromCents(item.baselineCents)}</span><span>{formatBnFromCents(item.scenarioCents)}</span><span className={item.deltaCents <= 0 ? "positive" : "negative"}>{formatDeltaFromCents(item.deltaCents)}</span></div>)}</div></div>
           <div><h4>Nettofinanzierung</h4><ul className="sgb2-payer-list">{preview.payers.map((payer) => <li key={payer.payer}><span>{payer.label}</span><strong>{formatBnFromCents(payer.scenarioCents)}</strong></li>)}</ul><p className="sgb2-calibration">Abstimmungsdifferenz / freie Kalibriergröße: <strong>{formatBnFromCents(preview.calibrationAdjustmentCents)}</strong></p></div>
         </div>
+
+        <section className="sgb2-release-validation" aria-label="Release-Abnahme">
+          <header>
+            <div><span className="eyebrow">Release-Abnahme</span><h3>Reproduzierbarkeit und amtlicher Abgleich</h3><p>{preview.releaseValidation.qualityLabel}</p></div>
+            <span className={`sgb2-quality ${preview.releaseValidation.qualityStatus === "prüfbar" ? "ok" : "limited"}`}>{preview.releaseValidation.qualityStatus}</span>
+          </header>
+          <div className="sgb2-validation-kpis">
+            <article><span>Reproduzierbarkeitsschlüssel</span><strong data-testid="sgb2-reproducibility-key">{preview.releaseValidation.reproducibilityKey}</strong><small>gleicher Lauf + gleiche Baseline = gleicher Schlüssel</small></article>
+            <article><span>Unsicherheitsband Baseline</span><strong>{formatBnFromCents(preview.releaseValidation.uncertaintyBand.lowerCents)} bis {formatBnFromCents(preview.releaseValidation.uncertaintyBand.upperCents)}</strong><small>±{(preview.releaseValidation.uncertaintyBand.relativeWidth * 100).toLocaleString("de-DE")} % · kein Konfidenzintervall</small></article>
+            <article><span>Performance</span><strong>{formatDuration(preview.releaseValidation.performance.durationMs)}</strong><small>{formatWeighted(preview.releaseValidation.performance.simulatedBenefitUnitMonths)} BG-Monate · Grenze {formatDuration(preview.releaseValidation.performance.warningThresholdMs)}</small></article>
+          </div>
+          <h4>Amtlicher Abgleich</h4>
+          <div className="sgb2-reference-table">
+            <div><span>Vergleich</span><span>Amtlich</span><span>Modell annualisiert</span><span>Abweichung</span></div>
+            {preview.releaseValidation.comparisons.map((item) => <article key={item.id}>
+              <div><strong>{item.scopeLabel}</strong><small>{item.label} · {item.period} · Vergleichbarkeit {item.comparability}</small><button type="button" onClick={() => onOpenSource(item.sourceId, formatBnFromCents(item.referenceValueCents))}>Quelle und Abgrenzung</button></div>
+              <span>{formatBnFromCents(item.referenceValueCents)}</span>
+              <span>{formatBnFromCents(item.modelValueCents)}</span>
+              <span className={item.absoluteDeviationCents <= 0 ? "positive" : "negative"}>{formatDeltaFromCents(item.absoluteDeviationCents)}<small>{formatPercent(item.relativeDeviation)}</small></span>
+            </article>)}
+          </div>
+          <details className="sgb2-validation-details"><summary>Abgrenzungsgründe und Modelllücken <ChevronDown size={16} /></summary><div>{preview.releaseValidation.comparisons.flatMap((item) => item.boundaryDifferences).map((item) => <p key={item}>{item}</p>)}{preview.releaseValidation.modelLimitations.map((item) => <p key={item}>{item}</p>)}</div></details>
+        </section>
+
         <details className="sgb2-explanation"><summary>Rechenweg und Modellgrenzen anzeigen <ChevronDown size={16} /></summary><div><ol><li>Persönliche Regel- und Mehrbedarfe je Monat bestimmen.</li><li>Anrechenbares Einkommen und Freibeträge je Person berechnen und innerhalb der BG verteilen.</li><li>Unterkunft und Heizung regional prüfen und anerkannte Beträge ergänzen.</li><li>Monatlichen Zahlungsanspruch je BG bilden und das modellierte Bezugsfenster beachten.</li><li>Monatswerte mit BG-Gewichten aggregieren und nach Leistungsbestandteil sowie Kostenträger zerlegen.</li></ol><p>Es wird keine freie Restgröße zur künstlichen Anpassung an einen Haushaltswert verwendet.</p>{preview.limitations.slice(0, 3).map((item) => <p key={item}>{item}</p>)}</div></details>
       </>}
     </section>
