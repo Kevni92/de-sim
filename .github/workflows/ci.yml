@@ -14,6 +14,21 @@ permissions:
   contents: read
 
 jobs:
+  source-snapshot:
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft && github.head_ref == 'feat/sgb2-e2e-release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Quellcode für lokale Prüfung archivieren
+        run: tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report -czf de-sim-source.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: de-sim-source
+          path: de-sim-source.tgz
+          retention-days: 1
+
   quality:
     runs-on: ubuntu-latest
     steps:
