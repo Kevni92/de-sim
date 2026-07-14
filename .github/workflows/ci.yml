@@ -29,11 +29,17 @@ jobs:
       - name: Quellcode und Browser für lokale Prüfung archivieren
         run: |
           tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report -czf /tmp/de-sim-source.tgz .
+          tar -czf /tmp/de-sim-node-modules.tgz node_modules
           tar -C "$HOME/.cache" -czf /tmp/ms-playwright.tgz ms-playwright
       - uses: actions/upload-artifact@v4
         with:
           name: de-sim-source
           path: /tmp/de-sim-source.tgz
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: local-node-modules
+          path: /tmp/de-sim-node-modules.tgz
           retention-days: 1
       - uses: actions/upload-artifact@v4
         with:
