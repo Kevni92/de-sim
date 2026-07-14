@@ -24,7 +24,7 @@ async function handle(request: EffectLocalRequest): Promise<EffectLocalResponse>
       ]);
       populationDb.close();
       if (!persons.length || !households.length) throw new Error("Der Bevölkerungslauf enthält keine auswertbaren Personen oder Haushalte.");
-      const result = calculateEffectRun(request.payload, persons, households);
+      const result: EffectRun = { ...calculateEffectRun(request.payload, persons, households), inputSignature: request.payload.inputSignature };
       const transaction = db.transaction(RUNS, "readwrite"); transaction.objectStore(RUNS).put(result); await complete(transaction);
       return { id: request.id, ok: true, data: result };
     }
