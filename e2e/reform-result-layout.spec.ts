@@ -11,7 +11,7 @@ test("ordnet ein Einnahmemodul nach dem gemeinsamen Reform- und Ergebnisvertrag"
   await expect(summary.getByText("Direkte staatliche Wirkung", { exact: true })).toBeVisible();
   await expect(summary.getByText("Am stärksten betroffen", { exact: true })).toBeVisible();
   await expect(summary.getByText("Belastbarkeit", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Modellstufe" })).toBeHidden();
+  await expect(page.getByRole("heading", { name: "Berechnungsrahmen" })).toBeHidden();
 
   const affectedSection = page.getByTestId("reform-affected-section");
   const affected = affectedSection.locator("summary");
@@ -19,10 +19,12 @@ test("ordnet ein Einnahmemodul nach dem gemeinsamen Reform- und Ergebnisvertrag"
   await affected.press("Enter");
   await expect(affectedSection.getByText("Private Haushalte", { exact: true })).toBeVisible();
 
-  const followUp = page.getByTestId("reform-follow-up-section").locator("summary");
+  const followUpSection = page.getByTestId("reform-follow-up-section");
+  const followUp = followUpSection.locator("summary");
   await followUp.focus();
   await followUp.press("Enter");
-  await expect(page.getByRole("heading", { name: "Modellstufe" })).toBeVisible();
+  await expect(followUpSection.getByRole("heading", { name: "Berechnungsrahmen" })).toBeVisible();
+  await expect(followUpSection.getByText("Mit kurzfristigen Reaktionen", { exact: true })).toBeVisible();
   await expect(page.getByText("Modellierte Folgewirkung", { exact: true })).toBeVisible();
 
   await page.getByText("Erweiterte Parameter", { exact: true }).click();
