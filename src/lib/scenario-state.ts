@@ -95,6 +95,7 @@ export function normalizeScenarioDraft(value: Partial<ScenarioDraft> | ScenarioS
   const allowedHorizons: TimeHorizon[] = [1, 5, 10, 20];
   const expenseChanges = numberRecord(value?.expenseChanges, {});
   const populationRunId = nullableString(value?.populationRunId);
+  const hasExplicitSgb2Reference = Boolean(value?.sgb2 && typeof value.sgb2 === "object");
   return {
     name: typeof value?.name === "string" && value.name.trim() ? value.name : fallback.name,
     description: typeof value?.description === "string" ? value.description : fallback.description,
@@ -119,7 +120,7 @@ export function normalizeScenarioDraft(value: Partial<ScenarioDraft> | ScenarioS
     sourceIds: stringArray(value?.sourceIds, fallback.sourceIds),
     populationRunId,
     populationModelVersion: nullableString(value?.populationModelVersion),
-    sgb2: normalizeSgb2ScenarioReference(value?.sgb2, expenseChanges, populationRunId),
+    sgb2: normalizeSgb2ScenarioReference(value?.sgb2, hasExplicitSgb2Reference ? undefined : expenseChanges, populationRunId),
   };
 }
 export function scenarioToJson(scenario: ScenarioDraft) { return JSON.stringify({ schemaVersion: SCENARIO_SCHEMA_VERSION, scenario }, null, 2); }

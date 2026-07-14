@@ -9,6 +9,8 @@ import { populationSources } from "./lib/population-model";
 import { calculateRevenueModules, revenueResultsById, type RevenueModuleId } from "./lib/revenue-modules";
 import { createScenarioHistory, defaultScenarioDraft, normalizeScenarioDraft, scenarioFromJson, scenarioHistoryReducer, scenarioToJson } from "./lib/scenario-state";
 import { expenseItems, fmtBn, fmtDiff, revenueItems } from "./lib/sim-data";
+import { sgb2PreviewClient } from "./lib/sgb2-preview-client";
+import type { Sgb2UiPreviewResult } from "./lib/sgb2-ui";
 import type { MetricRecord, PopulationGenerationOptions, PopulationRun, ScenarioDraft, ScenarioState, SourceRecord } from "./lib/types";
 import { ComparisonPage } from "./pages/ComparisonPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -31,6 +33,7 @@ const legacyMetricIds: Record<string, string> = {
 };
 const signedEuro = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : "±"}${Math.abs(Math.round(value)).toLocaleString("de-DE")} € / Monat`;
 const formatMillion = (value: number) => value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const centsToBillions = (value: number) => value / 100_000_000_000;
 
 export function App() {
   const [route, setRoute] = useState<AppRoute>(readRoute);
@@ -48,6 +51,9 @@ export function App() {
   const [populationLoading, setPopulationLoading] = useState(false);
   const [populationGenerating, setPopulationGenerating] = useState(false);
   const [populationError, setPopulationError] = useState("");
+  const [sgb2Preview, setSgb2Preview] = useState<Sgb2UiPreviewResult | null>(null);
+  const [sgb2PreviewLoading, setSgb2PreviewLoading] = useState(false);
+  const [sgb2PreviewError, setSgb2PreviewError] = useState("");
   const [taxResult, setTaxResult] = useState<IncomeTaxResult>(() => estimateIncomeTaxRevenue(defaultScenarioDraft.incomeTax, defaultScenarioDraft.modelLevel));
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
@@ -55,7 +61,34 @@ export function App() {
 
   const scenario = history.present;
   const revenueModuleResults = useMemo(() => calculateRevenueModules(scenario.revenueChanges, scenario.modelLevel), [scenario.modelLevel, scenario.revenueChanges]);
-  const expenseModuleResults = useMemo(() => calculateExpenseModules(scenario.expenseChanges, scenario.modelLevel), [scenario.expenseChanges, scenario.modelLevel]);
+  const baseExpenseModuleResults = useMemo(() => calculateExpenseModules(scenario.expenseChanges, scenario.modelLevel), [scenario.expenseChanges, scenario.modelLevel]);
+  const expenseModuleResults = useMemo(() => baseExpenseModuleResults.map((item) => {
+    if (item.id !== "social" || !sgb2Preview) return item;
+    const baseline = centsToBillions(sgb2Preview.baselinePaymentCents);
+    const value = centsToBillions(sgb2Preview.scenarioPaymentCents);
+    const standard = sgb2Preview.components.find((component) => component.id === "standard-need");
+    const additional = sgb2Preview.components.find((component) => component.id === "additional-need");
+    const accommodation = sgb2Preview.components.find((component) => component.id === "accommodation");
+    const heating = sgb2Preview.components.find((component) => component.id === "heating");
+    const benefitValue = centsToBillions((standard?.scenarioCents ?? 0) + (additional?.scenarioCents ?? 0));
+    const housingValue = centsToBillions((accommodation?.scenarioCents ?? 0) + (heating?.scenarioCents ?? 0));
+    return {
+      ...item,
+      baseline,
+      staticValue: value,
+      value,
+      staticDelta: value - baseline,
+      feedbackAdjustment: 0,
+      delta: value - baseline,
+      lineValues: { ...item.lineValues, buerger: benefitValue, wohnen: housingValue },
+      components: sgb2Preview.components.map((component) => ({
+        id: component.id,
+        label: component.label,
+        baseline: centsToBillions(component.baselineCents),
+        value: centsToBillions(component.scenarioCents),
+      })),
+    };
+  }), [baseExpenseModuleResults, sgb2Preview]);
   const revenueModulesById = useMemo(() => revenueResultsById(revenueModuleResults), [revenueModuleResults]);
   const expenseLinesById = useMemo(() => expenseLineResultsById(expenseModuleResults), [expenseModuleResults]);
   const otherRevenueDelta = revenueModuleResults.reduce((sum, item) => sum + item.delta, 0);
@@ -65,7 +98,7 @@ export function App() {
   const materializedScenario = useMemo<ScenarioDraft>(() => ({
     ...scenario,
     modelVersion: "synthetic-population-0.7.0",
-    sourceIds: Array.from(new Set([...scenario.sourceIds, "source-revenue-model", "source-expense-model", ...populationSources.map((source) => source.id)])),
+    sourceIds: Array.from(new Set([...scenario.sourceIds, "source-revenue-model", "source-expense-model", ...populationSources.map((source) => source.id), ...(sgb2Preview?.sourceIds ?? [])])),
     revenueChanges: {
       ...scenario.revenueChanges,
       ...Object.fromEntries(revenueModuleResults.map((item) => [item.id, item.delta])),
@@ -76,7 +109,7 @@ export function App() {
       ...scenario.expenseChanges,
       ...Object.fromEntries(expenseModuleResults.map((item) => [item.id, item.delta])),
     },
-  }), [expenseModuleResults, revenueModuleResults, scenario, taxResult.delta]);
+  }), [expenseModuleResults, revenueModuleResults, scenario, sgb2Preview?.sourceIds, taxResult.delta]);
 
   const metricValues = useMemo<Record<string, string>>(() => {
     const revenueTotal = revenueItems.reduce((sum, item) => item.id === "est" ? sum + taxResult.value : item.id in revenueModulesById ? sum + revenueModulesById[item.id as RevenueModuleId].value : sum + item.statusQuo, 0);
@@ -140,7 +173,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const routeNeedsPopulation = route === "/bevoelkerung" || route === "/einkommensteuer";
+    const routeNeedsPopulation = route === "/bevoelkerung" || route === "/einkommensteuer" || (route === "/ausgaben" && selectedExpenseModule === "social");
     if (!ready || activePopulation || (!routeNeedsPopulation && !scenario.populationRunId)) return;
 
     const attemptKey = scenario.populationRunId ?? "__default__";
@@ -181,6 +214,7 @@ export function App() {
             patch: {
               populationRunId: population.metadata.id,
               populationModelVersion: population.metadata.modelVersion,
+              sgb2: { ...scenario.sgb2, populationRunId: population.metadata.id },
             },
           });
         }
@@ -193,7 +227,34 @@ export function App() {
 
     void loadPopulation();
     return () => { cancelled = true; };
-  }, [activePopulation, ready, route, scenario.populationRunId]);
+  }, [activePopulation, ready, route, scenario.populationRunId, scenario.sgb2, selectedExpenseModule]);
+
+  useEffect(() => {
+    if (!ready || !activePopulation) {
+      setSgb2Preview(null);
+      setSgb2PreviewLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const timeout = window.setTimeout(() => {
+      setSgb2PreviewLoading(true);
+      setSgb2PreviewError("");
+      void sgb2PreviewClient.preview(activePopulation.metadata.id, { ...scenario.sgb2, populationRunId: activePopulation.metadata.id })
+        .then((preview) => {
+          if (!cancelled) setSgb2Preview(preview);
+        })
+        .catch((error) => {
+          if (!cancelled) setSgb2PreviewError(error instanceof Error ? error.message : "Bürgergeld-Vorschau konnte nicht berechnet werden.");
+        })
+        .finally(() => {
+          if (!cancelled) setSgb2PreviewLoading(false);
+        });
+    }, 220);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [activePopulation, ready, scenario.sgb2]);
 
   useEffect(() => {
     if (!ready) return;
@@ -300,6 +361,7 @@ export function App() {
         name: "Neues Szenario",
         populationRunId: activePopulation?.metadata.id ?? null,
         populationModelVersion: activePopulation?.metadata.modelVersion ?? null,
+        sgb2: { ...defaultScenarioDraft.sgb2, populationRunId: activePopulation?.metadata.id ?? null },
       },
     });
     setActiveScenarioId(null);
@@ -369,7 +431,7 @@ export function App() {
       const run = await localServer.generatePopulation(options);
       populationAttemptKey.current = run.metadata.id;
       setActivePopulation(run);
-      updateScenario({ populationRunId: run.metadata.id, populationModelVersion: run.metadata.modelVersion });
+      updateScenario({ populationRunId: run.metadata.id, populationModelVersion: run.metadata.modelVersion, sgb2: { ...scenario.sgb2, populationRunId: run.metadata.id } });
       await refreshPopulationRuns();
       showNotice("Synthetische Bevölkerung erzeugt und aktiviert");
     } catch (error) {
@@ -383,7 +445,7 @@ export function App() {
       const run = await localServer.activatePopulation(runId);
       populationAttemptKey.current = run.metadata.id;
       setActivePopulation(run);
-      updateScenario({ populationRunId: run.metadata.id, populationModelVersion: run.metadata.modelVersion });
+      updateScenario({ populationRunId: run.metadata.id, populationModelVersion: run.metadata.modelVersion, sgb2: { ...scenario.sgb2, populationRunId: run.metadata.id } });
       setPopulationError("");
       await refreshPopulationRuns();
     } catch (error) {
@@ -396,7 +458,7 @@ export function App() {
       populationAttemptKey.current = null;
       const next = await localServer.getActivePopulation();
       setActivePopulation(next);
-      updateScenario({ populationRunId: next.metadata.id, populationModelVersion: next.metadata.modelVersion });
+      updateScenario({ populationRunId: next.metadata.id, populationModelVersion: next.metadata.modelVersion, sgb2: { ...scenario.sgb2, populationRunId: next.metadata.id } });
       await refreshPopulationRuns();
     } catch (error) {
       setPopulationError(error instanceof Error ? error.message : "Lauf konnte nicht gelöscht werden.");
@@ -410,7 +472,7 @@ export function App() {
     {route === "/bevoelkerung" && <PopulationPage activeRun={activePopulation} runs={populationRuns} generating={populationLoading || populationGenerating} error={populationError} onGenerate={(options) => void generatePopulation(options)} onActivate={(runId) => void activatePopulation(runId)} onDelete={(runId) => void deletePopulationRun(runId)} onOpenSource={openSource} />}
     {route === "/einkommensteuer" && <IncomeTaxPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} result={taxResult} populationRun={activePopulation} revenueResults={revenueModuleResults} onSettings={(incomeTax) => updateScenario({ incomeTax })} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onNavigateRevenue={navigateRevenueModule} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/einnahmen" && <RevenueModulesPage selectedId={selectedRevenueModule} results={revenueModuleResults} incomeTaxResult={taxResult} parameters={scenario.revenueChanges} modelLevel={scenario.modelLevel} onSelect={setSelectedRevenueModule} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onParameters={(revenueChanges) => updateScenario({ revenueChanges })} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
-    {route === "/ausgaben" && <ExpenseModulesPage selectedId={selectedExpenseModule} results={expenseModuleResults} parameters={scenario.expenseChanges} modelLevel={scenario.modelLevel} onSelect={setSelectedExpenseModule} onParameters={(expenseChanges) => updateScenario({ expenseChanges })} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
+    {route === "/ausgaben" && <ExpenseModulesPage selectedId={selectedExpenseModule} results={expenseModuleResults} parameters={scenario.expenseChanges} modelLevel={scenario.modelLevel} sgb2={scenario.sgb2} sgb2Preview={sgb2Preview} sgb2PreviewLoading={sgb2PreviewLoading} sgb2PreviewError={sgb2PreviewError} populationAvailable={Boolean(activePopulation)} onSelect={setSelectedExpenseModule} onParameters={(expenseChanges) => updateScenario({ expenseChanges })} onSgb2={(sgb2) => updateScenario({ sgb2 })} onModelLevel={(modelLevel) => updateScenario({ modelLevel })} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/vergleich" && <ComparisonPage settings={scenario.incomeTax} revenue={taxResult.value} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/transparenz" && <TransparencyPage metrics={metrics} sources={sources} values={metricValues} onOpenMetric={openSource} />}
     {notice && <div className="toast" role="status">{notice}</div>}

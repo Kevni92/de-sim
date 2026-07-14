@@ -65,6 +65,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+      - name: SGB-II-Ausgaben-Screenshot hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sgb2-expense-ui
+          path: test-results/sgb2-expense-ui.png
+          if-no-files-found: warn
+          retention-days: 14
       - name: SGB-II-Populationsscreenshot hochladen
         if: always()
         uses: actions/upload-artifact@v4
