@@ -1,0 +1,52 @@
+.reform-result-layout { padding: 19px; }
+.reform-step-label { display: block; color: var(--primary, #147d7e); font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.reform-primary-control { display: grid; grid-template-columns: minmax(210px, .7fr) minmax(320px, 1.3fr); gap: 22px; align-items: center; margin-top: 18px; padding: 16px; border: 1px solid #bcd7d7; border-radius: 7px; background: #f1f7f7; }
+.reform-primary-control h3 { margin: 5px 0 4px; font-size: 15px; }
+.reform-primary-control p { margin: 0; color: var(--muted, #5f6b78); font-size: 10px; line-height: 1.5; }
+.reform-primary-control-body { min-width: 0; }
+.reform-primary-control .revenue-parameter { grid-template-columns: 1fr; gap: 8px; padding: 0; border: 0; }
+.reform-primary-control .revenue-parameter > span { display: none; }
+.reform-kpi-grid { margin-top: 12px; }
+.reform-disclosure { overflow: hidden; }
+.reform-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 18px; cursor: pointer; list-style: none; }
+.reform-disclosure > summary::-webkit-details-marker { display: none; }
+.reform-disclosure > summary:focus-visible { outline: 3px solid rgba(20, 125, 126, .28); outline-offset: -3px; }
+.reform-disclosure > summary h3 { margin: 4px 0 3px; font-size: 15px; }
+.reform-disclosure > summary p { margin: 0; color: var(--muted, #5f6b78); font-size: 10px; line-height: 1.45; }
+.reform-disclosure > summary svg { flex: 0 0 auto; transition: transform .18s ease; }
+.reform-disclosure[open] > summary svg { transform: rotate(180deg); }
+.reform-disclosure-content { padding: 18px; border-top: 1px solid var(--border, #d6dde5); }
+.reform-inline-card { padding: 0; }
+.reform-inline-card .section-title p { max-width: 720px; }
+.reform-effect-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.reform-effect-grid article { padding: 14px; border: 1px solid var(--border, #d6dde5); border-radius: 6px; background: #fff; }
+.reform-effect-grid span, .reform-effect-grid small { display: block; color: var(--muted, #5f6b78); font-size: 9px; line-height: 1.4; }
+.reform-effect-grid strong { display: block; margin: 7px 0 5px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.reform-disclosure .model-level-card { padding: 16px; border: 1px solid var(--border, #d6dde5); box-shadow: none; }
+.reform-source-callout { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; }
+.reform-source-callout h4 { margin: 0 0 5px; font-size: 13px; }
+.reform-source-callout p { margin: 0; color: var(--muted, #5f6b78); font-size: 10px; line-height: 1.5; }
+.reform-source-callout .button { white-space: nowrap; }
+.reform-parameter-intro { margin: 0 0 10px; color: var(--muted, #5f6b78); font-size: 10px; line-height: 1.5; }
+.reform-overview-table { padding: 0; border: 0; box-shadow: none; }
+.reform-state { margin-top: 18px; padding: 18px; border: 1px solid var(--border, #d6dde5); border-radius: 7px; background: #f7f9fa; }
+.reform-state > strong { display: block; margin: 5px 0; font-size: 15px; }
+.reform-state > p { margin: 0; color: var(--muted, #5f6b78); font-size: 10px; line-height: 1.5; }
+.reform-state-error { border-color: #dfb7b7; background: #fbefef; }
+.reform-state-not-calculable { border-color: #e8d39f; background: #fff8e7; }
+.reform-state .button { margin-top: 12px; }
+.reform-loading-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.reform-loading-grid span { height: 72px; border-radius: 6px; background: linear-gradient(90deg, #e8edef, #f5f7f8, #e8edef); background-size: 200% 100%; animation: reform-loading 1.4s linear infinite; }
+@keyframes reform-loading { to { background-position: -200% 0; } }
+
+@media (max-width: 720px) {
+  .reform-primary-control { grid-template-columns: 1fr; gap: 12px; }
+  .reform-effect-grid { grid-template-columns: 1fr; }
+  .reform-source-callout { grid-template-columns: 1fr; }
+  .reform-loading-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reform-disclosure > summary svg { transition: none; }
+  .reform-loading-grid span { animation: none; }
+}

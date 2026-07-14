@@ -10,6 +10,7 @@ import "./transparency.css";
 import "./income-tax.css";
 import "./income-tax-population.css";
 import "./revenue-modules.css";
+import "./reform-result-layout.css";
 import "./expense-modules.css";
 import "./sgb2-ui.css";
 import "./population.css";
