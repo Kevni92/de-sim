@@ -1,20 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppBar, type AppRoute } from "./components/AppBar";
+import { ScenarioPanel } from "./components/ScenarioPanel";
 import { localServer } from "./lib/local-server-client";
 import type { EffectModuleDefinition, EffectRun } from "./lib/long-term-effects";
+import { resolveCalculationFreshness } from "./lib/scenario-calculation";
 import { defaultScenarioDraft, normalizeScenarioDraft } from "./lib/scenario-state";
-import type { PopulationRun, ScenarioDraft, TimeHorizon } from "./lib/types";
+import type { PopulationRun, ScenarioDraft, ScenarioState } from "./lib/types";
 import { EffectsPage } from "./pages/EffectsPage";
 
 export function EffectsRoute() {
   const [scenario, setScenario] = useState<ScenarioDraft>(defaultScenarioDraft);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
+  const [savedCount, setSavedCount] = useState(0);
+  const [scenarioPanelOpen, setScenarioPanelOpen] = useState(false);
   const [modules, setModules] = useState<EffectModuleDefinition[]>([]);
   const [populationRun, setPopulationRun] = useState<PopulationRun | null>(null);
   const [run, setRun] = useState<EffectRun | null>(null);
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const calculationRequest = useRef(0);
 
   const navigate = (route: AppRoute) => {
     window.location.hash = route;
@@ -25,13 +30,15 @@ export function EffectsRoute() {
     let cancelled = false;
     void Promise.all([
       localServer.getActiveDraft(),
+      localServer.listScenarios(),
       localServer.listEffectModules(),
       localServer.getActivePopulation(),
-    ]).then(([draft, loadedModules, population]) => {
+    ]).then(([draft, savedScenarios, loadedModules, population]: [Awaited<ReturnType<typeof localServer.getActiveDraft>>, ScenarioState[], EffectModuleDefinition[], PopulationRun]) => {
       if (cancelled) return;
       const nextScenario = normalizeScenarioDraft(draft?.scenario ?? defaultScenarioDraft);
       setScenario(nextScenario);
       setActiveScenarioId(draft?.activeScenarioId ?? null);
+      setSavedCount(savedScenarios.length);
       setModules(loadedModules);
       setPopulationRun(population);
       setReady(true);
@@ -52,13 +59,15 @@ export function EffectsRoute() {
     return () => window.clearTimeout(timeout);
   }, [activeScenarioId, ready, scenario]);
 
-  const calculate = useCallback(async () => {
+  const calculate = useCallback(async (requestId: number) => {
     const populationRunId = scenario.populationRunId ?? populationRun?.metadata.id;
     if (!populationRunId) {
-      setError("Für die Wirkungsrechnung ist ein aktiver Bevölkerungslauf erforderlich.");
+      if (requestId === calculationRequest.current) {
+        setError("Für die Wirkungsrechnung ist eine verfügbare Modellbasis erforderlich.");
+        setLoading(false);
+      }
       return;
     }
-    setLoading(true);
     setError("");
     try {
       const result = await localServer.calculateEffects({
@@ -70,21 +79,37 @@ export function EffectsRoute() {
         legalYear: scenario.legalYear,
         parameters: scenario.effectParameters,
       });
-      setRun(result);
+      if (requestId === calculationRequest.current) setRun(result);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Wirkungen konnten nicht berechnet werden.");
+      if (requestId === calculationRequest.current) setError(cause instanceof Error ? cause.message : "Wirkungen konnten nicht berechnet werden.");
     } finally {
-      setLoading(false);
+      if (requestId === calculationRequest.current) setLoading(false);
     }
   }, [activeScenarioId, populationRun?.metadata.id, scenario]);
 
   useEffect(() => {
     if (!ready || !populationRun || modules.length === 0) return;
-    const timeout = window.setTimeout(() => void calculate(), 350);
+    const requestId = ++calculationRequest.current;
+    setLoading(true);
+    setError("");
+    const timeout = window.setTimeout(() => void calculate(requestId), 350);
     return () => window.clearTimeout(timeout);
   }, [calculate, modules.length, populationRun, ready]);
 
+  const retryCalculation = () => {
+    const requestId = ++calculationRequest.current;
+    setLoading(true);
+    void calculate(requestId);
+  };
   const patch = (value: Partial<ScenarioDraft>) => setScenario((current) => normalizeScenarioDraft({ ...current, ...value }));
+  const calculationStatus = resolveCalculationFreshness({
+    loading: loading || !ready,
+    hasResult: Boolean(run),
+    runModelLevel: run?.modelLevel,
+    runHorizonYears: run?.horizonYears,
+    modelLevel: scenario.modelLevel,
+    horizonYears: scenario.horizonYears,
+  });
 
   return <div className="app-shell">
     <AppBar
@@ -99,7 +124,7 @@ export function EffectsRoute() {
       onUndo={() => undefined}
       onRedo={() => undefined}
       onSave={() => void localServer.saveActiveDraft({ activeScenarioId, scenario })}
-      onOpenScenario={() => navigate("/dashboard")}
+      onOpenScenario={() => setScenarioPanelOpen(true)}
     />
     <EffectsPage
       modules={modules}
@@ -109,13 +134,20 @@ export function EffectsRoute() {
       horizonYears={scenario.horizonYears}
       populationRun={populationRun}
       loading={loading || !ready}
+      calculationStatus={calculationStatus}
       error={error}
       onParameters={(effectParameters) => patch({ effectParameters })}
-      onModelLevel={(modelLevel) => patch({ modelLevel })}
-      onHorizon={(horizonYears: TimeHorizon) => patch({ horizonYears })}
-      onCalculate={() => void calculate()}
+      onCalculate={retryCalculation}
       onOpenSource={() => navigate("/transparenz")}
       onBack={() => navigate("/dashboard")}
+    />
+    <ScenarioPanel
+      open={scenarioPanelOpen}
+      scenario={scenario}
+      activeScenarioId={activeScenarioId}
+      savedCount={savedCount}
+      onPatch={patch}
+      onClose={() => setScenarioPanelOpen(false)}
     />
   </div>;
 }
