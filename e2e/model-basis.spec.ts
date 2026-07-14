@@ -1,0 +1,44 @@
+import { expect, test } from "@playwright/test";
+
+test.beforeEach(async ({ page }) => {
+  await page.goto("./");
+  await page.evaluate(async () => {
+    const databases = await indexedDB.databases();
+    await Promise.all(databases.map(({ name }) => name && new Promise<void>((resolve) => {
+      const request = indexedDB.deleteDatabase(name);
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
+    })));
+  });
+});
+
+test("stellt für Einkommensteuer automatisch eine Modellbasis bereit", async ({ page }) => {
+  await page.goto("./#/einkommensteuer");
+
+  const basis = page.locator(".income-tax-population-banner");
+  await expect(basis).toBeVisible();
+  await expect(basis.getByText("Verwendete Datenbasis", { exact: true })).toBeVisible();
+  await expect(basis.getByText("innerhalb Toleranz", { exact: true })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByLabel("Grundfreibetrag Wert")).toBeEnabled();
+
+  await page.getByLabel("Grundfreibetrag Wert").fill("15000");
+  await expect(page.getByText("Verteilungswirkung", { exact: true })).toBeVisible();
+  await page.screenshot({ path: "test-results/issue-35-standard-model-basis.png", fullPage: true });
+});
+
+test("verwendet dieselbe Standard-Modellbasis nach einem neuen Szenario weiter", async ({ page }) => {
+  await page.goto("./#/einkommensteuer");
+  const basis = page.locator(".income-tax-population-banner");
+  await expect(basis.getByText("innerhalb Toleranz", { exact: true })).toBeVisible({ timeout: 60_000 });
+  const firstBasis = await basis.locator("strong").first().textContent();
+
+  await page.getByRole("button", { name: "Szenario", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
+  await dialog.getByRole("button", { name: "Neues Szenario" }).click();
+  await dialog.getByRole("button", { name: "Schließen", exact: true }).click();
+
+  await page.reload();
+  await expect(basis.getByText("innerhalb Toleranz", { exact: true })).toBeVisible({ timeout: 60_000 });
+  await expect(basis.locator("strong").first()).toHaveText(firstBasis ?? "");
+});
