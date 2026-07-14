@@ -63,7 +63,7 @@ export function ContextualEffectsPanel({
   }
 
   if (!basisAvailable) {
-    return <div className="context-effects-state warning" role="status" data-testid="context-effects-missing-basis"><AlertTriangle size={18} /><div><strong>Modellbasis fehlt</strong><p>Die direkte Wirkung bleibt nutzbar. Für kontextbezogene Personen-, Haushalts- und Zeitpfade wird eine verfügbare Modellbasis benötigt.</p><button className="button secondary small" type="button" onClick={onManageBasis}>Modellbasis prüfen</button></div></div>;
+    return <div className="context-effects-state warning" role="status" data-testid="context-effects-missing-basis"><AlertTriangle size={18} /><div><strong>Modellierte Folgewirkung</strong><p><b>Modellbasis fehlt oder wird vorbereitet.</b> Die direkte Wirkung bleibt nutzbar. Für kontextbezogene Personen-, Haushalts- und Zeitpfade wird eine verfügbare Modellbasis benötigt.</p><button className="button secondary small" type="button" onClick={onManageBasis}>Modellbasis prüfen</button></div></div>;
   }
 
   return <div className="context-effects-panel" data-testid="context-effects-panel" data-status={status}>
