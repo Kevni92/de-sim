@@ -1,6 +1,8 @@
-import { AlertTriangle, ArrowLeft, Calculator, Clock3, Database, Info, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Clock3, Database, Info, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { EffectModuleDefinition, EffectModuleResult, EffectRun } from "../lib/long-term-effects";
+import { ModuleCalculationContextCard } from "../components/ModuleDetailComponents";
+import type { EffectModuleDefinition, EffectRun } from "../lib/long-term-effects";
+import { modelLevelLabel, timeHorizonLabel, type CalculationFreshness } from "../lib/scenario-calculation";
 import type { ModelLevel, PopulationRun, TimeHorizon } from "../lib/types";
 
 const evidenceLabels: Record<string, string> = {
@@ -18,11 +20,6 @@ const causalityLabels: Record<string, string> = {
   modelliert: "Modelliert",
   hypothetisch: "Hypothetisch",
 };
-const levelLabels: Record<ModelLevel, string> = {
-  statisch: "Statisch",
-  verhalten: "Verhalten",
-  langfrist: "Langfristig",
-};
 
 const formatBn = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : "±"}${Math.abs(value).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mrd. €`;
 const formatCount = (value: number) => Math.round(value).toLocaleString("de-DE");
@@ -36,10 +33,9 @@ export function EffectsPage({
   horizonYears,
   populationRun,
   loading,
+  calculationStatus,
   error,
   onParameters,
-  onModelLevel,
-  onHorizon,
   onCalculate,
   onOpenSource,
   onBack,
@@ -48,13 +44,12 @@ export function EffectsPage({
   run: EffectRun | null;
   parameters: Record<string, number>;
   modelLevel: ModelLevel;
-  horizonYears: number;
+  horizonYears: TimeHorizon;
   populationRun: PopulationRun | null;
   loading: boolean;
+  calculationStatus: CalculationFreshness;
   error: string;
   onParameters: (parameters: Record<string, number>) => void;
-  onModelLevel: (level: ModelLevel) => void;
-  onHorizon: (years: TimeHorizon) => void;
   onCalculate: () => void;
   onOpenSource: (id: string, value?: string) => void;
   onBack: () => void;
@@ -65,33 +60,35 @@ export function EffectsPage({
   }, [modules, selectedId]);
   const selected = modules.find((module) => module.id === selectedId) ?? modules[0];
   const result = run?.moduleResults.find((item) => item.moduleId === selected?.id) ?? null;
-  const calculatedWithCurrentLevel = run?.modelLevel === modelLevel && run?.horizonYears === horizonYears;
   const summary = useMemo(() => {
-    if (!run) return { calculated: 0, unavailable: 0, widest: 0 };
+    if (!run) return { calculated: 0, unavailable: 0 };
     return {
       calculated: run.moduleResults.filter((item) => item.evidenceStatus !== "nicht-berechnet" && item.evidenceStatus !== "nicht-ausreichend-belegt").length,
       unavailable: run.moduleResults.filter((item) => item.evidenceStatus === "nicht-berechnet" || item.evidenceStatus === "nicht-ausreichend-belegt").length,
-      widest: Math.max(0, ...run.moduleResults.map((item) => Math.abs(item.upper - item.lower))),
     };
   }, [run]);
+  const calculationStatusMessage = calculationStatus === "updating"
+    ? run
+      ? "Die vorhandene Rechnung bleibt zur Orientierung sichtbar, wird aber gerade mit dem neuen Berechnungsrahmen aktualisiert."
+      : "Die Wirkungsrechnung wird mit dem zentralen Berechnungsrahmen vorbereitet."
+    : calculationStatus === "stale" && run
+      ? `Die sichtbare Rechnung verwendet noch ${modelLevelLabel(run.modelLevel)} mit ${timeHorizonLabel(run.horizonYears)} und wird nicht als aktuell ausgewiesen.`
+      : undefined;
 
   if (!selected) {
     return <main className="effects-page"><div className="effects-empty">Wirkungsregister wird geladen …</div></main>;
   }
 
   return (
-    <main className="effects-page">
+    <main className="effects-page" data-calculation-status={calculationStatus} aria-busy={loading}>
       <header className="effects-header">
         <button className="text-button effects-back" onClick={onBack}><ArrowLeft size={15} /> Zurück zum Dashboard</button>
         <div className="effects-title-row">
           <div>
             <p className="eyebrow">Milestone 8 · Wirkungs-Engine</p>
             <h1>Indirekte und langfristige Wirkungen</h1>
-            <p>Direkte Erstwirkung, zeitliche Verzögerung, Rückkopplungen und Unsicherheit werden getrennt ausgewiesen.</p>
+            <p>Direkte Erstwirkung, zeitliche Verzögerung, Rückkopplungen und Unsicherheit werden getrennt ausgewiesen. Änderungen am zentralen Szenario lösen die Aktualisierung automatisch aus.</p>
           </div>
-          <button className="button primary" onClick={onCalculate} disabled={loading || !populationRun} data-testid="calculate-effects">
-            {loading ? <RefreshCw className="spin" size={15} /> : <Calculator size={15} />} Neu berechnen
-          </button>
         </div>
       </header>
 
@@ -100,31 +97,22 @@ export function EffectsPage({
         <div><strong>Keine sichere Prognose.</strong> Die Ergebnisse zeigen mögliche Pfade unter den gewählten Annahmen. Nicht ausreichend belegte Wirkungen bleiben ausdrücklich unberechnet.</div>
       </section>
 
-      {error && <div className="effects-error" role="alert">{error}</div>}
+      {error && <div className="effects-error" role="alert"><span>{error}</span><button className="button secondary small" onClick={onCalculate} disabled={loading}><RefreshCw className={loading ? "spin" : ""} size={14} /> Erneut versuchen</button></div>}
 
       <section className="effects-overview" aria-label="Status der Wirkungsrechnung">
-        <article><Database size={17} /><span>Bevölkerungslauf</span><strong>{populationRun?.metadata.id.slice(0, 16) ?? "nicht verfügbar"}</strong><small>{populationRun ? `${formatCount(populationRun.summary.weightedPopulation)} gewichtete Personen` : "Bitte Bevölkerung erzeugen"}</small></article>
-        <article><Clock3 size={17} /><span>Zeithorizont</span><strong>{horizonYears} Jahre</strong><small>{run ? `${run.dataYear} bis ${run.dataYear + run.horizonYears}` : "noch nicht berechnet"}</small></article>
+        <article><Database size={17} /><span>Bevölkerungslauf</span><strong>{populationRun?.metadata.id.slice(0, 16) ?? "nicht verfügbar"}</strong><small>{populationRun ? `${formatCount(populationRun.summary.weightedPopulation)} gewichtete Personen` : "Modellbasis nicht verfügbar"}</small></article>
+        <article><Clock3 size={17} /><span>Zeithorizont</span><strong>{timeHorizonLabel(horizonYears)}</strong><small>{run ? `${run.dataYear} bis ${run.dataYear + run.horizonYears}` : "noch nicht berechnet"}</small></article>
         <article><Info size={17} /><span>Berechnete Module</span><strong>{summary.calculated} von {modules.length}</strong><small>{summary.unavailable} bewusst ohne Punktwert</small></article>
         <article><AlertTriangle size={17} /><span>Modellversion</span><strong>{run?.modelVersion ?? "0.8.0"}</strong><small>{run ? new Date(run.createdAt).toLocaleString("de-DE") : "noch kein Lauf"}</small></article>
       </section>
 
-      <section className="effects-level-card">
-        <div><strong>Modellstufe</strong><span>Die Stufe ist Teil des zentralen Szenariozustands.</span></div>
-        <div className="effects-level-controls">
-          <div className="effects-level-buttons" role="group" aria-label="Modellstufe">
-            {(["statisch", "verhalten", "langfrist"] as ModelLevel[]).map((level) => (
-              <button key={level} className={modelLevel === level ? "active" : ""} onClick={() => onModelLevel(level)}>{levelLabels[level]}</button>
-            ))}
-          </div>
-          <div className="effects-level-buttons" role="group" aria-label="Zeithorizont">
-            {([1, 5, 10, 20] as TimeHorizon[]).map((years) => (
-              <button key={years} className={horizonYears === years ? "active" : ""} onClick={() => onHorizon(years)}>{years} J.</button>
-            ))}
-          </div>
-        </div>
-        {!calculatedWithCurrentLevel && run && <small className="effects-stale">Die sichtbare Rechnung verwendet noch {levelLabels[run.modelLevel]} mit {run.horizonYears} Jahren. Bitte neu berechnen.</small>}
-      </section>
+      <ModuleCalculationContextCard
+        modelLevel={modelLevel}
+        horizonYears={horizonYears}
+        status={calculationStatus}
+        statusMessage={calculationStatusMessage}
+        description="Modellstufe und Zeitraum gelten für das gesamte Szenario. Die Wirkungsseite übernimmt sie schreibgeschützt und berechnet automatisch neu."
+      />
 
       <div className="effects-layout">
         <aside className="effects-module-list" aria-label="Wirkungsbereiche">
