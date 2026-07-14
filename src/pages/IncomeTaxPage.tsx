@@ -9,13 +9,12 @@ import {
 } from "../lib/income-tax";
 import { revenueModuleDefinitions, type RevenueModuleId, type RevenueModuleResult } from "../lib/revenue-modules";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
-import type { IncomeTaxSettings, ModelLevel, PopulationRun } from "../lib/types";
+import type { IncomeTaxSettings, ModelLevel } from "../lib/types";
 
 export function IncomeTaxPage({
   settings,
   modelLevel,
   result,
-  populationRun,
   revenueResults,
   onSettings,
   onModelLevel,
@@ -26,7 +25,6 @@ export function IncomeTaxPage({
   settings: IncomeTaxSettings;
   modelLevel: ModelLevel;
   result: IncomeTaxResult;
-  populationRun: PopulationRun | null;
   revenueResults: RevenueModuleResult[];
   onSettings: (next: IncomeTaxSettings) => void;
   onModelLevel: (level: ModelLevel) => void;
@@ -39,17 +37,11 @@ export function IncomeTaxPage({
   return (
     <main className="content-width revenue-modules-page income-tax-page">
       <ModulePageHeader
-        eyebrow="Milestone 7 · Einkommensteuer auf synthetischer Bevölkerung"
+        eyebrow="Einkommensteuer · Reform und direkte Wirkung"
         title="Steuern und Sozialbeiträge"
-        description="Gesetzlicher Tarifkern und gewichtete Verteilungsrechnung nutzen denselben aktiven, vollständig synthetischen Bevölkerungslauf."
+        description="Gesetzlichen Tarif ändern, direkte Haushaltswirkung verstehen und Berechnung bei Bedarf vollständig prüfen."
         onBack={onBack}
       />
-
-      <section className="card-flat income-tax-population-banner" aria-label="Verwendeter Bevölkerungslauf">
-        <div><span>Verwendete Datenbasis</span><strong>{populationRun?.metadata.id ?? "Fallback-Referenzpopulation"}</strong><small>{populationRun ? `${populationRun.metadata.sampleSize.toLocaleString("de-DE")} synthetische Personen · ${formatNumber(populationRun.metadata.weightedPopulation / 1_000_000)} Mio. gewichtet · Datenstand ${populationRun.metadata.dataYear}` : "Der referenzierte lokale Lauf ist nicht verfügbar."}</small></div>
-        <div><span>Kalibrierung</span><strong className={populationRun?.metadata.quality.status === "warnung" ? "negative" : "positive"}>{populationRun?.metadata.quality.status === "warnung" ? "Warnung" : populationRun ? "innerhalb Toleranz" : "nicht verfügbar"}</strong><small>{populationRun?.metadata.modelVersion ?? "Fallback"}</small></div>
-        <button className="button secondary small" onClick={() => onOpenSource("source-population-model", populationRun?.metadata.id ?? "Fallback")}><Info size={13} /> Bevölkerung nachweisen</button>
-      </section>
 
       <section className="revenue-module-layout">
         <aside className="card-flat revenue-module-list" aria-label="Einnahmemodule">
@@ -128,7 +120,7 @@ export function IncomeTaxPage({
           </section>
 
           <section className="card-flat income-tax-impact-card">
-            <div className="section-title"><div><h3>Verteilungswirkung</h3><p>Gewichtete Ergebnisse des aktiven synthetischen Bevölkerungslaufs.</p></div></div>
+            <div className="section-title"><div><h3>Verteilungswirkung</h3><p>Gewichtete Ergebnisse der automatisch bereitgestellten synthetischen Modellbasis.</p></div></div>
             <div className="revenue-kpi-grid">
               <ModuleMetric label="Gewinner" value={`${formatNumber(result.winnersM)} Mio.`} note="gewichtete Haushalte" tone="positive" onSource={() => onOpenSource("metric-income-tax-distribution", `${formatNumber(result.winnersM)} Mio.`)} />
               <ModuleMetric label="Verlierer" value={`${formatNumber(result.losersM)} Mio.`} note="gewichtete Haushalte" tone="negative" onSource={() => onOpenSource("metric-income-tax-distribution", `${formatNumber(result.losersM)} Mio.`)} />

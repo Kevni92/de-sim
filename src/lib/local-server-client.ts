@@ -6,6 +6,7 @@ import type {
   EffectModuleDefinition,
   EffectRun,
 } from "./long-term-effects";
+import type { PopulationBasisReference } from "./population-basis";
 import type {
   ActiveScenarioDraft,
   CalibrationEntry,
@@ -27,6 +28,9 @@ import type {
 type WithoutId<T> = T extends unknown ? Omit<T, "id"> : never;
 type LocalRequestInput = WithoutId<LocalRequest>;
 type EffectRequestInput = WithoutId<EffectLocalRequest>;
+type PopulationBasisRequestInput =
+  | { type: "population:ensure-standard" }
+  | { type: "population:reconstruct"; payload: { reference: PopulationBasisReference } };
 
 class WorkerRpcClient {
   private pending = new Map<string, { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }>();
@@ -45,12 +49,12 @@ class WorkerRpcClient {
     });
   }
 
-  call<T>(request: LocalRequestInput): Promise<T> {
+  call<T>(request: LocalRequestInput | PopulationBasisRequestInput): Promise<T> {
     const execute = () => {
       const id = crypto.randomUUID();
       return new Promise<T>((resolve, reject) => {
         this.pending.set(id, { resolve: resolve as (value: unknown) => void, reject });
-        this.worker.postMessage({ ...request, id } as LocalRequest);
+        this.worker.postMessage({ ...request, id });
       });
     };
     const result = this.tail.then(execute, execute);
@@ -104,6 +108,8 @@ class LocalServerClient {
   saveActiveDraft(draft: ActiveScenarioDraft) { return this.core.call<ActiveScenarioDraft>({ type: "draft:save", payload: draft }); }
 
   generatePopulation(options: PopulationGenerationOptions) { return this.population.call<PopulationRun>({ type: "population:generate", payload: options }); }
+  ensureStandardPopulation() { return this.population.call<PopulationRun>({ type: "population:ensure-standard" }); }
+  reconstructPopulation(reference: PopulationBasisReference) { return this.population.call<PopulationRun>({ type: "population:reconstruct", payload: { reference } }); }
   getActivePopulation() { return this.population.call<PopulationRun>({ type: "population:get-active" }); }
   listPopulationRuns() { return this.population.call<PopulationRun[]>({ type: "population:list-runs" }); }
   activatePopulation(runId: string) { return this.population.call<PopulationRun>({ type: "population:activate", payload: { runId } }); }

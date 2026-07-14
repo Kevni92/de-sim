@@ -11,8 +11,8 @@ async function generateReferencePopulation(page: import("@playwright/test").Page
   const personMetric = page.getByText("Synthetische Personen", { exact: true }).locator("..");
   await expect(personMetric.locator("strong")).not.toHaveText("–", { timeout: 60_000 });
   const sampleSize = page.getByLabel("Stichprobengröße");
-  const generate = page.getByRole("button", { name: "Neu erzeugen" });
-  await expect(generate).toBeEnabled();
+  const generate = page.getByRole("button", { name: "Erzeugen und für Szenario verwenden" });
+  await expect(generate).toBeEnabled({ timeout: 60_000 });
   await sampleSize.selectOption("2000");
   await expect(sampleSize).toHaveValue("2000");
   await generate.click();

@@ -7,11 +7,18 @@ import {
   populationSources,
   queryPopulation,
 } from "../lib/population-model";
+import {
+  populationBasisOptions,
+  populationRunIdForOptions,
+  STANDARD_POPULATION_OPTIONS,
+  type PopulationBasisReference,
+} from "../lib/population-basis";
 import { augmentPopulationRunWithSgb2, SGB2_POPULATION_MODEL_VERSION } from "../lib/sgb2-population";
 import type {
   CalibrationEntry,
   LocalRequest,
   LocalResponse,
+  PopulationGenerationOptions,
   PopulationRun,
   PopulationValidationIssue,
   Sgb2BenefitUnit,
@@ -20,8 +27,12 @@ import type {
   SyntheticPerson,
 } from "../lib/types";
 
+type PopulationWorkerRequest = LocalRequest
+  | { id: string; type: "population:ensure-standard" }
+  | { id: string; type: "population:reconstruct"; payload: { reference: PopulationBasisReference } };
+
 const scope = globalThis as unknown as {
-  addEventListener(type: "message", listener: (event: MessageEvent<LocalRequest>) => void): void;
+  addEventListener(type: "message", listener: (event: MessageEvent<PopulationWorkerRequest>) => void): void;
   postMessage(message: LocalResponse): void;
 };
 
@@ -39,7 +50,6 @@ const ACTIVE_KEY = "active-run";
 
 interface StoredCalibration extends CalibrationEntry { storageId: string; runId: string; }
 interface StoredValidation extends PopulationValidationIssue { storageId: string; runId: string; }
-
 type StoredRun = PopulationRun;
 
 function createRunIndexedStore(db: IDBDatabase, name: string, keyPath: string) {
@@ -156,13 +166,24 @@ async function ensureSgb2Run(db: IDBDatabase, run: StoredRun) {
   return saveGeneratedPopulation(db, { run, persons, households }, false);
 }
 
+async function ensureRunForOptions(db: IDBDatabase, options: PopulationGenerationOptions) {
+  const runId = populationRunIdForOptions(options);
+  const existing = await requestValue(db.transaction(RUNS).objectStore(RUNS).get(runId)) as StoredRun | undefined;
+  if (existing) {
+    const run = await ensureSgb2Run(db, existing);
+    await setActiveRun(db, run.metadata.id);
+    return run;
+  }
+  return saveGeneratedPopulation(db, generatePopulation(options));
+}
+
 async function ensureDefaultRun(db: IDBDatabase) {
   const runId = await activeRunId(db);
   if (runId) {
     const existing = await requestValue(db.transaction(RUNS).objectStore(RUNS).get(runId)) as StoredRun | undefined;
     if (existing) return ensureSgb2Run(db, existing);
   }
-  return saveGeneratedPopulation(db, generatePopulation({ seed: DEFAULT_POPULATION_SEED, sampleSize: DEFAULT_POPULATION_SAMPLE_SIZE, baselineId: DEFAULT_BASELINE_ID }));
+  return ensureRunForOptions(db, { seed: DEFAULT_POPULATION_SEED, sampleSize: DEFAULT_POPULATION_SAMPLE_SIZE, baselineId: DEFAULT_BASELINE_ID });
 }
 
 async function resolveRun(db: IDBDatabase, requested?: string) {
@@ -173,10 +194,16 @@ async function resolveRun(db: IDBDatabase, requested?: string) {
   return ensureSgb2Run(db, run);
 }
 
-async function handle(request: LocalRequest): Promise<LocalResponse> {
+async function handle(request: PopulationWorkerRequest): Promise<LocalResponse> {
   try {
     const db = await openDb();
     if (request.type === "population:generate") return { id: request.id, ok: true, data: await saveGeneratedPopulation(db, generatePopulation(request.payload)) };
+    if (request.type === "population:ensure-standard") return { id: request.id, ok: true, data: await ensureRunForOptions(db, STANDARD_POPULATION_OPTIONS) };
+    if (request.type === "population:reconstruct") {
+      const options = populationBasisOptions(request.payload.reference);
+      if (!options) throw new Error("Die ursprüngliche Modellbasis ist mit der aktuellen Modellversion nicht identisch rekonstruierbar.");
+      return { id: request.id, ok: true, data: await ensureRunForOptions(db, options) };
+    }
     if (request.type === "population:get-active") return { id: request.id, ok: true, data: await ensureDefaultRun(db) };
     if (request.type === "population:list-runs") {
       const runs = await requestValue(db.transaction(RUNS).objectStore(RUNS).getAll()) as StoredRun[];

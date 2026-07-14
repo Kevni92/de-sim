@@ -14,6 +14,7 @@ import "./reform-result-layout.css";
 import "./expense-modules.css";
 import "./sgb2-ui.css";
 import "./population.css";
+import "./model-basis-status.css";
 import "./effects.css";
 
 function Root() {

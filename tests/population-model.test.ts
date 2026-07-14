@@ -2,6 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { statutoryIncomeTax2026 } from "../src/lib/income-tax";
 import {
+  populationBasisFromRun,
+  populationBasisOptions,
+  populationRunIdForOptions,
+  STANDARD_POPULATION_OPTIONS,
+} from "../src/lib/population-basis";
+import {
   DEFAULT_BASELINE_ID,
   POPULATION_MODEL_VERSION,
   TARGET_HOUSEHOLDS,
@@ -11,6 +17,7 @@ import {
   generatePopulation,
   queryPopulation,
 } from "../src/lib/population-model";
+import { SCENARIO_SCHEMA_VERSION, defaultScenarioDraft, scenarioFromJson, scenarioToJson } from "../src/lib/scenario-state";
 
 const options = { seed: "test-seed-7", sampleSize: 500, baselineId: DEFAULT_BASELINE_ID };
 
@@ -72,4 +79,44 @@ test("Einkommensteuer nutzt den Bevölkerungslauf und reagiert auf Tarifänderun
   assert.notEqual(reform.staticValue, baseline.staticValue);
   assert.equal(reform.deciles.length, 10);
   assert.ok(Number.isFinite(reform.medianMonthlyChange));
+});
+
+test("Standard-Modellbasis besitzt eine stabile ID und eine rekonstruierbare Referenz", () => {
+  const generated = generatePopulation(STANDARD_POPULATION_OPTIONS);
+  assert.equal(generated.run.metadata.id, populationRunIdForOptions(STANDARD_POPULATION_OPTIONS));
+  const reference = populationBasisFromRun(generated.run);
+  assert.deepEqual(populationBasisOptions(reference), STANDARD_POPULATION_OPTIONS);
+  assert.equal(populationBasisOptions({ ...reference, modelVersion: "veraltet" }), null);
+});
+
+test("Szenarioexport erhält Referenz und Rekonstruktionsmetadaten", () => {
+  const generated = generatePopulation(options);
+  const reference = populationBasisFromRun(generated.run);
+  const json = scenarioToJson({
+    ...defaultScenarioDraft,
+    populationRunId: reference.runId,
+    populationModelVersion: reference.modelVersion,
+    populationBasis: reference,
+    sgb2: { ...defaultScenarioDraft.sgb2, populationRunId: reference.runId },
+  });
+  const parsed = JSON.parse(json) as { schemaVersion: number };
+  assert.equal(parsed.schemaVersion, SCENARIO_SCHEMA_VERSION);
+  const restored = scenarioFromJson(json);
+  assert.deepEqual(restored.populationBasis, reference);
+  assert.equal(restored.populationRunId, reference.runId);
+});
+
+test("ältere Szenarien behalten fehlende Laufreferenzen ohne erfundene Rekonstruktionsdaten", () => {
+  const restored = scenarioFromJson(JSON.stringify({
+    schemaVersion: 4,
+    scenario: { ...defaultScenarioDraft, populationBasis: undefined, populationRunId: "population-fehlt", populationModelVersion: POPULATION_MODEL_VERSION },
+  }));
+  assert.deepEqual(restored.populationBasis, {
+    runId: "population-fehlt",
+    modelVersion: POPULATION_MODEL_VERSION,
+    seed: null,
+    sampleSize: null,
+    baselineId: null,
+  });
+  assert.equal(populationBasisOptions(restored.populationBasis), null);
 });
