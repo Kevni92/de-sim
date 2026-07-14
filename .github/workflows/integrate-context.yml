@@ -1,0 +1,46 @@
+name: Kontextstand integrieren
+
+on:
+  push:
+    branches: [integration/37-kontextwirkungen-clean]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: integration/37-kontextwirkungen-clean
+      - name: Geprüfte Dateien übernehmen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/Kevni92/de-sim/actions/artifacts/8316184579/zip > /tmp/context.zip
+          mkdir -p /tmp/context-diagnostics
+          unzip -q /tmp/context.zip -d /tmp/context-diagnostics
+          python - <<'PY'
+          from pathlib import Path
+          import base64, io, re, tarfile
+          text = Path('/tmp/context-diagnostics/unit-tests.log').read_text(errors='replace')
+          lines = [line.strip() for line in text.splitlines()]
+          payloads = [line for line in lines if len(line) > 1000 and re.fullmatch(r'[A-Za-z0-9+/=]+', line)]
+          if not payloads:
+              raise SystemExit('Kein Diagnosepaket gefunden')
+          data = base64.b64decode(max(payloads, key=len))
+          with tarfile.open(fileobj=io.BytesIO(data), mode='r:gz') as archive:
+              archive.extractall('.', filter='data')
+          PY
+          git fetch origin integration/37-kontextwirkungen-main
+          git checkout origin/integration/37-kontextwirkungen-main -- package.json src/pages/ExpenseModulesPage.tsx technical-docs/README.md tests/tsconfig.json
+          rm .github/workflows/integrate-context.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "feat: Kontextwirkungen sauber auf main integrieren (#37)"
+          git push origin HEAD:integration/37-kontextwirkungen-clean
