@@ -7,6 +7,7 @@ import {
   populationSources,
   queryPopulation,
 } from "../lib/population-model";
+import { DEFAULT_POPULATION_BASIS, findMatchingPopulationBasis } from "../lib/model-basis";
 import { augmentPopulationRunWithSgb2, SGB2_POPULATION_MODEL_VERSION } from "../lib/sgb2-population";
 import type {
   CalibrationEntry,
@@ -160,8 +161,16 @@ async function ensureDefaultRun(db: IDBDatabase) {
   const runId = await activeRunId(db);
   if (runId) {
     const existing = await requestValue(db.transaction(RUNS).objectStore(RUNS).get(runId)) as StoredRun | undefined;
-    if (existing) return ensureSgb2Run(db, existing);
+    if (existing && findMatchingPopulationBasis([existing], DEFAULT_POPULATION_BASIS)) return ensureSgb2Run(db, existing);
   }
+
+  const runs = await requestValue(db.transaction(RUNS).objectStore(RUNS).getAll()) as StoredRun[];
+  const matching = findMatchingPopulationBasis(runs, DEFAULT_POPULATION_BASIS);
+  if (matching) {
+    await setActiveRun(db, matching.metadata.id);
+    return ensureSgb2Run(db, matching);
+  }
+
   return saveGeneratedPopulation(db, generatePopulation({ seed: DEFAULT_POPULATION_SEED, sampleSize: DEFAULT_POPULATION_SAMPLE_SIZE, baselineId: DEFAULT_BASELINE_ID }));
 }
 
