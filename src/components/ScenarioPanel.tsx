@@ -1,13 +1,15 @@
 import { Copy, CopyPlus, Download, FilePlus2, Upload, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { localServer } from "../lib/local-server-client";
+import { MODEL_LEVEL_OPTIONS, modelLevelCaution, TIME_HORIZON_OPTIONS } from "../lib/scenario-calculation";
 import type { ModelLevel, ScenarioDraft, TimeHorizon } from "../lib/types";
+import { SCENARIO_CALCULATION_SETTINGS_EVENT } from "./ModuleDetailComponents";
 
 export function ScenarioPanel({
   open,
   scenario,
   activeScenarioId,
-  savedCount,
+  savedCount = 0,
   onPatch,
   onClose,
   onNew,
@@ -19,28 +21,56 @@ export function ScenarioPanel({
   open: boolean;
   scenario: ScenarioDraft;
   activeScenarioId: string | null;
-  savedCount: number;
+  savedCount?: number;
   onPatch: (patch: Partial<ScenarioDraft>) => void;
   onClose: () => void;
-  onNew: () => void;
-  onDuplicate: () => void;
-  onExport: () => void;
-  onImport: (file: File) => Promise<void>;
-  onCopy: () => void;
+  onNew?: () => void;
+  onDuplicate?: () => void;
+  onExport?: () => void;
+  onImport?: (file: File) => Promise<void>;
+  onCopy?: () => void;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const modelLevelInput = useRef<HTMLSelectElement>(null);
+  const [requestedOpen, setRequestedOpen] = useState(false);
+  const [requestedCalculationFocus, setRequestedCalculationFocus] = useState(false);
+  const effectiveOpen = open || requestedOpen;
+  const hasScenarioActions = Boolean(onNew || onDuplicate || onExport || onImport || onCopy);
+
   const closeAndPersist = () => {
-    void localServer.saveActiveDraft({ activeScenarioId, scenario }).finally(onClose);
+    void localServer.saveActiveDraft({ activeScenarioId, scenario }).finally(() => {
+      setRequestedOpen(false);
+      setRequestedCalculationFocus(false);
+      onClose();
+    });
   };
 
   useEffect(() => {
-    if (!open) return;
+    const listener = () => {
+      setRequestedOpen(true);
+      setRequestedCalculationFocus(true);
+    };
+    window.addEventListener(SCENARIO_CALCULATION_SETTINGS_EVENT, listener);
+    return () => window.removeEventListener(SCENARIO_CALCULATION_SETTINGS_EVENT, listener);
+  }, []);
+
+  useEffect(() => {
+    if (!effectiveOpen) return;
     const listener = (event: KeyboardEvent) => event.key === "Escape" && closeAndPersist();
     document.addEventListener("keydown", listener);
     return () => document.removeEventListener("keydown", listener);
-  }, [open, activeScenarioId, scenario]);
+  }, [effectiveOpen, activeScenarioId, scenario]);
 
-  if (!open) return null;
+  useEffect(() => {
+    if (!effectiveOpen || !requestedCalculationFocus) return;
+    const frame = window.requestAnimationFrame(() => {
+      modelLevelInput.current?.scrollIntoView({ block: "center" });
+      modelLevelInput.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [effectiveOpen, requestedCalculationFocus]);
+
+  if (!effectiveOpen) return null;
 
   return (
     <div className="drawer-layer" role="dialog" aria-modal="true" aria-label="Szenario verwalten">
@@ -80,24 +110,27 @@ export function ScenarioPanel({
                 <span>Datenstand</span>
                 <input aria-label="Datenstand" type="number" min="2015" max="2040" value={scenario.dataYear} onChange={(event) => onPatch({ dataYear: Number(event.target.value) })} />
               </label>
-              <label>
-                <span>Zeithorizont</span>
-                <select aria-label="Zeithorizont" value={scenario.horizonYears} onChange={(event) => onPatch({ horizonYears: Number(event.target.value) as TimeHorizon })}>
-                  <option value={1}>1 Jahr</option>
-                  <option value={5}>5 Jahre</option>
-                  <option value={10}>10 Jahre</option>
-                  <option value={20}>20 Jahre</option>
-                </select>
-              </label>
-              <label>
-                <span>Modellstufe</span>
-                <select aria-label="Modellstufe im Dialog" value={scenario.modelLevel} onChange={(event) => onPatch({ modelLevel: event.target.value as ModelLevel })}>
-                  <option value="statisch">statisch</option>
-                  <option value="verhalten">mit Verhaltenseffekt</option>
-                  <option value="langfrist">Langfristszenario</option>
-                </select>
-              </label>
             </div>
+
+            <fieldset className="scenario-calculation-settings" data-testid="scenario-calculation-settings">
+              <legend>Berechnungsrahmen</legend>
+              <p>Modellstufe und Zeitraum gelten für alle Fachseiten dieses Szenarios. Änderungen aktualisieren abhängige Ergebnisse automatisch.</p>
+              <div className="scenario-form-grid">
+                <label>
+                  <span>Modellstufe</span>
+                  <select ref={modelLevelInput} aria-label="Modellstufe im Dialog" value={scenario.modelLevel} onChange={(event) => onPatch({ modelLevel: event.target.value as ModelLevel })}>
+                    {MODEL_LEVEL_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                </label>
+                <label>
+                  <span>Zeithorizont</span>
+                  <select aria-label="Zeithorizont" value={scenario.horizonYears} onChange={(event) => onPatch({ horizonYears: Number(event.target.value) as TimeHorizon })}>
+                    {TIME_HORIZON_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                </label>
+              </div>
+              <p className={`scenario-calculation-explanation ${scenario.modelLevel === "langfrist" ? "warning" : ""}`}>{modelLevelCaution(scenario.modelLevel)}</p>
+            </fieldset>
 
             <label>
               <span>Annahmen · eine pro Zeile</span>
@@ -115,13 +148,13 @@ export function ScenarioPanel({
             </div>
           </section>
 
-          <section className="scenario-actions-grid" aria-label="Szenarioaktionen">
-            <button className="button secondary" onClick={onNew}><FilePlus2 size={14} /> Neu</button>
-            <button className="button secondary" onClick={onDuplicate}><CopyPlus size={14} /> Duplizieren</button>
-            <button className="button secondary" onClick={onExport}><Download size={14} /> JSON exportieren</button>
-            <button className="button secondary" onClick={() => fileInput.current?.click()}><Upload size={14} /> JSON importieren</button>
-            <button className="button primary scenario-copy" onClick={onCopy}><Copy size={14} /> Als JSON kopieren</button>
-            <input
+          {hasScenarioActions && <section className="scenario-actions-grid" aria-label="Szenarioaktionen">
+            {onNew && <button className="button secondary" onClick={onNew}><FilePlus2 size={14} /> Neu</button>}
+            {onDuplicate && <button className="button secondary" onClick={onDuplicate}><CopyPlus size={14} /> Duplizieren</button>}
+            {onExport && <button className="button secondary" onClick={onExport}><Download size={14} /> JSON exportieren</button>}
+            {onImport && <button className="button secondary" onClick={() => fileInput.current?.click()}><Upload size={14} /> JSON importieren</button>}
+            {onCopy && <button className="button primary scenario-copy" onClick={onCopy}><Copy size={14} /> Als JSON kopieren</button>}
+            {onImport && <input
               ref={fileInput}
               className="visually-hidden"
               type="file"
@@ -132,8 +165,8 @@ export function ScenarioPanel({
                 if (file) void onImport(file);
                 event.currentTarget.value = "";
               }}
-            />
-          </section>
+            />}
+          </section>}
         </div>
 
         <footer>Änderungen werden automatisch über den lokalen Worker in IndexedDB gesichert.</footer>
