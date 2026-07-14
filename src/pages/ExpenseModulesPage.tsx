@@ -1,16 +1,18 @@
-import { ModuleMetric, ModuleModelLevelCard, ModulePageHeader, ModuleSummaryHeader } from "../components/ModuleDetailComponents";
+import { ModuleCalculationContextCard, ModuleMetric, ModulePageHeader, ModuleSummaryHeader } from "../components/ModuleDetailComponents";
 import { Sgb2ExpenseEditor } from "../components/Sgb2ExpenseEditor";
 import { defaultExpenseParameters, expenseModuleDefinitionById, expenseModuleDefinitions, expenseParameterKey, type ExpenseModuleId, type ExpenseModuleResult } from "../lib/expense-modules";
+import { modelLevelLabel } from "../lib/scenario-calculation";
 import type { Sgb2ScenarioReference } from "../lib/sgb2-policy";
 import { resetSgb2Ui, type Sgb2UiPreviewResult } from "../lib/sgb2-ui";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
-import type { ModelLevel } from "../lib/types";
+import type { ModelLevel, TimeHorizon } from "../lib/types";
 
 type Props = {
   selectedId: ExpenseModuleId;
   results: ExpenseModuleResult[];
   parameters: Record<string, number>;
   modelLevel: ModelLevel;
+  horizonYears: TimeHorizon;
   sgb2: Sgb2ScenarioReference;
   sgb2Preview: Sgb2UiPreviewResult | null;
   sgb2PreviewLoading: boolean;
@@ -19,12 +21,11 @@ type Props = {
   onSelect: (id: ExpenseModuleId) => void;
   onParameters: (parameters: Record<string, number>) => void;
   onSgb2: (reference: Sgb2ScenarioReference) => void;
-  onModelLevel: (level: ModelLevel) => void;
   onBack: () => void;
   onOpenSource: (metricId: string, value?: string) => void;
 };
 
-export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel, sgb2, sgb2Preview, sgb2PreviewLoading, sgb2PreviewError, populationAvailable, onSelect, onParameters, onSgb2, onModelLevel, onBack, onOpenSource }: Props) {
+export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel, horizonYears, sgb2, sgb2Preview, sgb2PreviewLoading, sgb2PreviewError, populationAvailable, onSelect, onParameters, onSgb2, onBack, onOpenSource }: Props) {
   const definition = expenseModuleDefinitionById[selectedId];
   const result = results.find((item) => item.id === selectedId) ?? results[0];
   const updateParameter = (key: string, value: number) => onParameters({ ...parameters, [expenseParameterKey(selectedId, key)]: value });
@@ -38,7 +39,7 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
     <ModulePageHeader
       eyebrow="Milestone 6 · Ausgabenmodule"
       title="Ausgaben und Leistungen"
-      description="Neun priorisierte Module mit einheitlichem Aufbau für Baseline, Szenario, direkte Wirkung, Modellstufe und Nachweise."
+      description="Neun priorisierte Module mit einheitlichem Aufbau für Baseline, Szenario, direkte Wirkung, zentralen Berechnungsrahmen und Nachweise."
       onBack={onBack}
     />
 
@@ -62,19 +63,26 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
             <ModuleMetric label="Baseline" value={fmtBn(result.baseline)} note={definition.legalBasis} />
             <ModuleMetric label="Szenariowert" value={fmtBn(result.value)} note={`${fmtDiff(result.delta)} gegenüber Baseline`} tone={result.delta <= 0 ? "positive" : "negative"} testId="expense-module-value" />
             <ModuleMetric label="Direkte Wirkung" value={fmtDiff(result.staticDelta)} note="vor modellierter Folgewirkung" tone={result.staticDelta <= 0 ? "positive" : "negative"} />
-            <ModuleMetric label="Folgewirkung" value={fmtDiff(result.feedbackAdjustment)} note={`Modellstufe ${modelLabel(modelLevel)}`} tone={result.feedbackAdjustment <= 0 ? "positive" : "negative"} />
+            <ModuleMetric label="Folgewirkung" value={fmtDiff(result.feedbackAdjustment)} note={modelLevelLabel(modelLevel)} tone={result.feedbackAdjustment <= 0 ? "positive" : "negative"} />
           </div>
         </section>
 
-        {selectedId === "social" ? <Sgb2ExpenseEditor
-          reference={sgb2}
-          preview={sgb2Preview}
-          loading={sgb2PreviewLoading}
-          error={sgb2PreviewError}
-          populationAvailable={populationAvailable}
-          onReference={onSgb2}
-          onOpenSource={onOpenSource}
-        /> : <>
+        {selectedId === "social" ? <>
+          <ModuleCalculationContextCard
+            modelLevel={modelLevel}
+            horizonYears={horizonYears}
+            description="Der Berechnungsrahmen gilt auch für Bürgergeld und weitere Leistungen; die unmittelbare Mikrosimulation bleibt getrennt nachvollziehbar."
+          />
+          <Sgb2ExpenseEditor
+            reference={sgb2}
+            preview={sgb2Preview}
+            loading={sgb2PreviewLoading}
+            error={sgb2PreviewError}
+            populationAvailable={populationAvailable}
+            onReference={onSgb2}
+            onOpenSource={onOpenSource}
+          />
+        </> : <>
           <section className="revenue-editor-grid">
             <article className="card-flat revenue-parameters"><div className="section-title"><div><h3>Szenarioparameter</h3><p>Änderungen werden im zentralen Szenario gespeichert und wirken sofort auf Dashboard und Saldo.</p></div></div><div className="parameter-list">{definition.parameters.map((item) => {
               const key = expenseParameterKey(selectedId, item.key); const value = parameters[key] ?? item.baseline;
@@ -82,13 +90,10 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
             })}</div></article>
 
             <aside className="revenue-side-stack">
-              <ModuleModelLevelCard
-                description="Direkte Haushaltswirkung und Folgewirkung bleiben getrennt."
-                ariaLabel="Modellstufe Ausgabenmodul"
+              <ModuleCalculationContextCard
                 modelLevel={modelLevel}
-                onModelLevel={onModelLevel}
-                modelLabel={modelLabel}
-                modelDescription={modelDescription}
+                horizonYears={horizonYears}
+                description="Direkte Haushaltswirkung und mögliche Folgewirkungen bleiben getrennt; die Einstellung gilt für das gesamte Szenario."
               />
               <article className="card-flat incidence-card"><div className="section-title"><div><h3>Begünstigte und Leistungskanäle</h3><p>Modellierte Verteilung des Aggregats, keine individuellen Ansprüche.</p></div></div><div className="incidence-bar" role="img" aria-label={`Begünstigtenstruktur für ${definition.label}`}>{result.beneficiaries.map((item) => <i key={item.label} style={{ width: `${item.share}%` }} title={`${item.label}: ${item.share} %`} />)}</div><ul>{result.beneficiaries.map((item) => <li key={item.label}><span>{item.label}</span><strong>{item.share} %</strong></li>)}</ul><p className="uncertainty-note">Ergebnisband: ± {result.uncertaintyPercent} %. Folgewirkungen sind keine Prognose.</p></article>
             </aside>
@@ -102,6 +107,3 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
     </section>
   </main>;
 }
-
-function modelLabel(level: ModelLevel) { return level === "statisch" ? "statisch" : level === "verhalten" ? "mit Folgewirkung" : "langfristig"; }
-function modelDescription(level: ModelLevel) { return level === "statisch" ? "nur direkte Haushaltswirkung" : level === "verhalten" ? "moderate Rückwirkung" : "stärkere mittelfristige Rückwirkung"; }
