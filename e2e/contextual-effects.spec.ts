@@ -22,7 +22,7 @@ test("ordnet Wirkungen automatisch Reformmodulen und Vergleichsebenen zu", async
   await sourceDialog.getByRole("button", { name: "Schließen", exact: true }).click();
 
   await page.goto("./#/ausgaben");
-  await page.getByRole("button", { name: /Kitas und Familienleistungen/ }).click();
+  await page.locator(".expense-module-list").getByRole("button", { name: /Kitas und Familienleistungen/ }).click();
   await page.getByLabel("Betreuungsplätze Wert").fill("112");
   await page.getByLabel("Personal- und Qualitätskosten Wert").fill("120");
 
