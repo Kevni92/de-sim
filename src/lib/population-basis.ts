@@ -3,7 +3,6 @@ import {
   DEFAULT_POPULATION_SAMPLE_SIZE,
   DEFAULT_POPULATION_SEED,
   POPULATION_MODEL_VERSION,
-  populationRunIdForOptions,
 } from "./population-model";
 import type { PopulationGenerationOptions, PopulationRun } from "./types";
 
@@ -20,6 +19,13 @@ export const STANDARD_POPULATION_OPTIONS: PopulationGenerationOptions = Object.f
   sampleSize: DEFAULT_POPULATION_SAMPLE_SIZE,
   baselineId: DEFAULT_BASELINE_ID,
 });
+
+export function populationRunIdForOptions(options: PopulationGenerationOptions) {
+  const sampleSize = Math.round(Math.min(50_000, Math.max(500, options.sampleSize)));
+  const seed = options.seed.trim() || DEFAULT_POPULATION_SEED;
+  const baselineId = options.baselineId || DEFAULT_BASELINE_ID;
+  return `population-${hashSeed(`${seed}|${sampleSize}|${baselineId}|${POPULATION_MODEL_VERSION}`).toString(16)}`;
+}
 
 export function populationBasisFromRun(run: PopulationRun): PopulationBasisReference {
   return {
@@ -46,4 +52,13 @@ export function isStandardPopulationBasis(reference: PopulationBasisReference | 
   if (!reference) return false;
   return reference.runId === populationRunIdForOptions(STANDARD_POPULATION_OPTIONS)
     && reference.modelVersion === POPULATION_MODEL_VERSION;
+}
+
+function hashSeed(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
