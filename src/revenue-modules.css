@@ -49,14 +49,22 @@
 .parameter-controls input[type="number"] { width: 100%; padding: 7px 8px; border: 1px solid var(--border, #d6dde5); border-radius: 5px; font: inherit; font-size: 11px; font-variant-numeric: tabular-nums; }
 .parameter-controls b { min-width: 38px; color: var(--muted, #5f6b78); font-size: 9px; font-weight: 700; }
 .revenue-side-stack { display: grid; gap: 18px; }
-.model-level-card, .incidence-card { padding: 18px; }
-.model-level-card h3, .incidence-card h3 { margin: 0 0 5px; font-size: 14px; }
-.model-level-card > p, .incidence-card .section-title p { margin: 0 0 13px; color: var(--muted, #5f6b78); font-size: 10px; line-height: 1.5; }
-.model-level-options { display: grid; gap: 7px; }
-.model-level-options button { display: grid; gap: 3px; padding: 10px 11px; border: 1px solid var(--border, #d6dde5); border-radius: 5px; background: #fff; color: inherit; text-align: left; cursor: pointer; }
-.model-level-options button.active { border-color: #147d7e; background: #e1efef; }
-.model-level-options strong { font-size: 11px; }
-.model-level-options small { color: var(--muted, #5f6b78); font-size: 9px; }
+.scenario-calculation-card, .incidence-card { padding: 18px; }
+.scenario-calculation-card h3, .incidence-card h3 { margin: 0 0 5px; font-size: 14px; }
+.scenario-calculation-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.scenario-calculation-card-head > div { min-width: 0; }
+.scenario-calculation-card-head p, .incidence-card .section-title p { margin: 0 0 13px; color: var(--muted, #5f6b78); font-size: 10px; line-height: 1.5; }
+.scenario-calculation-state { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 23px; padding: 0 8px; border-radius: 999px; background: #e6f4ec; color: #18704d; font-size: 9px; font-weight: 800; }
+.scenario-calculation-state.updating { background: #e1efef; color: #147d7e; }
+.scenario-calculation-state.stale { background: #fff4d8; color: #8a6516; }
+.scenario-calculation-values { display: grid; gap: 8px; margin: 0; }
+.scenario-calculation-values > div { padding: 10px 11px; border: 1px solid var(--border, #d6dde5); border-radius: 5px; background: #fff; }
+.scenario-calculation-values dt { display: flex; align-items: center; gap: 5px; color: var(--muted, #5f6b78); font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.scenario-calculation-values dd { margin: 6px 0 3px; font-size: 11px; font-weight: 800; }
+.scenario-calculation-values small { display: block; color: var(--muted, #5f6b78); font-size: 9px; line-height: 1.4; }
+.scenario-calculation-note { margin: 10px 0 0; color: var(--muted, #5f6b78); font-size: 9px; line-height: 1.45; }
+.scenario-calculation-note.warning { padding: 9px 10px; border-radius: 5px; background: #fff4d8; color: #73570f !important; }
+.scenario-calculation-edit { width: 100%; margin-top: 12px; }
 .incidence-bar { display: flex; height: 13px; overflow: hidden; border-radius: 999px; background: #edf2f5; }
 .incidence-bar i { display: block; min-width: 2px; border-right: 1px solid rgba(255,255,255,.7); background: #147d7e; }
 .incidence-bar i:nth-child(2) { opacity: .72; }
@@ -99,4 +107,6 @@
   .revenue-side-stack { grid-template-columns: 1fr; }
   .revenue-overview-table { overflow-x: auto; }
   .revenue-table-head, .revenue-overview-table > button { min-width: 720px; }
+  .scenario-calculation-card-head { display: grid; }
+  .scenario-calculation-state { justify-self: start; }
 }
