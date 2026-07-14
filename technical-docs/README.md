@@ -12,6 +12,7 @@ Dieser Ordner beschreibt die technische Arbeitsweise und die aktuelle Anwendungs
 | [`MODELLBASIS.md`](MODELLBASIS.md) | Automatische Standardbasis, Szenarioreferenz, Worker-Ablauf und Wiederherstellung fehlender Bevölkerungsläufe |
 | [`BERECHNUNGSRAHMEN.md`](BERECHNUNGSRAHMEN.md) | Zentrale Modellstufe und Zeithorizont, schreibgeschützte Fachseiten und Aktualitätsstatus der Wirkungsrechnung |
 | [`KONTEXTWIRKUNGEN.md`](KONTEXTWIRKUNGEN.md) | Explizite Reform-Wirkungs-Zuordnung, Überlappungsschutz, Eingabesignatur und gemeinsame Modul-/Vergleichsdarstellung |
+| [`BUERGERGELD-STANDARDMODUS.md`](BUERGERGELD-STANDARDMODUS.md) | Gemeinsamer kanonischer Zustand für verständlichen Standard- und vollständigen Expertenmodus |
 
 ## Abgrenzung
 
