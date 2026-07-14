@@ -18,6 +18,12 @@
 .scenario-form input, .scenario-form textarea, .scenario-form select { width: 100%; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 9px 10px; color: var(--foreground); font: inherit; font-size: 12px; }
 .scenario-form textarea { resize: vertical; line-height: 1.5; }
 .scenario-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.scenario-calculation-settings { margin: 2px 0 0; padding: 14px; border: 1px solid color-mix(in srgb, var(--primary) 38%, var(--line)); border-radius: 7px; background: color-mix(in srgb, var(--primary-soft) 55%, var(--surface)); }
+.scenario-calculation-settings legend { padding: 0 5px; font-size: 12px; font-weight: 800; }
+.scenario-calculation-settings > p { margin: 0 0 12px; color: var(--muted-foreground); font-size: 10.5px; line-height: 1.5; }
+.scenario-calculation-settings .scenario-form-grid { margin-bottom: 11px; }
+.scenario-calculation-explanation { margin: 0 !important; padding: 9px 10px; border-radius: 5px; background: var(--surface); color: var(--muted-foreground); }
+.scenario-calculation-explanation.warning { background: var(--warning-soft); color: #73570f; }
 .scenario-sources { display: grid; gap: 7px; }
 .scenario-sources > div { display: flex; flex-wrap: wrap; gap: 6px; }
 .scenario-sources code { border: 1px solid var(--line); border-radius: 4px; background: var(--subtle); padding: 4px 6px; color: var(--muted-foreground); font-size: 10px; }
