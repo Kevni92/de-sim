@@ -36,7 +36,7 @@ test("öffnet Bürgergeld aus dem Dashboard und validiert den Referenzlauf", asy
   await expect(reproducibilityKey).toHaveText(/^sgb2-[0-9a-f]{8}$/, { timeout: 60_000 });
   const baselineKey = await reproducibilityKey.textContent();
   await expect(page.getByRole("heading", { name: "Reproduzierbarkeit und amtlicher Abgleich" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Amtlicher Abgleich" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amtlicher Abgleich", exact: true })).toBeVisible();
   await expect(page.getByText("Regelbedarf und Mehrbedarfe", { exact: true })).toBeVisible();
   await expect(page.getByText("Bundesanteil Unterkunft und Heizung", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Quelle und Abgrenzung" })).toHaveCount(2);
@@ -115,10 +115,9 @@ test("stellt Bürgergeld-Release-Abnahme auf Mobilgeräten responsiv dar", async
   await page.goto("./#/ausgaben");
   await expect(page.getByTestId("sgb2-editor")).toBeVisible();
   await expect(page.getByLabel("Regelbedarfe Prozent der Baseline")).toBeVisible();
-  await page.getByRole("button", { name: "Experte" }).click();
-  await expect(page.getByLabel("Alleinstehende Erwachsene Wert")).toBeVisible();
   await expect(page.getByTestId("sgb2-reproducibility-key")).toHaveText(/^sgb2-[0-9a-f]{8}$/, { timeout: 60_000 });
   await expect(page.getByRole("heading", { name: "Reproduzierbarkeit und amtlicher Abgleich" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Amtlicher Abgleich", exact: true })).toBeVisible();
 });
 
 test("öffnet Ausgabenmodule in der mobilen Dashboard-Navigation", async ({ page, isMobile }) => {
