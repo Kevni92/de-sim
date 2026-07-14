@@ -14,41 +14,10 @@ permissions:
   contents: read
 
 jobs:
-  source-snapshot:
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft && github.head_ref == 'feat/sgb2-e2e-release'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm install --no-audit --no-fund
-      - run: npx playwright install chromium
-      - name: Quellcode und Browser für lokale Prüfung archivieren
-        run: |
-          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=test-results --exclude=playwright-report -czf /tmp/de-sim-source.tgz .
-          tar -czf /tmp/de-sim-node-modules.tgz node_modules
-          tar -C "$HOME/.cache" -czf /tmp/ms-playwright.tgz ms-playwright
-      - uses: actions/upload-artifact@v4
-        with:
-          name: de-sim-source
-          path: /tmp/de-sim-source.tgz
-          retention-days: 1
-      - uses: actions/upload-artifact@v4
-        with:
-          name: local-node-modules
-          path: /tmp/de-sim-node-modules.tgz
-          retention-days: 1
-      - uses: actions/upload-artifact@v4
-        with:
-          name: local-playwright-browser
-          path: /tmp/ms-playwright.tgz
-          retention-days: 1
-
   quality:
+    name: Typecheck, Build und Unit-Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,7 +25,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
       - name: Typecheck
         shell: bash
         run: set -o pipefail; npm run typecheck 2>&1 | tee typecheck.log
@@ -66,8 +37,8 @@ jobs:
       - name: Unit-Tests
         shell: bash
         run: set -o pipefail; npm run test:unit 2>&1 | tee unit-tests.log
-      - name: Qualitätsdiagnose hochladen
-        if: always()
+      - name: Qualitätsdiagnose bei Fehler hochladen
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: quality-diagnostics
@@ -79,9 +50,10 @@ jobs:
           retention-days: 7
 
   e2e:
+    name: Playwright Desktop und Mobil
     if: github.event_name == 'push' || github.event.pull_request.draft == false
-    needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -89,19 +61,35 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Playwright-Browser cachen
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Chromium und Systemabhängigkeiten bereitstellen
+        run: npx playwright install --with-deps chromium
       - name: Playwright Desktop und Mobil
         shell: bash
         run: set -o pipefail; npm run test:e2e 2>&1 | tee playwright.log
-      - name: Playwright-Diagnose und Bericht hochladen
+      - name: Browser-Screenshots hochladen
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-results
+          name: browser-screenshots
+          path: test-results/**/*.png
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Playwright-Diagnose bei Fehler hochladen
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
           path: |
             playwright.log
             playwright-report/
-            test-results/**/*.png
+            test-results/
           if-no-files-found: warn
           retention-days: 14
