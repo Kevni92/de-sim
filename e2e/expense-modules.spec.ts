@@ -14,7 +14,7 @@ async function openBuergergeld(page: Page) {
 
 async function openResultDetail(page: Page, label: string) {
   const details = page.locator("details.sgb2-result-detail").filter({ hasText: label });
-  const summary = details.locator("summary");
+  const summary = details.locator(":scope > summary");
   await summary.focus();
   await summary.press("Enter");
   await expect(details).toHaveAttribute("open", "");
