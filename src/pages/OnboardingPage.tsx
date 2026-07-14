@@ -1,12 +1,13 @@
-import type { ModelLevel } from "../lib/types";
+import { ModuleCalculationContextCard } from "../components/ModuleDetailComponents";
+import type { ModelLevel, TimeHorizon } from "../lib/types";
 
 export function OnboardingPage({
   modelLevel,
-  onModelLevel,
+  horizonYears,
   onStart,
 }: {
   modelLevel: ModelLevel;
-  onModelLevel: (level: ModelLevel) => void;
+  horizonYears: TimeHorizon;
   onStart: () => void;
 }) {
   return (
@@ -31,15 +32,13 @@ export function OnboardingPage({
             </div>
           </fieldset>
 
-          <fieldset className="choice-fieldset">
-            <legend>Modellstufe</legend>
-            <p>Spekulativere Wirkungen werden klar von der statischen Berechnung getrennt.</p>
-            <div className="choice-grid">
-              <ChoiceButton label="Statisch" note="keine Verhaltenseffekte" active={modelLevel === "statisch"} onClick={() => onModelLevel("statisch")} />
-              <ChoiceButton label="Mit Verhaltenseffekt" note="kurzfristige Reaktion" active={modelLevel === "verhalten"} onClick={() => onModelLevel("verhalten")} />
-              <ChoiceButton label="Langfristszenario" note="10-Jahres-Trend" active={modelLevel === "langfrist"} onClick={() => onModelLevel("langfrist")} />
-            </div>
-          </fieldset>
+          <section className="onboarding-calculation" aria-label="Berechnungsrahmen des Szenarios">
+            <ModuleCalculationContextCard
+              modelLevel={modelLevel}
+              horizonYears={horizonYears}
+              description="Der Berechnungsrahmen gilt für das gesamte Szenario. Du kannst ihn zentral im Szenario ändern."
+            />
+          </section>
 
           <div className="onboarding-actions">
             <button className="button primary large" onClick={onStart}>Simulation starten</button>
@@ -72,14 +71,5 @@ function Choice({ label, note, active = false }: { label: string; note: string; 
       <strong>{label}</strong>
       <small>{note}</small>
     </div>
-  );
-}
-
-function ChoiceButton({ label, note, active, onClick }: { label: string; note: string; active: boolean; onClick: () => void }) {
-  return (
-    <button className={`choice-card button-card ${active ? "active" : ""}`} onClick={onClick}>
-      <strong>{label}</strong>
-      <small>{note}</small>
-    </button>
   );
 }

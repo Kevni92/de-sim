@@ -1,5 +1,5 @@
 import type { ChangeEvent } from "react";
-import { ModuleModelLevelCard, ModulePageHeader } from "../components/ModuleDetailComponents";
+import { ModuleCalculationContextCard, ModulePageHeader } from "../components/ModuleDetailComponents";
 import { ReformDisclosureSection, ReformResultLayout, type ReformMetric, type ReformResultStatus } from "../components/ReformResultLayout";
 import type { IncomeTaxResult } from "../lib/income-tax";
 import {
@@ -12,7 +12,7 @@ import {
   type RevenueParameterDefinition,
 } from "../lib/revenue-modules";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
-import type { ModelLevel } from "../lib/types";
+import type { ModelLevel, TimeHorizon } from "../lib/types";
 
 export function RevenueModulesPage({
   selectedId,
@@ -20,10 +20,10 @@ export function RevenueModulesPage({
   incomeTaxResult,
   parameters,
   modelLevel,
+  horizonYears,
   onSelect,
   onNavigateIncomeTax,
   onParameters,
-  onModelLevel,
   onBack,
   onOpenSource,
 }: {
@@ -32,10 +32,10 @@ export function RevenueModulesPage({
   incomeTaxResult: IncomeTaxResult;
   parameters: Record<string, number>;
   modelLevel: ModelLevel;
+  horizonYears: TimeHorizon;
   onSelect: (id: RevenueModuleId) => void;
   onNavigateIncomeTax: () => void;
   onParameters: (parameters: Record<string, number>) => void;
-  onModelLevel: (level: ModelLevel) => void;
   onBack: () => void;
   onOpenSource: (metricId: string, value?: string) => void;
 }) {
@@ -124,13 +124,10 @@ export function RevenueModulesPage({
                   <article><span>Direkte staatliche Wirkung</span><strong className={result.staticDelta >= 0 ? "positive" : "negative"}>{fmtDiff(result.staticDelta)}</strong><small>ohne modellierte Verhaltensreaktion</small></article>
                   <article><span>Modellierte Folgewirkung</span><strong className={result.behavioralAdjustment >= 0 ? "positive" : "negative"}>{fmtDiff(result.behavioralAdjustment)}</strong><small>separater Modellpfad, keine sichere Prognose</small></article>
                 </div>
-                <ModuleModelLevelCard
-                  description="Die direkte Wirkung bleibt unverändert sichtbar. Nur die getrennte Folgewirkung hängt von der Modellstufe ab."
-                  ariaLabel="Modellstufe Einnahmemodul"
+                <ModuleCalculationContextCard
                   modelLevel={modelLevel}
-                  onModelLevel={onModelLevel}
-                  modelLabel={modelLabel}
-                  modelDescription={modelDescription}
+                  horizonYears={horizonYears}
+                  description="Die direkte Wirkung bleibt unverändert sichtbar. Der zentrale Berechnungsrahmen steuert nur die getrennte Folgewirkung."
                 />
               </ReformDisclosureSection>
 
@@ -189,16 +186,4 @@ function resultStatus(result: RevenueModuleResult | undefined): ReformResultStat
 
 function confidenceLabel(confidence: "hoch" | "mittel" | "niedrig") {
   return confidence === "hoch" ? "Hoch" : confidence === "mittel" ? "Mittel" : "Niedrig";
-}
-
-function modelLabel(level: ModelLevel) {
-  if (level === "statisch") return "nur direkte Wirkung";
-  if (level === "verhalten") return "mit kurzfristiger Reaktion";
-  return "mit längerfristiger Reaktion";
-}
-
-function modelDescription(level: ModelLevel) {
-  if (level === "statisch") return "Bemessungsgrundlagen bleiben konstant";
-  if (level === "verhalten") return "moderate kurzfristige Reaktion";
-  return "stärkere mittelfristige Anpassung";
 }

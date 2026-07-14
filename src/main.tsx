@@ -16,6 +16,7 @@ import "./sgb2-ui.css";
 import "./population.css";
 import "./model-basis-status.css";
 import "./effects.css";
+import "./scenario-calculation.css";
 
 function Root() {
   const [hash, setHash] = useState(window.location.hash.replace(/^#/, "") || "/");

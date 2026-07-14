@@ -1,0 +1,47 @@
+.onboarding-calculation {
+  max-width: 720px;
+  margin-top: 30px;
+}
+
+.effects-page > .scenario-calculation-card {
+  margin-bottom: 14px;
+}
+
+.effects-error {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.effects-error .button {
+  flex: 0 0 auto;
+}
+
+.effects-page[data-calculation-status="updating"] .effects-content,
+.effects-page[data-calculation-status="stale"] .effects-content {
+  position: relative;
+}
+
+.effects-page[data-calculation-status="updating"] .effects-content::before,
+.effects-page[data-calculation-status="stale"] .effects-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 7px;
+  pointer-events: none;
+}
+
+.effects-page[data-calculation-status="updating"] .effects-content::before {
+  background: color-mix(in srgb, var(--surface) 20%, transparent);
+}
+
+.effects-page[data-calculation-status="stale"] .effects-content::before {
+  border: 1px dashed var(--warning);
+}
+
+@media (max-width: 720px) {
+  .effects-error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

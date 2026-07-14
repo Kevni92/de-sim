@@ -1,6 +1,6 @@
 import { Calculator, Info } from "lucide-react";
 import { useMemo, useState } from "react";
-import { ModuleMetric, ModuleModelLevelCard, ModulePageHeader, ModuleSummaryHeader } from "../components/ModuleDetailComponents";
+import { ModuleCalculationContextCard, ModuleMetric, ModulePageHeader, ModuleSummaryHeader } from "../components/ModuleDetailComponents";
 import {
   calculateReformIncomeTax,
   calculateStatutoryIncomeTax2026,
@@ -8,26 +8,27 @@ import {
   type IncomeTaxResult,
 } from "../lib/income-tax";
 import { revenueModuleDefinitions, type RevenueModuleId, type RevenueModuleResult } from "../lib/revenue-modules";
+import { modelLevelLabel } from "../lib/scenario-calculation";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
-import type { IncomeTaxSettings, ModelLevel } from "../lib/types";
+import type { IncomeTaxSettings, ModelLevel, TimeHorizon } from "../lib/types";
 
 export function IncomeTaxPage({
   settings,
   modelLevel,
+  horizonYears,
   result,
   revenueResults,
   onSettings,
-  onModelLevel,
   onNavigateRevenue,
   onBack,
   onOpenSource,
 }: {
   settings: IncomeTaxSettings;
   modelLevel: ModelLevel;
+  horizonYears: TimeHorizon;
   result: IncomeTaxResult;
   revenueResults: RevenueModuleResult[];
   onSettings: (next: IncomeTaxSettings) => void;
-  onModelLevel: (level: ModelLevel) => void;
   onNavigateRevenue: (id: RevenueModuleId) => void;
   onBack: () => void;
   onOpenSource: (metricId: string, value?: string) => void;
@@ -77,7 +78,7 @@ export function IncomeTaxPage({
               <ModuleMetric label="Baseline" value={fmtBn(result.baselineValue)} note="Gesetzlicher Tarif 2026 · § 32a EStG" />
               <ModuleMetric label="Szenariowert" value={fmtBn(result.value)} note={`${fmtDiff(result.delta)} gegenüber Baseline`} tone={result.delta >= 0 ? "positive" : "negative"} />
               <ModuleMetric label="Statische Wirkung" value={fmtDiff(result.staticDelta)} note="ohne Verhaltensreaktion" tone={result.staticDelta >= 0 ? "positive" : "negative"} />
-              <ModuleMetric label="Verhaltenskomponente" value={fmtDiff(result.behavioralAdjustment)} note={`Verhaltensanpassung · Modellstufe ${modelLabel(modelLevel)}`} tone={result.behavioralAdjustment >= 0 ? "positive" : "negative"} />
+              <ModuleMetric label="Verhaltenskomponente" value={fmtDiff(result.behavioralAdjustment)} note={`Getrennter Modellpfad · ${modelLevelLabel(modelLevel)}`} tone={result.behavioralAdjustment >= 0 ? "positive" : "negative"} />
             </div>
           </section>
 
@@ -97,13 +98,10 @@ export function IncomeTaxPage({
             </article>
 
             <aside className="revenue-side-stack">
-              <ModuleModelLevelCard
-                description="Statischer Tarifvergleich oder zusätzlich modellierte Reaktion des zu versteuernden Einkommens."
-                ariaLabel="Modellstufe Einkommensteuer"
+              <ModuleCalculationContextCard
                 modelLevel={modelLevel}
-                onModelLevel={onModelLevel}
-                modelLabel={modelLabel}
-                modelDescription={modelDescription}
+                horizonYears={horizonYears}
+                description="Der zentrale Berechnungsrahmen steuert die getrennt ausgewiesene Verhaltenskomponente."
               />
 
               <article className="card-flat income-tax-law-card" aria-label="Gesetzliche Eckwerte 2026">
@@ -169,9 +167,9 @@ function TaxCheckCard({ settings, onOpenSource }: { settings: IncomeTaxSettings;
         <label><span>Veranlagung</span><select aria-label="Veranlagung für Tarifprüfung" value={joint ? "joint" : "single"} onChange={(event) => setJoint(event.target.value === "joint")}><option value="single">alleinstehend</option><option value="joint">zusammenveranlagt</option></select></label>
       </div>
       <div className="tax-check-results">
-        <div><span>Gesetz 2026</span><strong data-testid="baseline-tax-check">{formatEuro(calculation.baselineTax)}</strong><small>{formatRate(calculation.baselineTax, income)} Durchschnitt</small></div>
-        <div><span>Reformszenario</span><strong>{formatEuro(calculation.reformTax)}</strong><small>{formatRate(calculation.reformTax, income)} Durchschnitt</small></div>
-        <div className={calculation.change >= 0 ? "positive" : "negative"}><span>Verfügbares Einkommen</span><strong>{formatSignedEuro(calculation.change, " / Jahr")}</strong><small>{formatSignedEuro(calculation.change / 12, " / Monat")}</small></div>
+        <div><span>Gesetz 2026</span><strong data-testid="baseline-tax-check">{formatEuro(calculation.baselineTax)}</strong><small>{formatRate(calculation.baselineTax, income)} Durchschnittsbelastung</small></div>
+        <div><span>Reformszenario</span><strong>{formatEuro(calculation.reformTax)}</strong><small>{formatRate(calculation.reformTax, income)} Durchschnittsbelastung</small></div>
+        <div><span>Jährliche Entlastung</span><strong className={calculation.change >= 0 ? "positive" : "negative"}>{formatSignedEuro(calculation.change)}</strong><small>{formatSignedEuro(calculation.change / 12, " / Monat")}</small></div>
       </div>
       <p className="tax-check-disclaimer">Die Prüfung berechnet ausschließlich die tarifliche Einkommensteuer. Solidaritätszuschlag, Kirchensteuer, Sozialabgaben und individuelle Abzüge sind nicht enthalten.</p>
     </section>
@@ -199,16 +197,6 @@ function DistributionRows({ result }: { result: IncomeTaxResult }) {
   })}</div>;
 }
 
-function modelLabel(level: ModelLevel) {
-  if (level === "statisch") return "statisch";
-  if (level === "verhalten") return "mit Verhalten";
-  return "langfristig";
-}
-function modelDescription(level: ModelLevel) {
-  if (level === "statisch") return "gesetzlicher Tarifvergleich ohne Reaktion";
-  if (level === "verhalten") return "moderate Reaktion des zu versteuernden Einkommens";
-  return "stärkere mittelfristige Anpassung";
-}
 function formatNumber(value: number) { return value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
 function formatEuro(value: number) { return `${Math.round(value).toLocaleString("de-DE")} €`; }
 function formatSignedEuro(value: number, suffix = "") { const sign = value > 0 ? "+" : value < 0 ? "−" : "±"; return `${sign}${Math.abs(Math.round(value)).toLocaleString("de-DE")} €${suffix}`; }
