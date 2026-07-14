@@ -13,10 +13,11 @@ test("ordnet ein Einnahmemodul nach dem gemeinsamen Reform- und Ergebnisvertrag"
   await expect(summary.getByText("Belastbarkeit", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Modellstufe" })).toBeHidden();
 
-  const affected = page.getByTestId("reform-affected-section").locator("summary");
+  const affectedSection = page.getByTestId("reform-affected-section");
+  const affected = affectedSection.locator("summary");
   await affected.focus();
   await affected.press("Enter");
-  await expect(page.getByText("Private Haushalte", { exact: true })).toBeVisible();
+  await expect(affectedSection.getByText("Private Haushalte", { exact: true })).toBeVisible();
 
   const followUp = page.getByTestId("reform-follow-up-section").locator("summary");
   await followUp.focus();
@@ -38,7 +39,8 @@ test("verwendet mobil dieselbe fachliche Reihenfolge ohne horizontale Pflichtnav
   await expect(page.getByTestId("reform-kpi-grid").locator("article")).toHaveCount(4);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
 
-  await page.getByText("Wer ist betroffen?", { exact: true }).click();
-  await expect(page.getByText("Private Haushalte", { exact: true })).toBeVisible();
+  const affectedSection = page.getByTestId("reform-affected-section");
+  await affectedSection.getByText("Wer ist betroffen?", { exact: true }).click();
+  await expect(affectedSection.getByText("Private Haushalte", { exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/issue-34-reform-result-layout-mobile.png", fullPage: true });
 });
