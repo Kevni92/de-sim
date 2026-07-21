@@ -1,40 +1,40 @@
-.income-tax-page .revenue-module-list nav > button.active { background: #e1efef; box-shadow: inset 3px 0 #147d7e; }
+﻿.income-tax-page .revenue-module-list nav > button.active { background: #e1efef; box-shadow: inset 3px 0 #147d7e; }
 .income-tax-page .revenue-side-stack { grid-template-columns: 1fr; }
 .income-tax-switch-parameter .switch { justify-self: end; }
 .income-tax-parameters { overflow: hidden; }
-.income-tax-parameters .parameter-note { margin: 0 -18px -18px; border-top: 1px solid var(--line); background: var(--subtle); padding: 12px 18px; color: var(--muted-foreground); font-size: 9.5px; line-height: 1.55; }
+.income-tax-parameters .parameter-note { margin: 0 -18px -18px; border-top: 1px solid var(--line); background: var(--subtle); padding: 12px 18px; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.55; }
 .income-tax-law-card { padding: 18px; }
-.income-tax-law-card .section-title h3, .income-tax-impact-card .section-title h3 { margin: 0 0 5px; font-size: 14px; }
-.income-tax-law-card .section-title p, .income-tax-impact-card .section-title p { margin: 0; color: var(--muted-foreground); font-size: 10px; line-height: 1.5; }
+.income-tax-law-card .section-title h3, .income-tax-impact-card .section-title h3 { margin: 0 0 5px; font-size: var(--fs-md); }
+.income-tax-law-card .section-title p, .income-tax-impact-card .section-title p { margin: 0; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.5; }
 .income-tax-law-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
 .income-tax-law-grid > div { border: 1px solid var(--line); border-radius: 5px; background: var(--subtle); padding: 10px; }
-.income-tax-law-grid span { display: block; color: var(--muted-foreground); font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-.income-tax-law-grid strong { display: block; margin-top: 5px; font-size: 13px; }
+.income-tax-law-grid span { display: block; color: var(--muted-foreground); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.income-tax-law-grid strong { display: block; margin-top: 5px; font-size: var(--fs-md); }
 .income-tax-impact-card { padding: 18px; }
 
 .tax-check-card { overflow: hidden; }
 .tax-check-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 12px 14px; }
 .tax-check-card > header > div { display: flex; align-items: flex-start; gap: 9px; }
-.tax-check-card h2 { margin-bottom: 3px; font-size: 12.5px; }
-.tax-check-card header p { margin: 0; color: var(--muted-foreground); font-size: 10px; }
+.tax-check-card h2 { margin-bottom: 3px; font-size: var(--fs-md); }
+.tax-check-card header p { margin: 0; color: var(--muted-foreground); font-size: var(--fs-xs); }
 .calculator-icon { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 5px; background: var(--primary-soft); color: var(--primary); }
 .tax-check-inputs { display: grid; grid-template-columns: minmax(0,2fr) minmax(150px,1fr); gap: 10px; padding: 13px 14px; }
 .tax-check-inputs label { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 5px 8px; align-items: center; }
-.tax-check-inputs label > span { grid-column: 1 / -1; color: var(--muted-foreground); font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-.tax-check-inputs input, .tax-check-inputs select { width: 100%; height: 36px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); padding: 0 10px; color: var(--foreground); font-size: 12px; }
-.tax-check-inputs small { color: var(--muted-foreground); font-size: 10px; }
+.tax-check-inputs label > span { grid-column: 1 / -1; color: var(--muted-foreground); font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.tax-check-inputs input, .tax-check-inputs select { width: 100%; height: 36px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); padding: 0 10px; color: var(--foreground); font-size: var(--fs-sm); }
+.tax-check-inputs small { color: var(--muted-foreground); font-size: var(--fs-xs); }
 .tax-check-results { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .tax-check-results > div { min-height: 86px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--line); padding: 11px 14px; }
 .tax-check-results > div:last-child { border-right: 0; background: var(--primary-soft); }
-.tax-check-results span { color: var(--muted-foreground); font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-.tax-check-results strong { margin-top: 6px; color: var(--foreground); font-size: 18px; }
-.tax-check-results small { margin-top: 4px; color: var(--muted-foreground); font-size: 9.5px; }
-.tax-check-disclaimer { margin: 0; padding: 10px 14px; color: var(--muted-foreground); font-size: 9.5px; line-height: 1.5; }
+.tax-check-results span { color: var(--muted-foreground); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.tax-check-results strong { margin-top: 6px; color: var(--foreground); font-size: var(--fs-xl); }
+.tax-check-results small { margin-top: 4px; color: var(--muted-foreground); font-size: var(--fs-xs); }
+.tax-check-disclaimer { margin: 0; padding: 10px 14px; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.5; }
 
 .budget-model-compare { display: grid; gap: 7px; margin-top: 12px; }
-.budget-model-compare span { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); padding: 7px 0; color: var(--muted-foreground); font-size: 10px; }
-.budget-model-compare b { color: var(--foreground); font-size: 12px; }
-.distribution-summary { margin: 13px 0 0; border-top: 1px solid var(--line); padding-top: 11px; color: var(--muted-foreground); font-size: 10.5px; }
+.budget-model-compare span { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); padding: 7px 0; color: var(--muted-foreground); font-size: var(--fs-xs); }
+.budget-model-compare b { color: var(--foreground); font-size: var(--fs-sm); }
+.distribution-summary { margin: 13px 0 0; border-top: 1px solid var(--line); padding-top: 11px; color: var(--muted-foreground); font-size: var(--fs-xs); }
 .distribution-summary strong { color: var(--foreground); }
 
 @media (max-width: 720px) {

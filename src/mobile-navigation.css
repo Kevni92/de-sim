@@ -1,4 +1,4 @@
-.app-bar .mobile-menu-button,
+﻿.app-bar .mobile-menu-button,
 .app-bar .mobile-nav-layer {
   display: none !important;
 }
@@ -63,7 +63,7 @@
 
   .mobile-nav-heading span {
     color: var(--muted-foreground);
-    font-size: 10.5px;
+    font-size: var(--fs-xs);
     font-weight: 750;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -73,7 +73,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 14px;
+    font-size: var(--fs-md);
   }
 
   .mobile-nav-items {
@@ -96,7 +96,7 @@
     padding: 0 13px;
     color: var(--foreground);
     text-align: left;
-    font-size: 14px;
+    font-size: var(--fs-md);
     font-weight: 650;
   }
 
@@ -111,7 +111,7 @@
 
   .mobile-nav-items button span:last-child {
     color: var(--muted-foreground);
-    font-size: 22px;
+    font-size: var(--fs-2xl);
     font-weight: 400;
   }
 
@@ -129,7 +129,7 @@
 
   .mobile-nav-footer small {
     color: var(--muted-foreground);
-    font-size: 10.5px;
+    font-size: var(--fs-xs);
     line-height: 1.45;
     text-align: center;
   }

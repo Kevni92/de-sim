@@ -1,4 +1,4 @@
-.model-basis-status { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 13px; align-items: center; margin: 18px auto 0; padding: 14px 16px; border: 1px solid var(--border, #d6dde5); border-radius: 6px; background: #fff; }
+﻿.model-basis-status { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 13px; align-items: center; margin: 18px auto 0; padding: 14px 16px; border: 1px solid var(--border, #d6dde5); border-radius: 6px; background: #fff; }
 .model-basis-status.ready { border-color: #b8d8c8; background: #f4faf7; }
 .model-basis-status.warning { border-color: #ead6a2; background: #fffaf0; }
 .model-basis-status.missing, .model-basis-status.error { border-color: #e2b9b9; background: #fff7f7; }
@@ -7,10 +7,10 @@
 .model-basis-status.warning .model-basis-status-icon { background: #fff0c8; color: #8a6516; }
 .model-basis-status.missing .model-basis-status-icon, .model-basis-status.error .model-basis-status-icon { background: #f6e2e2; color: #a33b3b; }
 .model-basis-status-copy { min-width: 0; }
-.model-basis-status-copy > span { display: block; color: var(--muted, #5f6b78); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-.model-basis-status-copy > strong { display: block; margin-top: 2px; font-size: 14px; }
-.model-basis-status-copy p { margin: 3px 0 0; color: var(--muted, #5f6b78); font-size: 10px; line-height: 1.45; }
-.model-basis-status-copy small { display: block; margin-top: 6px; color: #8b3d3d; font-size: 9px; line-height: 1.45; }
+.model-basis-status-copy > span { display: block; color: var(--muted, #5f6b78); font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.model-basis-status-copy > strong { display: block; margin-top: 2px; font-size: var(--fs-md); }
+.model-basis-status-copy p { margin: 3px 0 0; color: var(--muted, #5f6b78); font-size: var(--fs-xs); line-height: 1.45; }
+.model-basis-status-copy small { display: block; margin-top: 6px; color: #8b3d3d; font-size: var(--fs-2xs); line-height: 1.45; }
 .model-basis-status-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
 .model-basis-status-actions .button { white-space: nowrap; }
 @media (max-width: 820px) { .model-basis-status { grid-template-columns: auto minmax(0, 1fr); } .model-basis-status-actions { grid-column: 1 / -1; justify-content: flex-start; } }
