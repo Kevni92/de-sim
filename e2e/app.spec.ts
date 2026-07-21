@@ -201,6 +201,36 @@ test("durchsucht das Transparenzregister auch nach weiteren Einnahmen", async ({
   await expect(dialog.getByRole("heading", { name: "Änderungsverlauf" })).toBeVisible();
 });
 
+test("erschließt Modellbasis und Wirkungsregister über Nachweise, ohne sie als Hauptnav-Punkte zu führen", async ({ page, isMobile }, testInfo) => {
+  test.skip(isMobile, "Desktop-Nutzerfluss");
+  testInfo.setTimeout(150_000);
+  await page.goto("./#/dashboard");
+  const mainNav = page.getByRole("navigation", { name: "Hauptnavigation" });
+  await expect(mainNav.getByRole("button", { name: "Übersicht", exact: true })).toBeVisible();
+  await expect(mainNav.getByRole("button", { name: "Einnahmen", exact: true })).toBeVisible();
+  await expect(mainNav.getByRole("button", { name: "Ausgaben und Leistungen", exact: true })).toBeVisible();
+  await expect(mainNav.getByRole("button", { name: "Vergleich", exact: true })).toBeVisible();
+  await expect(mainNav.getByRole("button", { name: "Nachweise", exact: true })).toBeVisible();
+  for (const removedLabel of ["Dashboard", "Bevölkerung", "Einkommensteuer", "Weitere Einnahmen", "Ausgaben", "Transparenz", "Wirkungen"]) {
+    await expect(mainNav.getByRole("button", { name: removedLabel, exact: true })).toHaveCount(0);
+  }
+
+  await mainNav.getByRole("button", { name: "Nachweise", exact: true }).click();
+  await expect(page).toHaveURL(/#\/transparenz$/);
+  await expect(page.getByRole("heading", { name: "Transparenzregister" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Modellbasis und erweiterte Prüfung" })).toBeVisible();
+
+  await page.getByRole("button", { name: /Bevölkerungslauf und Modellbasis/ }).click();
+  await expect(page).toHaveURL(/#\/bevoelkerung$/);
+  await expect(page.getByRole("heading", { name: "Modellbasis und Bevölkerung" })).toBeVisible({ timeout: 45_000 });
+  await expect(mainNav.getByRole("button", { name: "Nachweise", exact: true })).toHaveAttribute("aria-current", "page");
+
+  await page.goto("./#/transparenz");
+  await page.getByRole("button", { name: /Wirkungsregister/ }).click();
+  await expect(page).toHaveURL(/#\/wirkungen$/);
+  await expect(page.getByRole("heading", { name: "Indirekte und langfristige Wirkungen" })).toBeVisible({ timeout: 90_000 });
+});
+
 test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ page, isMobile }) => {
   test.skip(isMobile, "Die kompakte App-Bar zeigt Speichern nur auf Desktop");
   const name = `Milestone 5 ${Date.now()}`;

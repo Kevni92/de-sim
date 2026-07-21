@@ -1,4 +1,4 @@
-import { BookOpenCheck, Calculator, Database, Search, ShieldCheck } from "lucide-react";
+import { ArrowRight, BookOpenCheck, Calculator, Database, GitBranch, Search, ShieldCheck, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { EvidenceStatus, MetricRecord, SourceRecord } from "../lib/types";
@@ -10,11 +10,15 @@ export function TransparencyPage({
   sources,
   values,
   onOpenMetric,
+  onNavigatePopulation,
+  onNavigateEffects,
 }: {
   metrics: MetricRecord[];
   sources: SourceRecord[];
   values: Record<string, string>;
   onOpenMetric: (metricId: string, value?: string) => void;
+  onNavigatePopulation: () => void;
+  onNavigateEffects: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("alle");
@@ -54,6 +58,24 @@ export function TransparencyPage({
         <Stat icon={<Calculator size={17} />} label="Modellrechnungen" value={counts.modell} />
         <Stat icon={<BookOpenCheck size={17} />} label="Explizite Annahmen" value={counts.annahme} />
         <Stat icon={<Search size={17} />} label="Originalquellen" value={counts.quellen} />
+      </section>
+
+      <section className="card-flat transparency-model-basis" aria-labelledby="model-basis-title">
+        <header>
+          <div><h2 id="model-basis-title">Modellbasis und erweiterte Prüfung</h2><p>Technische Recheninfrastruktur bleibt hier gezielt erreichbar, ohne die Standardansicht zu dominieren.</p></div>
+        </header>
+        <div className="transparency-model-basis-grid">
+          <button className="transparency-model-basis-link" onClick={onNavigatePopulation}>
+            <Users size={18} />
+            <span><strong>Bevölkerungslauf und Modellbasis</strong><small>Synthetische Bevölkerung, Kalibrierungsbericht und Verteilungen verwalten und prüfen.</small></span>
+            <ArrowRight size={15} />
+          </button>
+          <button className="transparency-model-basis-link" onClick={onNavigateEffects}>
+            <GitBranch size={18} />
+            <span><strong>Wirkungsregister</strong><small>Indirekte und langfristige Wirkungen mit Modellversion, Zeitpfad und Modellgrenzen prüfen.</small></span>
+            <ArrowRight size={15} />
+          </button>
+        </div>
       </section>
 
       <section className="card-flat transparency-catalogue" aria-labelledby="catalogue-title">
