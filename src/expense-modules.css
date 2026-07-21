@@ -1,4 +1,4 @@
-.expense-modules-page .revenue-module-list nav > button.active { background: #f4edf9; box-shadow: inset 3px 0 #7a4e9d; }
+﻿.expense-modules-page .revenue-module-list nav > button.active { background: #f4edf9; box-shadow: inset 3px 0 #7a4e9d; }
 .expense-modules-page .revenue-header .eyebrow { color: #7a4e9d; }
 .expense-modules-page .parameter-controls input[type="range"] { accent-color: #7a4e9d; }
 .expense-modules-page .model-level-options button.active { border-color: #7a4e9d; background: #f4edf9; }
@@ -6,6 +6,6 @@
 .expense-component-card { padding: 18px; }
 .expense-component-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
 .expense-component-grid article { padding: 13px; border: 1px solid var(--border, #d6dde5); border-radius: 6px; background: #fff; }
-.expense-component-grid span, .expense-component-grid small { display: block; color: var(--muted, #5f6b78); font-size: 9px; line-height: 1.4; }
-.expense-component-grid strong { display: block; margin: 7px 0 5px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.expense-component-grid span, .expense-component-grid small { display: block; color: var(--muted, #5f6b78); font-size: var(--fs-2xs); line-height: 1.4; }
+.expense-component-grid strong { display: block; margin: 7px 0 5px; font-size: var(--fs-lg); font-variant-numeric: tabular-nums; }
 @media (max-width: 720px) { .expense-component-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
