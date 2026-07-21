@@ -8,18 +8,21 @@ export type AppRoute = "/" | "/dashboard" | "/bevoelkerung" | "/einkommensteuer"
 type AppTheme = "light" | "dark";
 const themeStorageKey = "haushaltskompass-theme";
 const navigationItems: Array<{ route: AppRoute; label: string }> = [
-  { route: "/dashboard", label: "Dashboard" },
-  { route: "/bevoelkerung", label: "Bevölkerung" },
-  { route: "/einkommensteuer", label: "Einkommensteuer" },
-  { route: "/einnahmen", label: "Weitere Einnahmen" },
-  { route: "/ausgaben", label: "Ausgaben" },
+  { route: "/dashboard", label: "Übersicht" },
+  { route: "/einnahmen", label: "Einnahmen" },
+  { route: "/ausgaben", label: "Ausgaben und Leistungen" },
   { route: "/vergleich", label: "Vergleich" },
-  { route: "/transparenz", label: "Transparenz" },
+  { route: "/transparenz", label: "Nachweise" },
 ];
+const routeNavigationGroup: Partial<Record<AppRoute, AppRoute>> = {
+  "/einkommensteuer": "/einnahmen",
+  "/bevoelkerung": "/transparenz",
+};
 
 function readTheme(): AppTheme { return document.documentElement.dataset.theme === "dark" ? "dark" : "light"; }
 function isActiveRoute(current: AppRoute, target: AppRoute) {
-  return target === "/dashboard" ? current === "/dashboard" || current === "/" : current === target;
+  const effectiveCurrent = current === "/" ? "/dashboard" : routeNavigationGroup[current] ?? current;
+  return effectiveCurrent === target;
 }
 
 export function AppBar({

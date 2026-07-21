@@ -1,13 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 const navigationLabels = [
-  "Dashboard",
-  "Bevölkerung",
-  "Einkommensteuer",
-  "Weitere Einnahmen",
-  "Ausgaben",
+  "Übersicht",
+  "Einnahmen",
+  "Ausgaben und Leistungen",
   "Vergleich",
-  "Transparenz",
+  "Nachweise",
 ];
 
 test.describe.configure({ timeout: 90_000 });
@@ -34,8 +32,10 @@ test("stellt die Desktop-Navigation mobil als bedienbares Burger-Menü bereit", 
   for (const label of navigationLabels) {
     await expect(menu.getByRole("button", { name: label, exact: true })).toBeVisible();
   }
-  await expect(menu.getByRole("button", { name: "Wirkungen", exact: true })).toHaveCount(0);
-  await expect(menu.getByRole("button", { name: "Dashboard", exact: true })).toHaveAttribute("aria-current", "page");
+  for (const removedLabel of ["Wirkungen", "Bevölkerung", "Einkommensteuer", "Weitere Einnahmen", "Ausgaben", "Transparenz", "Dashboard"]) {
+    await expect(menu.getByRole("button", { name: removedLabel, exact: true })).toHaveCount(0);
+  }
+  await expect(menu.getByRole("button", { name: "Übersicht", exact: true })).toHaveAttribute("aria-current", "page");
 
   await menu.getByRole("button", { name: "Vergleich", exact: true }).click();
   await expect(page).toHaveURL(/#\/vergleich$/);

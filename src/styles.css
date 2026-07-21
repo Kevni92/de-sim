@@ -55,18 +55,18 @@ h1, h2, h3, p { margin-top: 0; }
 .eyebrow { color: var(--muted-foreground); font-size: 10.5px; line-height: 1; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 
 .app-bar { position: sticky; top: 0; z-index: 50; height: 64px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.97); backdrop-filter: blur(10px); }
-.app-bar-inner { width: min(1440px, calc(100% - 32px)); height: 100%; margin-inline: auto; display: flex; align-items: center; gap: 20px; }
+.app-bar-inner { width: min(1440px, calc(100% - 32px)); height: 100%; margin-inline: auto; display: flex; align-items: center; gap: 12px; }
 .brand-link { display: flex; align-items: center; gap: 9px; border: 0; background: transparent; padding: 0; text-align: left; }
 .brand-mark { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 6px; background: var(--primary); color: #fff; }
 .brand-copy { display: flex; flex-direction: column; line-height: 1.2; }
 .brand-copy strong { font-size: 15px; letter-spacing: -.015em; }
 .brand-copy small { margin-top: 2px; color: var(--muted-foreground); font-size: 10.5px; white-space: nowrap; }
 .top-nav { display: flex; align-items: center; gap: 3px; margin-left: 12px; }
-.top-nav button { height: 32px; border: 0; border-radius: 6px; background: transparent; padding: 0 12px; color: var(--muted-foreground); font-size: 13px; font-weight: 600; }
+.top-nav button { height: 32px; border: 0; border-radius: 6px; background: transparent; padding: 0 10px; color: var(--muted-foreground); font-size: 13px; font-weight: 600; white-space: nowrap; }
 .top-nav button:hover { background: var(--subtle); color: var(--foreground); }
 .top-nav button.active { background: var(--primary-soft); color: var(--primary); }
-.app-actions { margin-left: auto; display: flex; align-items: center; gap: 7px; }
-.app-actions > input { width: 166px; height: 32px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 0 10px; color: var(--foreground); font-size: 12.5px; }
+.app-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.app-actions > input { width: clamp(90px, 10vw, 166px); height: 32px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 0 10px; color: var(--foreground); font-size: 12.5px; }
 
 .onboarding-page { min-height: calc(100vh - 64px); }
 .onboarding-grid { width: min(1440px, calc(100% - 48px)); margin: 0 auto; padding: 42px 0 80px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 42px; }
