@@ -20,6 +20,7 @@
     "sgb2-housing.test.ts",
     "sgb2-aggregation.test.ts",
     "sgb2-ui.test.ts",
+    "sgb2-simple-controls.test.ts",
     "sgb2-release-validation.test.ts",
     "scenario-calculation.test.ts",
     "reform-effects.test.ts",
@@ -43,6 +44,7 @@
     "../src/lib/sgb2-aggregation.ts",
     "../src/lib/sgb2-release-validation.ts",
     "../src/lib/sgb2-ui.ts",
+    "../src/lib/sgb2-simple-controls.ts",
     "../src/lib/scenario-calculation.ts",
     "../src/lib/scenario-state.ts",
     "../src/lib/types.ts"
