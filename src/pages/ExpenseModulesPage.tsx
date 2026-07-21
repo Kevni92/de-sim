@@ -1,7 +1,10 @@
+import { ContextualEffectsPanel } from "../components/ContextualEffectsPanel";
 import { ModuleCalculationContextCard, ModuleMetric, ModulePageHeader, ModuleSummaryHeader } from "../components/ModuleDetailComponents";
 import { Sgb2ExpenseEditor } from "../components/Sgb2ExpenseEditor";
 import { defaultExpenseParameters, expenseModuleDefinitionById, expenseModuleDefinitions, expenseParameterKey, type ExpenseModuleId, type ExpenseModuleResult } from "../lib/expense-modules";
-import { modelLevelLabel } from "../lib/scenario-calculation";
+import type { EffectRun } from "../lib/long-term-effects";
+import { contextKeyForExpense } from "../lib/reform-effects";
+import { modelLevelLabel, type CalculationFreshness } from "../lib/scenario-calculation";
 import type { Sgb2ScenarioReference } from "../lib/sgb2-policy";
 import { resetSgb2Ui, type Sgb2UiPreviewResult } from "../lib/sgb2-ui";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
@@ -13,6 +16,9 @@ type Props = {
   parameters: Record<string, number>;
   modelLevel: ModelLevel;
   horizonYears: TimeHorizon;
+  effectRun: EffectRun | null;
+  effectStatus: CalculationFreshness;
+  effectError: string;
   sgb2: Sgb2ScenarioReference;
   sgb2Preview: Sgb2UiPreviewResult | null;
   sgb2PreviewLoading: boolean;
@@ -21,13 +27,17 @@ type Props = {
   onSelect: (id: ExpenseModuleId) => void;
   onParameters: (parameters: Record<string, number>) => void;
   onSgb2: (reference: Sgb2ScenarioReference) => void;
+  onRetryEffects: () => void;
+  onOpenAdvancedEffects: () => void;
+  onManageBasis: () => void;
   onBack: () => void;
   onOpenSource: (metricId: string, value?: string) => void;
 };
 
-export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel, horizonYears, sgb2, sgb2Preview, sgb2PreviewLoading, sgb2PreviewError, populationAvailable, onSelect, onParameters, onSgb2, onBack, onOpenSource }: Props) {
+export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel, horizonYears, effectRun, effectStatus, effectError, sgb2, sgb2Preview, sgb2PreviewLoading, sgb2PreviewError, populationAvailable, onSelect, onParameters, onSgb2, onRetryEffects, onOpenAdvancedEffects, onManageBasis, onBack, onOpenSource }: Props) {
   const definition = expenseModuleDefinitionById[selectedId];
   const result = results.find((item) => item.id === selectedId) ?? results[0];
+  const effectActive = Math.abs(result.staticDelta) > 1e-9 || definition.parameters.some((parameter) => Math.abs((parameters[expenseParameterKey(selectedId, parameter.key)] ?? parameter.baseline) - parameter.baseline) > 1e-9);
   const updateParameter = (key: string, value: number) => onParameters({ ...parameters, [expenseParameterKey(selectedId, key)]: value });
   const resetModule = () => {
     const next = { ...parameters };
@@ -63,7 +73,7 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
             <ModuleMetric label="Baseline" value={fmtBn(result.baseline)} note={definition.legalBasis} />
             <ModuleMetric label="Szenariowert" value={fmtBn(result.value)} note={`${fmtDiff(result.delta)} gegenüber Baseline`} tone={result.delta <= 0 ? "positive" : "negative"} testId="expense-module-value" />
             <ModuleMetric label="Direkte Wirkung" value={fmtDiff(result.staticDelta)} note="vor modellierter Folgewirkung" tone={result.staticDelta <= 0 ? "positive" : "negative"} />
-            <ModuleMetric label="Folgewirkung" value={fmtDiff(result.feedbackAdjustment)} note={modelLevelLabel(modelLevel)} tone={result.feedbackAdjustment <= 0 ? "positive" : "negative"} />
+            <ModuleMetric label="Modulinterne Reaktion" value={fmtDiff(result.feedbackAdjustment)} note={modelLevelLabel(modelLevel)} tone={result.feedbackAdjustment <= 0 ? "positive" : "negative"} />
           </div>
         </section>
 
@@ -93,6 +103,7 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
               <ModuleCalculationContextCard
                 modelLevel={modelLevel}
                 horizonYears={horizonYears}
+                status={effectActive ? effectStatus : "current"}
                 description="Direkte Haushaltswirkung und mögliche Folgewirkungen bleiben getrennt; die Einstellung gilt für das gesamte Szenario."
               />
               <article className="card-flat incidence-card"><div className="section-title"><div><h3>Begünstigte und Leistungskanäle</h3><p>Modellierte Verteilung des Aggregats, keine individuellen Ansprüche.</p></div></div><div className="incidence-bar" role="img" aria-label={`Begünstigtenstruktur für ${definition.label}`}>{result.beneficiaries.map((item) => <i key={item.label} style={{ width: `${item.share}%` }} title={`${item.label}: ${item.share} %`} />)}</div><ul>{result.beneficiaries.map((item) => <li key={item.label}><span>{item.label}</span><strong>{item.share} %</strong></li>)}</ul><p className="uncertainty-note">Ergebnisband: ± {result.uncertaintyPercent} %. Folgewirkungen sind keine Prognose.</p></article>
@@ -101,6 +112,22 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
 
           {result.components.length > 0 && <section className="card-flat expense-component-card"><div className="section-title"><div><h3>Getrennte Teilaggregate</h3><p>Einzeln berechnet und erst danach zusammengeführt.</p></div></div><div className="expense-component-grid">{result.components.map((component) => <article key={component.id}><span>{component.label}</span><strong>{fmtBn(component.value)}</strong><small>{fmtBn(component.baseline)} Baseline · {fmtDiff(component.value - component.baseline)}</small></article>)}</div></section>}
         </>}
+
+        <section className="card-flat expense-context-effects" aria-labelledby="expense-context-effects-title">
+          <div className="section-title"><div><h3 id="expense-context-effects-title">Mögliche Folgewirkungen</h3><p>Nur explizit zugeordnete Wirkungsketten werden angezeigt. Direkte Ausgaben bleiben oberhalb getrennt.</p></div></div>
+          <ContextualEffectsPanel
+            contextKey={contextKeyForExpense(selectedId)}
+            active={effectActive}
+            run={effectRun}
+            status={effectStatus}
+            basisAvailable={populationAvailable}
+            error={effectError}
+            onRetry={onRetryEffects}
+            onOpenSource={onOpenSource}
+            onOpenAdvanced={onOpenAdvancedEffects}
+            onManageBasis={onManageBasis}
+          />
+        </section>
 
         <section className="card-flat revenue-overview-table"><div className="section-title"><div><h3>Gesamtwirkung der Ausgabenmodule</h3><p>Getrennte Berechnung, konsistente Übernahme in den Staatshaushalt.</p></div></div><div className="revenue-table-head"><span>Modul</span><span>Baseline</span><span>Direkt</span><span>Folgewirkung</span><span>Szenario</span></div>{results.map((item) => <button key={item.id} onClick={() => onSelect(item.id)} className={item.id === selectedId ? "active" : ""}><strong>{item.label}</strong><span>{fmtBn(item.baseline)}</span><span className={item.staticDelta <= 0 ? "positive" : "negative"}>{fmtDiff(item.staticDelta)}</span><span className={item.feedbackAdjustment <= 0 ? "positive" : "negative"}>{fmtDiff(item.feedbackAdjustment)}</span><span><b>{fmtBn(item.value)}</b></span></button>)}</section>
       </div>

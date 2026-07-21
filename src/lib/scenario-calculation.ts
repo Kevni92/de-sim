@@ -75,6 +75,8 @@ export function resolveCalculationFreshness({
   runHorizonYears,
   modelLevel,
   horizonYears,
+  runInputSignature,
+  inputSignature,
 }: {
   loading: boolean;
   hasResult: boolean;
@@ -82,8 +84,11 @@ export function resolveCalculationFreshness({
   runHorizonYears?: number;
   modelLevel: ModelLevel;
   horizonYears: number;
+  runInputSignature?: string;
+  inputSignature?: string;
 }): CalculationFreshness {
   if (loading) return "updating";
   if (!hasResult) return "stale";
+  if (inputSignature && runInputSignature !== inputSignature) return "stale";
   return runModelLevel === modelLevel && runHorizonYears === horizonYears ? "current" : "stale";
 }
