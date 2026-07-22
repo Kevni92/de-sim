@@ -61,6 +61,7 @@ export interface DemographyProjectionInput {
   retirementAge: number;
   modelVersion?: string;
   legalYear: number;
+  additionalBirthsByVariant?: Partial<Record<ProjectionVariant, Record<number, number>>>;
 }
 
 export interface DemographyProjectionRun {
@@ -85,6 +86,45 @@ export interface DemographyValidationIssue {
   code: string;
   message: string;
   path?: string;
+}
+
+export type FamilyFertilityEvidenceStatus = "nicht-berechnet" | "gerichteter-zusammenhang" | "szenarioband-berechenbar";
+
+export interface FamilyFertilityEffectInput {
+  status: FamilyFertilityEvidenceStatus;
+  effectPct: number;
+  onsetYears: number;
+  durationYears: number;
+  baseYear: number;
+  targetYear: number;
+  annualBirthBaseline: number;
+  sourceIds: string[];
+  workingAgeStart: number;
+}
+
+export interface FamilyFertilityPathPoint {
+  year: number;
+  status: FamilyFertilityEvidenceStatus;
+  direction: "positiv" | "negativ" | "nicht-berechnet";
+  additionalBirths: number | null;
+  lowerBirths: number | null;
+  upperBirths: number | null;
+  earliestWorkingAgeYear: number | null;
+}
+
+export interface FamilyFertilityPath {
+  status: FamilyFertilityEvidenceStatus;
+  points: FamilyFertilityPathPoint[];
+  additionalBirthsByVariant: Record<ProjectionVariant, Record<number, number>>;
+  sourceIds: string[];
+  warnings: string[];
+}
+
+export interface FamilyReformImpact {
+  directBudgetDeltaBn: number;
+  familyReliefBn: number;
+  fertilityPath: FamilyFertilityPath;
+  warnings: string[];
 }
 
 export const defaultLongTermScenarioSettings: LongTermScenarioSettings = {
@@ -223,7 +263,7 @@ function sum(population: CohortPopulation, from = 0, to = MAX_AGE) {
 
 function emptyCohorts(): CohortPopulation { return { female: Array(MAX_AGE + 1).fill(0), male: Array(MAX_AGE + 1).fill(0) }; }
 
-function projectPath(input: DemographyProjectionInput, assumptions: DemographyAssumptions): ProjectionYear[] {
+function projectPath(input: DemographyProjectionInput, assumptions: DemographyAssumptions, variant?: ProjectionVariant): ProjectionYear[] {
   const result: ProjectionYear[] = [];
   let current = cloneCohorts(input.startPopulation);
   for (let year = input.baseYear; year <= input.targetYear; year += 1) {
@@ -250,6 +290,8 @@ function projectPath(input: DemographyProjectionInput, assumptions: DemographyAs
           : 0;
         births += femaleBirths;
       }
+      const additionalBirths = variant ? input.additionalBirthsByVariant?.[variant]?.[year] ?? 0 : 0;
+      births += additionalBirths;
       next.female[0] += births * 0.488;
       next.male[0] += births * 0.512;
       current = next;
@@ -290,9 +332,9 @@ export function projectDemography(input: DemographyProjectionInput): DemographyP
   const issues = validateDemographyInput(input);
   if (issues.length) throw new Error(issues.map((issue) => `${issue.code}: ${issue.message}`).join(" "));
   const variants = {
-    lower: projectPath(input, input.variants.lower),
-    central: projectPath(input, input.variants.central),
-    upper: projectPath(input, input.variants.upper),
+    lower: projectPath(input, input.variants.lower, "lower"),
+    central: projectPath(input, input.variants.central, "central"),
+    upper: projectPath(input, input.variants.upper, "upper"),
   } satisfies Record<ProjectionVariant, ProjectionYear[]>;
   const inputSignature = projectionInputSignature(input);
   return {
@@ -315,6 +357,56 @@ export function projectDemography(input: DemographyProjectionInput): DemographyP
       "Die amtliche Referenz dient der Einordnung und Kalibrierung; Reformwirkungen benötigen eigene Wirkungsverträge.",
     ],
     sourceIds: [...new Set([...input.baseline.sourceIds, ...input.scenario.sourceIds])],
+  };
+}
+
+function rampForFamilyEffect(year: number, input: FamilyFertilityEffectInput) {
+  const start = input.baseYear + Math.max(0, Math.round(input.onsetYears));
+  const end = start + Math.max(1, Math.round(input.durationYears));
+  if (year < start) return 0;
+  return clamp((year - start + 1) / Math.max(1, end - start), 0, 1);
+}
+
+export function calculateFamilyFertilityPath(input: FamilyFertilityEffectInput): FamilyFertilityPath {
+  if (!Number.isInteger(input.baseYear) || input.targetYear < input.baseYear || input.annualBirthBaseline < 0 || !Number.isFinite(input.effectPct)) throw new Error("Ungültige Annahmen für den familienpolitischen Wirkungspfad.");
+  const empty: Record<ProjectionVariant, Record<number, number>> = { lower: {}, central: {}, upper: {} };
+  const warnings = [
+    "Direkte Familienausgaben und eine mögliche demografische Wirkung werden getrennt gerechnet.",
+    "Zusätzliche Geburten beeinflussen das Erwerbspotenzial erst nach dem errechneten Kohortenübergang.",
+  ];
+  const points: FamilyFertilityPathPoint[] = [];
+  for (let year = input.baseYear; year <= input.targetYear; year += 1) {
+    const factor = rampForFamilyEffect(year, input);
+    const central = input.status === "szenarioband-berechenbar" ? input.annualBirthBaseline * input.effectPct / 100 * factor : null;
+    const lower = central === null ? null : central * 0.5;
+    const upper = central === null ? null : central * 1.5;
+    const direction = input.status === "nicht-berechnet" ? "nicht-berechnet" : input.effectPct < 0 ? "negativ" : "positiv";
+    const earliestWorkingAgeYear = central === null ? null : year + input.workingAgeStart;
+    points.push({ year, status: input.status, direction, additionalBirths: central, lowerBirths: lower, upperBirths: upper, earliestWorkingAgeYear });
+    if (central !== null) {
+      empty.central[year] = central;
+      empty.lower[year] = lower ?? 0;
+      empty.upper[year] = upper ?? 0;
+    }
+  }
+  if (input.status === "nicht-berechnet") warnings.push("Die konkrete Geburtenwirkung ist nicht ausreichend belegt und bleibt ohne Punktwert.");
+  if (input.status === "gerichteter-zusammenhang") warnings.push("Die Wirkungsrichtung ist sichtbar; eine zusätzliche Geburtenzahl wird nicht behauptet.");
+  return { status: input.status, points, additionalBirthsByVariant: empty, sourceIds: [...input.sourceIds], warnings };
+}
+
+export function calculateFamilyReformImpact(input: {
+  benefitChangePct: number;
+  familyBaselineBn: number;
+  fertility: FamilyFertilityEffectInput;
+}): FamilyReformImpact {
+  if (!Number.isFinite(input.benefitChangePct) || input.familyBaselineBn < 0) throw new Error("Ungültige direkte Familienannahme.");
+  const directBudgetDeltaBn = input.familyBaselineBn * input.benefitChangePct / 100;
+  const path = calculateFamilyFertilityPath(input.fertility);
+  return {
+    directBudgetDeltaBn: round(directBudgetDeltaBn, 3),
+    familyReliefBn: round(-directBudgetDeltaBn, 3),
+    fertilityPath: path,
+    warnings: ["Die direkte Budgetwirkung ist keine Gegenfinanzierung eines unsicheren Geburtenpfads.", ...path.warnings],
   };
 }
 
