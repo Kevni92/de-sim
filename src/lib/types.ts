@@ -6,6 +6,33 @@ export type EvidenceStatus = SourceStatus | "unbekannt";
 export type ModelLevel = "statisch" | "verhalten" | "langfrist";
 export type TimeHorizon = 1 | 5 | 10 | 20;
 
+export type LongTermPreset =
+  | "amtliche-referenz"
+  | "niedrigere-nettozuwanderung"
+  | "hoehere-nettozuwanderung"
+  | "frueherer-arbeitsmarktzugang"
+  | "spaeteres-rentenalter"
+  | "familienpolitischer-wirkungspfad";
+
+export interface LongTermScenarioSettings {
+  targetYear: number;
+  preset: LongTermPreset;
+  workingAgeStart: number;
+  retirementAge: number;
+  fertilityEffectStatus: "nicht-berechnet" | "gerichteter-zusammenhang" | "szenarioband-berechenbar";
+  fertilityEffectPct: number;
+  migrationNetAnnual: number;
+  protectionSharePct: number;
+  accessDelayYears: number;
+  participationRatePct: number;
+  employmentRatePct: number;
+  workTimeFactorPct: number;
+  contributionRatePct: number;
+  averageAnnualWage: number;
+  pensionBenefitRatePct: number;
+  federalGrantBn: number;
+}
+
 export interface SourceRecord {
   id: string;
   title: string;
@@ -277,6 +304,7 @@ export interface ScenarioDraft {
   sourceIds: string[];
   populationRunId: string | null;
   populationModelVersion: string | null;
+  longTerm: LongTermScenarioSettings;
   sgb2: Sgb2ScenarioReference;
 }
 

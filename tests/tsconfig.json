@@ -13,6 +13,7 @@
   },
   "include": [
     "population-model.test.ts",
+    "long-term-scenario.test.ts",
     "effects-model.test.ts",
     "sgb2-policy.test.ts",
     "sgb2-population.test.ts",
@@ -50,6 +51,7 @@
     "../src/lib/sgb2-simple-controls.ts",
     "../src/lib/scenario-calculation.ts",
     "../src/lib/scenario-state.ts",
-    "../src/lib/types.ts"
+    "../src/lib/types.ts",
+    "../src/lib/long-term-scenario.ts"
   ]
 }
