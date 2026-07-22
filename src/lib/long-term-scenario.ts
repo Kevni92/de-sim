@@ -218,6 +218,50 @@ export interface LabourPath {
   warnings: string[];
 }
 
+export interface PensionPathInput {
+  population: ProjectionYear[];
+  labour: LabourPath;
+  retirementAge: number;
+  pensionerRatePct: number;
+  contributionRatePct: number;
+  pensionBenefitRatePct: number;
+  averageAnnualWage: number;
+  pensionIndexationPct: number;
+  otherContributionBn: number;
+  federalGrantBn: number;
+  otherRevenueBn: number;
+  administrationExpensesBn: number;
+  sourceIds: string[];
+}
+
+export interface PensionPathPoint {
+  year: number;
+  olderPopulation: number;
+  pensioners: number;
+  contributors: number;
+  taxableWageBill: number;
+  contributionRevenueBn: number;
+  otherContributionBn: number;
+  federalGrantBn: number;
+  otherRevenueBn: number;
+  averageAnnualPension: number;
+  pensionExpensesBn: number;
+  administrationExpensesBn: number;
+  totalRevenueBn: number;
+  balanceBn: number;
+  contributorsPer100Pensioners: number;
+  requiredAdditionalContributionRatePct: number;
+  requiredAdditionalFederalGrantBn: number;
+}
+
+export interface PensionPath {
+  points: PensionPathPoint[];
+  lower: PensionPathPoint[];
+  upper: PensionPathPoint[];
+  sourceIds: string[];
+  warnings: string[];
+}
+
 export const defaultLongTermScenarioSettings: LongTermScenarioSettings = {
   targetYear: 2070,
   preset: "amtliche-referenz",
@@ -655,6 +699,73 @@ export function calculateLabourPath(input: LabourPathInput): LabourPath {
       "Menschen im Erwerbsalter, Erwerbspersonen, Beschäftigte und Beitragszahlende sind getrennte Größen.",
       "Ein höheres Rentenalter erweitert die Altersgrenze, garantiert aber keine Beschäftigung.",
       input.migration ? "Migration wird aus dem demografischen Bestand abgegrenzt und über den eigenen Zugangspfad ergänzt; Doppelzählung wird vermieden." : "Ohne Migrationspfad wird kein zusätzlicher Zugang oder Beschäftigungsbeitrag angenommen.",
+    ],
+  };
+}
+
+function populationAtOrAboveRetirementAge(population: ProjectionYear, retirementAge: number) {
+  return sum(population.byAge, retirementAge, MAX_AGE);
+}
+
+function validatePensionInput(input: PensionPathInput) {
+  if (!input.population.length || input.population.length !== input.labour.points.length) throw new Error("Bevölkerungs- und Erwerbspfad müssen dieselben Jahre enthalten.");
+  if (!Number.isInteger(input.retirementAge) || input.retirementAge <= 20 || input.retirementAge > MAX_AGE) throw new Error("Ungültiges Rentenzugangsalter.");
+  const rates = [input.pensionerRatePct, input.contributionRatePct, input.pensionBenefitRatePct];
+  if (rates.some((value) => !Number.isFinite(value) || value < 0 || value > 100)) throw new Error("Renten- und Beitragssätze müssen zwischen 0 und 100 liegen.");
+  const nonNegative = [input.averageAnnualWage, input.pensionIndexationPct, input.otherContributionBn, input.federalGrantBn, input.otherRevenueBn, input.administrationExpensesBn];
+  if (nonNegative.some((value) => !Number.isFinite(value) || value < 0)) throw new Error("Alterssicherungsbeträge müssen nichtnegativ und endlich sein.");
+}
+
+function calculatePensionPathForRates(input: PensionPathInput, labourPoints: LabourPathPoint[], pensionerRatePct: number): PensionPathPoint[] {
+  const baseYear = input.population[0]?.year ?? 0;
+  return input.population.map((population, index) => {
+    const labour = labourPoints[index];
+    const olderPopulation = populationAtOrAboveRetirementAge(population, input.retirementAge);
+    const pensioners = olderPopulation * pensionerRatePct / 100;
+    const averageAnnualPension = input.averageAnnualWage * input.pensionBenefitRatePct / 100 * ((1 + input.pensionIndexationPct / 100) ** Math.max(0, population.year - baseYear));
+    const contributionRevenueBn = labour.taxableWageBill * input.contributionRatePct / 100 / 1_000_000_000;
+    const pensionExpensesBn = pensioners * averageAnnualPension / 1_000_000_000;
+    const administrationExpensesBn = input.administrationExpensesBn;
+    const totalRevenueBn = contributionRevenueBn + input.otherContributionBn + input.federalGrantBn + input.otherRevenueBn;
+    const balanceBn = totalRevenueBn - pensionExpensesBn - administrationExpensesBn;
+    const financingGapBn = Math.max(0, pensionExpensesBn + administrationExpensesBn - totalRevenueBn);
+    return {
+      year: population.year,
+      olderPopulation: round(olderPopulation, 0),
+      pensioners: round(pensioners, 0),
+      contributors: round(labour.contributors, 0),
+      taxableWageBill: round(labour.taxableWageBill, 0),
+      contributionRevenueBn: round(contributionRevenueBn, 3),
+      otherContributionBn: round(input.otherContributionBn, 3),
+      federalGrantBn: round(input.federalGrantBn, 3),
+      otherRevenueBn: round(input.otherRevenueBn, 3),
+      averageAnnualPension: round(averageAnnualPension, 0),
+      pensionExpensesBn: round(pensionExpensesBn, 3),
+      administrationExpensesBn: round(administrationExpensesBn, 3),
+      totalRevenueBn: round(totalRevenueBn, 3),
+      balanceBn: round(balanceBn, 3),
+      contributorsPer100Pensioners: round(labour.contributors / Math.max(1, pensioners) * 100, 2),
+      requiredAdditionalContributionRatePct: round(financingGapBn / Math.max(1, labour.taxableWageBill / 1_000_000_000) * 100, 3),
+      requiredAdditionalFederalGrantBn: round(financingGapBn, 3),
+    };
+  });
+}
+
+export function calculatePensionPath(input: PensionPathInput): PensionPath {
+  validatePensionInput(input);
+  const points = calculatePensionPathForRates(input, input.labour.points, input.pensionerRatePct);
+  const lower = calculatePensionPathForRates(input, input.labour.lower, clamp(input.pensionerRatePct * 0.95, 0, 100));
+  const upper = calculatePensionPathForRates(input, input.labour.upper, clamp(input.pensionerRatePct * 1.05, 0, 100));
+  return {
+    points,
+    lower,
+    upper,
+    sourceIds: [...new Set([...input.sourceIds, ...input.labour.sourceIds])],
+    warnings: [
+      "Der Rentenbestand ist eine Bezugsquote der Kohorten ab Rentenzugangsalter und nicht automatisch die gesamte ältere Bevölkerung.",
+      "Beitragseinnahmen, weitere Beiträge, Bundeszuschuss und sonstige Einnahmen werden getrennt ausgewiesen; der Zuschuss ist keine Restgröße.",
+      "Der erforderliche zusätzliche Beitragssatz und der zusätzliche Bundeszuschuss sind alternative Ausgleichsindikatoren und werden nicht addiert.",
+      "Das aggregierte Szenario ersetzt keine individuelle Rentenberechnung und keine vollständige Finanzprojektion der Rentenversicherung.",
     ],
   };
 }
