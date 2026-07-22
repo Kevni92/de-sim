@@ -121,6 +121,6 @@ test("synchronisiert und exportiert Wirkungsreferenzen ohne Undo-Schritt", () =>
   assert.equal(synced.present.effectRunReference?.runId, reference.runId);
   const json = scenarioToJson(synced.present);
   const wrapper = JSON.parse(json) as { schemaVersion: number };
-  assert.equal(wrapper.schemaVersion, 6);
+  assert.equal(wrapper.schemaVersion, 7);
   assert.deepEqual(scenarioFromJson(json).effectRunReference, reference);
 });

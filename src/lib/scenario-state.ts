@@ -1,4 +1,5 @@
 import { defaultEffectParameters } from "./long-term-effects";
+import { defaultLongTermScenarioSettings } from "./long-term-scenario";
 import type { PopulationBasisReference } from "./population-basis";
 import {
   cloneSgb2ScenarioReference,
@@ -8,7 +9,7 @@ import {
 } from "./sgb2-policy";
 import type { ModelLevel, ScenarioDraft, ScenarioState, TimeHorizon } from "./types";
 
-export const SCENARIO_SCHEMA_VERSION = 6;
+export const SCENARIO_SCHEMA_VERSION = 7;
 export interface EffectRunReference {
   runId: string;
   modelVersion: string;
@@ -70,6 +71,7 @@ export const defaultScenarioDraft: ScenarioDraftWithPopulationBasis = {
   ],
   populationRunId: null,
   populationModelVersion: null,
+  longTerm: { ...defaultLongTermScenarioSettings },
   populationBasis: null,
   effectRunReference: null,
   sgb2: cloneSgb2ScenarioReference(defaultSgb2ScenarioReference),
@@ -94,6 +96,7 @@ function cloneScenario(scenario: ScenarioDraftWithPopulationBasis): ScenarioDraf
     sourceIds: [...scenario.sourceIds],
     populationBasis: scenario.populationBasis ? { ...scenario.populationBasis } : null,
     effectRunReference: scenario.effectRunReference ? { ...scenario.effectRunReference } : null,
+    longTerm: { ...scenario.longTerm },
     sgb2: cloneSgb2ScenarioReference(scenario.sgb2),
   };
 }
@@ -179,13 +182,33 @@ export function normalizeScenarioDraft(value: ScenarioInput | ScenarioState | nu
     populationModelVersion,
     populationBasis,
     effectRunReference: normalizeEffectRunReference((value as ScenarioInput | undefined)?.effectRunReference),
+    longTerm: {
+      ...fallback.longTerm,
+      ...(value?.longTerm && typeof value.longTerm === "object" ? value.longTerm : {}),
+      targetYear: numberOr((value?.longTerm as { targetYear?: unknown } | undefined)?.targetYear, fallback.longTerm.targetYear),
+      workingAgeStart: numberOr((value?.longTerm as { workingAgeStart?: unknown } | undefined)?.workingAgeStart, fallback.longTerm.workingAgeStart),
+      retirementAge: numberOr((value?.longTerm as { retirementAge?: unknown } | undefined)?.retirementAge, fallback.longTerm.retirementAge),
+      fertilityEffectPct: numberOr((value?.longTerm as { fertilityEffectPct?: unknown } | undefined)?.fertilityEffectPct, fallback.longTerm.fertilityEffectPct),
+      migrationNetAnnual: numberOr((value?.longTerm as { migrationNetAnnual?: unknown } | undefined)?.migrationNetAnnual, fallback.longTerm.migrationNetAnnual),
+      protectionSharePct: numberOr((value?.longTerm as { protectionSharePct?: unknown } | undefined)?.protectionSharePct, fallback.longTerm.protectionSharePct),
+      accessDelayYears: numberOr((value?.longTerm as { accessDelayYears?: unknown } | undefined)?.accessDelayYears, fallback.longTerm.accessDelayYears),
+      participationRatePct: numberOr((value?.longTerm as { participationRatePct?: unknown } | undefined)?.participationRatePct, fallback.longTerm.participationRatePct),
+      employmentRatePct: numberOr((value?.longTerm as { employmentRatePct?: unknown } | undefined)?.employmentRatePct, fallback.longTerm.employmentRatePct),
+      workTimeFactorPct: numberOr((value?.longTerm as { workTimeFactorPct?: unknown } | undefined)?.workTimeFactorPct, fallback.longTerm.workTimeFactorPct),
+      contributionRatePct: numberOr((value?.longTerm as { contributionRatePct?: unknown } | undefined)?.contributionRatePct, fallback.longTerm.contributionRatePct),
+      averageAnnualWage: numberOr((value?.longTerm as { averageAnnualWage?: unknown } | undefined)?.averageAnnualWage, fallback.longTerm.averageAnnualWage),
+      pensionBenefitRatePct: numberOr((value?.longTerm as { pensionBenefitRatePct?: unknown } | undefined)?.pensionBenefitRatePct, fallback.longTerm.pensionBenefitRatePct),
+      federalGrantBn: numberOr((value?.longTerm as { federalGrantBn?: unknown } | undefined)?.federalGrantBn, fallback.longTerm.federalGrantBn),
+      preset: (value?.longTerm as { preset?: unknown } | undefined)?.preset === "niedrigere-nettozuwanderung" || (value?.longTerm as { preset?: unknown } | undefined)?.preset === "hoehere-nettozuwanderung" || (value?.longTerm as { preset?: unknown } | undefined)?.preset === "frueherer-arbeitsmarktzugang" || (value?.longTerm as { preset?: unknown } | undefined)?.preset === "spaeteres-rentenalter" || (value?.longTerm as { preset?: unknown } | undefined)?.preset === "familienpolitischer-wirkungspfad" || (value?.longTerm as { preset?: unknown } | undefined)?.preset === "amtliche-referenz" ? (value?.longTerm as { preset: typeof fallback.longTerm.preset }).preset : fallback.longTerm.preset,
+      fertilityEffectStatus: (value?.longTerm as { fertilityEffectStatus?: unknown } | undefined)?.fertilityEffectStatus === "gerichteter-zusammenhang" || (value?.longTerm as { fertilityEffectStatus?: unknown } | undefined)?.fertilityEffectStatus === "szenarioband-berechenbar" ? (value?.longTerm as { fertilityEffectStatus: typeof fallback.longTerm.fertilityEffectStatus }).fertilityEffectStatus : fallback.longTerm.fertilityEffectStatus,
+    },
     sgb2: normalizeSgb2ScenarioReference(value?.sgb2, hasExplicitSgb2Reference ? undefined : expenseChanges, populationRunId),
   };
 }
 export function scenarioToJson(scenario: ScenarioDraftWithPopulationBasis) { return JSON.stringify({ schemaVersion: SCENARIO_SCHEMA_VERSION, scenario }, null, 2); }
 export function scenarioFromJson(text: string): ScenarioDraftWithPopulationBasis {
   const parsed = JSON.parse(text) as { schemaVersion?: unknown; scenario?: unknown };
-  const supportedVersions = [1, 2, 3, 4, 5, SCENARIO_SCHEMA_VERSION];
+  const supportedVersions = [1, 2, 3, 4, 5, 6, SCENARIO_SCHEMA_VERSION];
   if (!supportedVersions.includes(parsed.schemaVersion as number) || !parsed.scenario || typeof parsed.scenario !== "object") throw new Error("Die Datei ist kein unterstütztes Deutschland-Simulator-Szenario.");
   const scenario = normalizeScenarioDraft(parsed.scenario as ScenarioInput);
   const sgb2Error = validateSgb2ScenarioReference(scenario.sgb2).find((issue) => issue.severity === "error");
