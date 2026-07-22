@@ -17,6 +17,7 @@ export function ComparisonPage({
   onBack,
   onOpenSource,
   onOpenAdvancedEffects,
+  onOpenLongTerm,
 }: {
   settings: IncomeTaxSettings;
   revenue: number;
@@ -27,6 +28,7 @@ export function ComparisonPage({
   onBack: () => void;
   onOpenSource: (metricId: string, value?: string) => void;
   onOpenAdvancedEffects: () => void;
+  onOpenLongTerm: () => void;
 }) {
   const rows = [
     ["Einnahmen", "1.573,9 Mrd. €", fmtBn(1_573.9 + revenue - 358.2), "1.604,7 Mrd. €"],
@@ -86,6 +88,15 @@ export function ComparisonPage({
           ])}
         </div>
         <button className="button secondary small" type="button" onClick={onOpenAdvancedEffects}>Vollständige Wirkungsmodelle prüfen <ExternalLink size={13} /></button>
+      </section>
+
+      <section className="long-term-entry card-flat" aria-labelledby="long-term-entry-title">
+        <div>
+          <span className="eyebrow">Szenariovergleich</span>
+          <h2 id="long-term-entry-title">Langfristige Entwicklung</h2>
+          <p>Bevölkerung, Erwerbspotenzial und Alterssicherung bis 2030, 2040, 2050 oder 2070 in einer gemeinsamen, vereinfachten Szenarioansicht vergleichen.</p>
+        </div>
+        <button className="button primary" type="button" onClick={onOpenLongTerm}>Langfristansicht öffnen <ExternalLink size={13} /></button>
       </section>
 
       <section className="comparison-policies">
