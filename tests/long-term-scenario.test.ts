@@ -8,6 +8,8 @@ import {
   markProjectionStatus,
   projectDemography,
   validateDemographyInput,
+  calculateFamilyFertilityPath,
+  calculateFamilyReformImpact,
 } from "../src/lib/long-term-scenario";
 
 test("Kohorten alternieren mit stabiler 100+-Gruppe", () => {
@@ -71,4 +73,60 @@ test("Ungültige Kohorten und Altersgrenzen werden abgelehnt", () => {
   const issues = validateDemographyInput(input);
   assert.ok(issues.some((issue) => issue.code === "invalid-age-boundaries"));
   assert.ok(issues.some((issue) => issue.code === "invalid-population"));
+});
+
+test("Familienwirkung bleibt ohne Evidenz sichtbar, aber ohne Punktwert", () => {
+  const path = calculateFamilyFertilityPath({
+    status: "nicht-berechnet",
+    effectPct: 10,
+    onsetYears: 2,
+    durationYears: 5,
+    baseYear: 2026,
+    targetYear: 2040,
+    annualBirthBaseline: 700_000,
+    sourceIds: ["source-family-fertility"],
+    workingAgeStart: 20,
+  });
+  assert.equal(path.points[5].additionalBirths, null);
+  assert.equal(path.points[5].earliestWorkingAgeYear, null);
+  assert.deepEqual(path.additionalBirthsByVariant.central, {});
+});
+
+test("Quantifizierbarer Familienpfad hat Anlauf, Bandbreite und Kohortenübergang", () => {
+  const path = calculateFamilyFertilityPath({
+    status: "szenarioband-berechenbar",
+    effectPct: 10,
+    onsetYears: 2,
+    durationYears: 4,
+    baseYear: 2026,
+    targetYear: 2050,
+    annualBirthBaseline: 700_000,
+    sourceIds: ["source-family-fertility"],
+    workingAgeStart: 20,
+  });
+  const point = path.points.find((item) => item.year === 2030)!;
+  assert.ok((point.additionalBirths ?? 0) > 0);
+  assert.ok((point.lowerBirths ?? 0) < (point.additionalBirths ?? 0));
+  assert.equal(point.earliestWorkingAgeYear, 2050);
+  assert.equal(path.additionalBirthsByVariant.central[2030], point.additionalBirths);
+});
+
+test("Direkte Familienausgaben bleiben von der Langfristwirkung getrennt", () => {
+  const impact = calculateFamilyReformImpact({
+    benefitChangePct: 10,
+    familyBaselineBn: 55.3,
+    fertility: {
+      status: "gerichteter-zusammenhang",
+      effectPct: 10,
+      onsetYears: 3,
+      durationYears: 5,
+      baseYear: 2026,
+      targetYear: 2070,
+      annualBirthBaseline: 700_000,
+      sourceIds: ["source-family-fertility"],
+      workingAgeStart: 20,
+    },
+  });
+  assert.equal(impact.directBudgetDeltaBn, 5.53);
+  assert.equal(impact.fertilityPath.points.at(-1)?.additionalBirths, null);
 });
