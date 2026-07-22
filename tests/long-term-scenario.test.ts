@@ -10,6 +10,7 @@ import {
   validateDemographyInput,
   calculateFamilyFertilityPath,
   calculateFamilyReformImpact,
+  calculateMigrationPath,
 } from "../src/lib/long-term-scenario";
 
 test("Kohorten alternieren mit stabiler 100+-Gruppe", () => {
@@ -129,4 +130,57 @@ test("Direkte Familienausgaben bleiben von der Langfristwirkung getrennt", () =>
   });
   assert.equal(impact.directBudgetDeltaBn, 5.53);
   assert.equal(impact.fertilityPath.points.at(-1)?.additionalBirths, null);
+});
+
+test("Migrationspfad trennt Berechtigung, Beschäftigung und Beiträge", () => {
+  const path = calculateMigrationPath({
+    baseYear: 2026,
+    targetYear: 2028,
+    annualArrivals: 1000,
+    protectionSharePct: 100,
+    ageProfile: Array(MAX_AGE + 1).fill(0).map((_, age) => age === 30 ? 1 : 0),
+    accessPreset: "rechtsstand-des-szenarios",
+    accessDelayYears: 1,
+    participationRatePct: 80,
+    employmentRatePct: 50,
+    workTimeFactorPct: 75,
+    averageAnnualWage: 40_000,
+    taxRatePct: 20,
+    contributionRatePct: 18.6,
+    transferRateWhenNotEmployedPct: 100,
+    workingAgeStart: 20,
+    retirementAge: 67,
+    legalYear: 2026,
+    sourceIds: ["source-migration-statistics"],
+  });
+  assert.equal(path.points[0].legallyEligible, 0);
+  assert.equal(path.points[0].taxes, 0);
+  assert.ok(path.points[1].legallyEligible > 0);
+  assert.ok(path.points[1].employed > 0);
+  assert.ok(path.points[1].socialContributions > 0);
+});
+
+test("Früher Zugang erhöht Berechtigung, aber nicht automatisch Beschäftigung", () => {
+  const base = {
+    baseYear: 2026,
+    targetYear: 2026,
+    annualArrivals: 1000,
+    protectionSharePct: 100,
+    ageProfile: Array(MAX_AGE + 1).fill(0).map((_, age) => age === 30 ? 1 : 0),
+    participationRatePct: 0,
+    employmentRatePct: 0,
+    workTimeFactorPct: 80,
+    averageAnnualWage: 40_000,
+    taxRatePct: 20,
+    contributionRatePct: 18.6,
+    transferRateWhenNotEmployedPct: 100,
+    workingAgeStart: 20,
+    retirementAge: 67,
+    legalYear: 2026,
+    sourceIds: [],
+  } as const;
+  const path = calculateMigrationPath({ ...base, sourceIds: [], accessPreset: "vereinfachter-frueher-zugang", accessDelayYears: 2 });
+  assert.equal(path.points[0].legallyEligible, 1000);
+  assert.equal(path.points[0].employed, 0);
+  assert.equal(path.points[0].socialContributions, 0);
 });

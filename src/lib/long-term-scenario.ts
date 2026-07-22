@@ -127,6 +127,59 @@ export interface FamilyReformImpact {
   warnings: string[];
 }
 
+export type MigrationAccessPreset = "rechtsstand-des-szenarios" | "vereinfachter-frueher-zugang" | "benutzerdefinierte-wartezeit";
+export type MigrationStatus = "im-verfahren" | "noch-nicht-erwerbsberechtigt" | "erwerbsberechtigt" | "beschäftigt" | "qualifizierung";
+
+export interface MigrationPathInput {
+  baseYear: number;
+  targetYear: number;
+  annualArrivals: number;
+  protectionSharePct: number;
+  ageProfile: number[];
+  accessPreset: MigrationAccessPreset;
+  accessDelayYears: number;
+  participationRatePct: number;
+  employmentRatePct: number;
+  workTimeFactorPct: number;
+  averageAnnualWage: number;
+  taxRatePct: number;
+  contributionRatePct: number;
+  transferRateWhenNotEmployedPct: number;
+  workingAgeStart: number;
+  retirementAge: number;
+  legalYear: number;
+  sourceIds: string[];
+}
+
+export interface MigrationPathPoint {
+  year: number;
+  arrivals: number;
+  workingAge: number;
+  legallyEligible: number;
+  participants: number;
+  employed: number;
+  fullTimeEquivalents: number;
+  taxableWageBill: number;
+  taxes: number;
+  socialContributions: number;
+  transferDependent: number;
+  statusCounts: Record<MigrationStatus, number>;
+}
+
+export interface MigrationPath {
+  accessPreset: MigrationAccessPreset;
+  legalYear: number;
+  legalBasis: string[];
+  accessDelayYears: number;
+  points: MigrationPathPoint[];
+  lower: MigrationPathPoint[];
+  upper: MigrationPathPoint[];
+  sourceIds: string[];
+  warnings: string[];
+}
+
+export const migrationLegalBasis = ["asylgesetz-61", "aufenthaltsgesetz-4a"] as const;
+
 export const defaultLongTermScenarioSettings: LongTermScenarioSettings = {
   targetYear: 2070,
   preset: "amtliche-referenz",
@@ -407,6 +460,100 @@ export function calculateFamilyReformImpact(input: {
     familyReliefBn: round(-directBudgetDeltaBn, 3),
     fertilityPath: path,
     warnings: ["Die direkte Budgetwirkung ist keine Gegenfinanzierung eines unsicheren Geburtenpfads.", ...path.warnings],
+  };
+}
+
+function validateMigrationInput(input: MigrationPathInput) {
+  if (!Number.isInteger(input.baseYear) || input.targetYear < input.baseYear || input.annualArrivals < 0 || input.ageProfile.length !== MAX_AGE + 1) throw new Error("Ungültige Migrationsannahmen.");
+  if (input.ageProfile.some((value) => !Number.isFinite(value) || value < 0) || input.ageProfile.reduce((sum, value) => sum + value, 0) <= 0) throw new Error("Das Altersprofil der Migration muss aus nichtnegativen Werten bestehen.");
+  if (input.workingAgeStart < 0 || input.retirementAge <= input.workingAgeStart || input.retirementAge > MAX_AGE) throw new Error("Ungültige Altersgrenzen im Migrationspfad.");
+  for (const value of [input.protectionSharePct, input.participationRatePct, input.employmentRatePct, input.workTimeFactorPct, input.taxRatePct, input.contributionRatePct, input.transferRateWhenNotEmployedPct]) if (!Number.isFinite(value) || value < 0 || value > 100) throw new Error("Quoten im Migrationspfad müssen zwischen 0 und 100 liegen.");
+}
+
+function migrationDelay(input: MigrationPathInput) {
+  if (input.accessPreset === "vereinfachter-frueher-zugang") return 0;
+  if (input.accessPreset === "rechtsstand-des-szenarios") return Math.max(0, Math.round(input.accessDelayYears));
+  return Math.max(0, Math.round(input.accessDelayYears));
+}
+
+function migrationProfileSum(input: MigrationPathInput) {
+  return input.ageProfile.reduce((sum, value) => sum + value, 0);
+}
+
+function calculateMigrationPathForRates(input: MigrationPathInput, participationRatePct: number, employmentRatePct: number): MigrationPathPoint[] {
+  const delay = migrationDelay(input);
+  const profileTotal = migrationProfileSum(input);
+  const points: MigrationPathPoint[] = [];
+  for (let year = input.baseYear; year <= input.targetYear; year += 1) {
+    let workingAge = 0;
+    let legallyEligible = 0;
+    let participants = 0;
+    let employed = 0;
+    const statusCounts: Record<MigrationStatus, number> = { "im-verfahren": 0, "noch-nicht-erwerbsberechtigt": 0, erwerbsberechtigt: 0, beschäftigt: 0, qualifizierung: 0 };
+    for (let arrivalYear = input.baseYear; arrivalYear <= year; arrivalYear += 1) {
+      const yearsSinceArrival = year - arrivalYear;
+      for (let initialAge = 0; initialAge <= MAX_AGE; initialAge += 1) {
+        const count = input.annualArrivals * input.ageProfile[initialAge] / profileTotal;
+        const age = Math.min(MAX_AGE, initialAge + yearsSinceArrival);
+        const protectedCount = count * input.protectionSharePct / 100;
+        const generalCount = count - protectedCount;
+        const isWorkingAge = age >= input.workingAgeStart && age < input.retirementAge;
+        if (!isWorkingAge) continue;
+        workingAge += count;
+        const eligible = generalCount + (yearsSinceArrival >= delay ? protectedCount : 0);
+        legallyEligible += eligible;
+        const cohortParticipants = eligible * participationRatePct / 100;
+        const cohortEmployed = cohortParticipants * employmentRatePct / 100;
+        participants += cohortParticipants;
+        employed += cohortEmployed;
+        const notEligible = protectedCount - (yearsSinceArrival >= delay ? protectedCount : 0);
+        statusCounts[notEligible > 0 ? (yearsSinceArrival === 0 ? "im-verfahren" : "noch-nicht-erwerbsberechtigt") : "erwerbsberechtigt"] += notEligible > 0 ? notEligible : eligible;
+        statusCounts.beschäftigt += cohortEmployed;
+        statusCounts.qualifizierung += Math.max(0, cohortParticipants - cohortEmployed);
+      }
+    }
+    const fte = employed * input.workTimeFactorPct / 100;
+    const wageBill = fte * input.averageAnnualWage;
+    const taxes = wageBill * input.taxRatePct / 100;
+    const contributions = wageBill * input.contributionRatePct / 100;
+    points.push({
+      year,
+      arrivals: input.annualArrivals,
+      workingAge: round(workingAge, 0),
+      legallyEligible: round(legallyEligible, 0),
+      participants: round(participants, 0),
+      employed: round(employed, 0),
+      fullTimeEquivalents: round(fte, 0),
+      taxableWageBill: round(wageBill, 0),
+      taxes: round(taxes, 0),
+      socialContributions: round(contributions, 0),
+      transferDependent: round(Math.max(0, workingAge - employed) * input.transferRateWhenNotEmployedPct / 100, 0),
+      statusCounts: Object.fromEntries(Object.entries(statusCounts).map(([key, value]) => [key, round(value, 0)])) as Record<MigrationStatus, number>,
+    });
+  }
+  return points;
+}
+
+export function calculateMigrationPath(input: MigrationPathInput): MigrationPath {
+  validateMigrationInput(input);
+  const central = calculateMigrationPathForRates(input, input.participationRatePct, input.employmentRatePct);
+  const lower = calculateMigrationPathForRates(input, input.participationRatePct * 0.8, input.employmentRatePct * 0.8);
+  const upper = calculateMigrationPathForRates(input, clamp(input.participationRatePct * 1.15, 0, 100), clamp(input.employmentRatePct * 1.15, 0, 100));
+  const delay = migrationDelay(input);
+  return {
+    accessPreset: input.accessPreset,
+    legalYear: input.legalYear,
+    legalBasis: [...migrationLegalBasis],
+    accessDelayYears: delay,
+    points: central,
+    lower,
+    upper,
+    sourceIds: [...new Set([...input.sourceIds, ...migrationLegalBasis.map((id) => `source-${id}`)])],
+    warnings: [
+      "Allgemeine Migration und schutz-/asylbezogene Zuwanderung werden im Modell getrennt geführt.",
+      "Erwerbsberechtigung ist keine Beschäftigungsgarantie; Beiträge entstehen nur über Beschäftigung und Arbeitsvolumen.",
+      input.accessPreset === "vereinfachter-frueher-zugang" ? "Der frühere Zugang ist ein Szenario und überschreibt nicht den geltenden Rechtsstand." : "Der Rechtsstand ist als Baseline mit Daten- und Rechtsjahr gespeichert.",
+    ],
   };
 }
 
