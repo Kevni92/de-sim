@@ -11,6 +11,7 @@ import {
   calculateFamilyFertilityPath,
   calculateFamilyReformImpact,
   calculateMigrationPath,
+  calculateLabourPath,
 } from "../src/lib/long-term-scenario";
 
 test("Kohorten alternieren mit stabiler 100+-Gruppe", () => {
@@ -183,4 +184,82 @@ test("Früher Zugang erhöht Berechtigung, aber nicht automatisch Beschäftigung
   assert.equal(path.points[0].legallyEligible, 1000);
   assert.equal(path.points[0].employed, 0);
   assert.equal(path.points[0].socialContributions, 0);
+});
+
+test("Erwerbspfad trennt alle Übergangsstufen", () => {
+  const projection = projectDemography(defaultProjectionInput("labour", 2028));
+  const path = calculateLabourPath({
+    population: projection.scenario,
+    retirementAge: 67,
+    participationRatePct: 80,
+    employmentRatePct: 90,
+    workTimeFactorPct: 75,
+    contributionRatePct: 18.6,
+    averageAnnualWage: 45_000,
+    populationIncludesMigration: false,
+    sourceIds: ["source-population-model"],
+  });
+  const point = path.points[1];
+  assert.ok(point.workingAge > point.demographicPotential);
+  assert.ok(point.demographicPotential >= point.availableWorkers * 0.9);
+  assert.ok(point.availableWorkers >= point.employed);
+  assert.ok(point.employed >= point.fullTimeEquivalents);
+  assert.equal(point.contributors, point.employed);
+});
+
+test("Nullbeteiligung führt trotz Erwerbsalter zu null Erwerbspersonen", () => {
+  const projection = projectDemography(defaultProjectionInput("zero", 2027));
+  const point = calculateLabourPath({
+    population: projection.scenario,
+    retirementAge: 67,
+    participationRatePct: 0,
+    employmentRatePct: 100,
+    workTimeFactorPct: 100,
+    contributionRatePct: 18.6,
+    averageAnnualWage: 45_000,
+    populationIncludesMigration: false,
+    sourceIds: [],
+  }).points[1];
+  assert.equal(point.availableWorkers, 0);
+  assert.equal(point.employed, 0);
+  assert.equal(point.contributors, 0);
+});
+
+test("Migrationsberechtigung ohne Beschäftigung wird nicht als Beitrag gezählt", () => {
+  const projection = projectDemography(defaultProjectionInput("migration-labour", 2027));
+  const migration = calculateMigrationPath({
+    baseYear: 2026,
+    targetYear: 2027,
+    annualArrivals: 1000,
+    protectionSharePct: 100,
+    ageProfile: Array(MAX_AGE + 1).fill(0).map((_, age) => age === 30 ? 1 : 0),
+    accessPreset: "vereinfachter-frueher-zugang",
+    accessDelayYears: 0,
+    participationRatePct: 0,
+    employmentRatePct: 0,
+    workTimeFactorPct: 80,
+    averageAnnualWage: 45_000,
+    taxRatePct: 20,
+    contributionRatePct: 18.6,
+    transferRateWhenNotEmployedPct: 100,
+    workingAgeStart: 20,
+    retirementAge: 67,
+    legalYear: 2026,
+    sourceIds: [],
+  });
+  const point = calculateLabourPath({
+    population: projection.scenario,
+    migration,
+    retirementAge: 67,
+    participationRatePct: 80,
+    employmentRatePct: 90,
+    workTimeFactorPct: 80,
+    contributionRatePct: 18.6,
+    averageAnnualWage: 45_000,
+    populationIncludesMigration: true,
+    sourceIds: [],
+  }).points[0];
+  assert.equal(point.components.migrationEligible, 1000);
+  assert.equal(point.components.migrationEmployed, 0);
+  assert.ok(Math.abs(point.taxableWageBill - point.components.nativePotential * 90 / 100 * 80 / 100 * 45_000) < 100_000);
 });

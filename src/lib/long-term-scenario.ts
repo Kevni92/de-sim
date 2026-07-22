@@ -180,6 +180,44 @@ export interface MigrationPath {
 
 export const migrationLegalBasis = ["asylgesetz-61", "aufenthaltsgesetz-4a"] as const;
 
+export interface LabourPathInput {
+  population: ProjectionYear[];
+  migration?: MigrationPath | null;
+  retirementAge: number;
+  participationRatePct: number;
+  employmentRatePct: number;
+  workTimeFactorPct: number;
+  contributionRatePct: number;
+  averageAnnualWage: number;
+  populationIncludesMigration: boolean;
+  sourceIds: string[];
+}
+
+export interface LabourPathPoint {
+  year: number;
+  workingAge: number;
+  demographicPotential: number;
+  availableWorkers: number;
+  employed: number;
+  fullTimeEquivalents: number;
+  contributors: number;
+  taxableWageBill: number;
+  components: {
+    nativePotential: number;
+    migrationEligible: number;
+    migrationParticipants: number;
+    migrationEmployed: number;
+  };
+}
+
+export interface LabourPath {
+  points: LabourPathPoint[];
+  lower: LabourPathPoint[];
+  upper: LabourPathPoint[];
+  sourceIds: string[];
+  warnings: string[];
+}
+
 export const defaultLongTermScenarioSettings: LongTermScenarioSettings = {
   targetYear: 2070,
   preset: "amtliche-referenz",
@@ -553,6 +591,70 @@ export function calculateMigrationPath(input: MigrationPathInput): MigrationPath
       "Allgemeine Migration und schutz-/asylbezogene Zuwanderung werden im Modell getrennt geführt.",
       "Erwerbsberechtigung ist keine Beschäftigungsgarantie; Beiträge entstehen nur über Beschäftigung und Arbeitsvolumen.",
       input.accessPreset === "vereinfachter-frueher-zugang" ? "Der frühere Zugang ist ein Szenario und überschreibt nicht den geltenden Rechtsstand." : "Der Rechtsstand ist als Baseline mit Daten- und Rechtsjahr gespeichert.",
+    ],
+  };
+}
+
+function ageParticipationFactor(age: number, retirementAge: number) {
+  if (age < 20 || age >= retirementAge) return 0;
+  if (age < 35) return 0.58 + (age - 20) * 0.018;
+  if (age < 55) return 0.85;
+  return Math.max(0.3, 0.85 - (age - 55) * 0.025);
+}
+
+function nativePotentialFromWorkingAge(workingAge: number, retirementAge: number) {
+  const averageAge = retirementAge <= 67 ? 43 : 44;
+  return workingAge * ageParticipationFactor(averageAge, retirementAge);
+}
+
+function calculateLabourPathForRates(input: LabourPathInput, participationRatePct: number, employmentRatePct: number): LabourPathPoint[] {
+  return input.population.map((population, index) => {
+    const migration = input.migration?.points[index];
+    const migrationWorkingAge = migration?.workingAge ?? 0;
+    const nativeWorkingAge = input.populationIncludesMigration ? Math.max(0, population.workingAge - migrationWorkingAge) : population.workingAge;
+    const nativePotential = nativePotentialFromWorkingAge(nativeWorkingAge, input.retirementAge) * participationRatePct / 100;
+    const migrationEligible = migration?.legallyEligible ?? 0;
+    const migrationParticipants = migration?.participants ?? 0;
+    const migrationEmployed = migration?.employed ?? 0;
+    const availableWorkers = nativePotential + migrationParticipants;
+    const employed = nativePotential * employmentRatePct / 100 + migrationEmployed;
+    const nativeFte = nativePotential * employmentRatePct / 100 * input.workTimeFactorPct / 100;
+    const fte = nativeFte + (migration?.fullTimeEquivalents ?? 0);
+    const contributors = employed;
+    const wageBill = fte * input.averageAnnualWage;
+    return {
+      year: population.year,
+      workingAge: round(nativeWorkingAge + migrationWorkingAge, 0),
+      demographicPotential: round(nativePotential + migrationEligible * participationRatePct / 100, 0),
+      availableWorkers: round(availableWorkers, 0),
+      employed: round(employed, 0),
+      fullTimeEquivalents: round(fte, 0),
+      contributors: round(contributors, 0),
+      taxableWageBill: round(wageBill, 0),
+      components: {
+        nativePotential: round(nativePotential, 0),
+        migrationEligible: round(migrationEligible, 0),
+        migrationParticipants: round(migrationParticipants, 0),
+        migrationEmployed: round(migrationEmployed, 0),
+      },
+    };
+  });
+}
+
+export function calculateLabourPath(input: LabourPathInput): LabourPath {
+  if (!input.population.length || input.retirementAge <= 20 || input.averageAnnualWage < 0) throw new Error("Ungültige Erwerbspotenzialannahmen.");
+  const points = calculateLabourPathForRates(input, input.participationRatePct, input.employmentRatePct);
+  const lower = calculateLabourPathForRates(input, input.participationRatePct * 0.85, input.employmentRatePct * 0.85);
+  const upper = calculateLabourPathForRates(input, clamp(input.participationRatePct * 1.1, 0, 100), clamp(input.employmentRatePct * 1.1, 0, 100));
+  return {
+    points,
+    lower,
+    upper,
+    sourceIds: [...new Set([...input.sourceIds, ...(input.migration?.sourceIds ?? [])])],
+    warnings: [
+      "Menschen im Erwerbsalter, Erwerbspersonen, Beschäftigte und Beitragszahlende sind getrennte Größen.",
+      "Ein höheres Rentenalter erweitert die Altersgrenze, garantiert aber keine Beschäftigung.",
+      input.migration ? "Migration wird aus dem demografischen Bestand abgegrenzt und über den eigenen Zugangspfad ergänzt; Doppelzählung wird vermieden." : "Ohne Migrationspfad wird kein zusätzlicher Zugang oder Beschäftigungsbeitrag angenommen.",
     ],
   };
 }
