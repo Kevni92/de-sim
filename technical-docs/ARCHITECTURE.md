@@ -137,6 +137,7 @@ Ein Widget:
 
 - `types.ts` enthält gemeinsam verwendete Typen für Szenarien, Quellen, Kennzahlen, Bevölkerung, Modellstufen und Worker-Nachrichten.
 - `scenario-state.ts` definiert Standardszenario, Schema-Version, Normalisierung, Undo/Redo, JSON-Import und JSON-Export.
+- `personal-effect-contracts.ts` definiert persönliche Wirkungsaussagen mit getrennter Perspektive, Richtung, Genauigkeitsstufe, Quantifizierung, Evidenz und Profilbezug.
 
 Änderungen am Szenariovertrag benötigen:
 
@@ -293,6 +294,7 @@ Vor Abschluss eines Features prüfen:
 - [ ] Worker-Nachrichten und JSON-Daten sind typisiert und normalisiert.
 - [ ] Neue Kennzahlen besitzen Quelle, Status, Jahr, Unsicherheit und Grenzen.
 - [ ] Direkte, indirekte und langfristige Wirkungen bleiben getrennt.
+- [ ] Persönliche Aussagen referenzieren bestehende Kontextwirkungspfade über IDs und duplizieren keine Wirkungskette.
 - [ ] Routen sind in Typ, Navigation, Rendering und Tests konsistent.
 - [ ] Vorhandene Komponenten und CSS-Muster wurden wiederverwendet.
 - [ ] Desktop, Mobil, Tastatur, Lade-, Leer- und Fehlerzustände sind geprüft.

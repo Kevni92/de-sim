@@ -13,6 +13,7 @@ Dieser Ordner beschreibt die technische Arbeitsweise und die aktuelle Anwendungs
 | [`BERECHNUNGSRAHMEN.md`](BERECHNUNGSRAHMEN.md) | Zentrale Modellstufe und Zeithorizont, schreibgeschützte Fachseiten und Aktualitätsstatus der Wirkungsrechnung |
 | [`KONTEXTWIRKUNGEN.md`](KONTEXTWIRKUNGEN.md) | Explizite Reform-Wirkungs-Zuordnung, Überlappungsschutz, Eingabesignatur und gemeinsame Modul-/Vergleichsdarstellung |
 | [`BUERGERGELD-STANDARDMODUS.md`](BUERGERGELD-STANDARDMODUS.md) | Gemeinsamer kanonischer Zustand für verständlichen Standard- und vollständigen Expertenmodus |
+| [`PERSOENLICHE-WIRKUNGSAUSSAGEN.md`](PERSOENLICHE-WIRKUNGSAUSSAGEN.md) | Vertrag für persönliche Wirkungsaussagen, Genauigkeitsstufen und Validierungsregeln |
 | [`UX-ABNAHME-CHECKLISTE.md`](UX-ABNAHME-CHECKLISTE.md) | Verbindliches Komplexitätsbudget und manuelle Abnahmecheckliste für die Standardflüsse Einnahmen, Bürgergeld und erweiterte Prüfung |
 
 ## Abgrenzung
