@@ -4,7 +4,7 @@ import { haushaltsKompassDarkLogo, haushaltsKompassLightLogo } from "../branding
 import "../branding-theme.css";
 import "../mobile-navigation.css";
 
-export type AppRoute = "/" | "/dashboard" | "/bevoelkerung" | "/einkommensteuer" | "/einnahmen" | "/ausgaben" | "/wirkungen" | "/vergleich" | "/transparenz";
+export type AppRoute = "/" | "/dashboard" | "/bevoelkerung" | "/einkommensteuer" | "/einnahmen" | "/ausgaben" | "/wirkungen" | "/vergleich" | "/langfrist" | "/transparenz";
 type AppTheme = "light" | "dark";
 const themeStorageKey = "haushaltskompass-theme";
 const navigationItems: Array<{ route: AppRoute; label: string }> = [
