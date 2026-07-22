@@ -12,6 +12,7 @@ import {
   calculateFamilyReformImpact,
   calculateMigrationPath,
   calculateLabourPath,
+  calculatePensionPath,
 } from "../src/lib/long-term-scenario";
 
 test("Kohorten alternieren mit stabiler 100+-Gruppe", () => {
@@ -262,4 +263,106 @@ test("Migrationsberechtigung ohne Beschäftigung wird nicht als Beitrag gezählt
   assert.equal(point.components.migrationEligible, 1000);
   assert.equal(point.components.migrationEmployed, 0);
   assert.ok(Math.abs(point.taxableWageBill - point.components.nativePotential * 90 / 100 * 80 / 100 * 45_000) < 100_000);
+});
+
+function pensionFixture(retirementAge = 67, averageAnnualWage = 48_000) {
+  const input = defaultProjectionInput(`pension-${retirementAge}`, 2030);
+  input.retirementAge = retirementAge;
+  const projection = projectDemography(input);
+  const labour = calculateLabourPath({
+    population: projection.scenario,
+    retirementAge,
+    participationRatePct: 78,
+    employmentRatePct: 93,
+    workTimeFactorPct: 82,
+    contributionRatePct: 18.6,
+    averageAnnualWage,
+    populationIncludesMigration: false,
+    sourceIds: ["source-population-model"],
+  });
+  return { population: projection.scenario, labour };
+}
+
+test("Alterssicherung trennt ältere Bevölkerung und Rentenbestand sowie Finanzierungsquellen", () => {
+  const fixture = pensionFixture();
+  const point = calculatePensionPath({
+    ...fixture,
+    retirementAge: 67,
+    pensionerRatePct: 82,
+    contributionRatePct: 18.6,
+    pensionBenefitRatePct: 48,
+    averageAnnualWage: 48_000,
+    pensionIndexationPct: 1.5,
+    otherContributionBn: 5,
+    federalGrantBn: 115,
+    otherRevenueBn: 2,
+    administrationExpensesBn: 1,
+    sourceIds: [],
+  }).points[0];
+  assert.ok(point.olderPopulation > point.pensioners);
+  assert.equal(point.totalRevenueBn, point.contributionRevenueBn + point.otherContributionBn + point.federalGrantBn + point.otherRevenueBn);
+  assert.ok(Math.abs(point.balanceBn - (point.totalRevenueBn - point.pensionExpensesBn - point.administrationExpensesBn)) < 0.001);
+  assert.ok(point.federalGrantBn > 0);
+});
+
+test("Null-Lohnsumme erzeugt keine Erwerbstätigenbeiträge", () => {
+  const fixture = pensionFixture(67, 0);
+  const point = calculatePensionPath({
+    ...fixture,
+    retirementAge: 67,
+    pensionerRatePct: 80,
+    contributionRatePct: 18.6,
+    pensionBenefitRatePct: 48,
+    averageAnnualWage: 0,
+    pensionIndexationPct: 0,
+    otherContributionBn: 0,
+    federalGrantBn: 0,
+    otherRevenueBn: 0,
+    administrationExpensesBn: 0,
+    sourceIds: [],
+  }).points[0];
+  assert.equal(point.taxableWageBill, 0);
+  assert.equal(point.contributionRevenueBn, 0);
+});
+
+test("Ein höheres Rentenalter verändert den Rentenzugang getrennt vom Erwerbspfad", () => {
+  const at65 = pensionFixture(65);
+  const at67 = pensionFixture(67);
+  const settings = {
+    pensionerRatePct: 80,
+    contributionRatePct: 18.6,
+    pensionBenefitRatePct: 48,
+    averageAnnualWage: 48_000,
+    pensionIndexationPct: 0,
+    otherContributionBn: 0,
+    federalGrantBn: 0,
+    otherRevenueBn: 0,
+    administrationExpensesBn: 0,
+    sourceIds: [],
+  };
+  const point65 = calculatePensionPath({ ...at65, retirementAge: 65, ...settings }).points[0];
+  const point67 = calculatePensionPath({ ...at67, retirementAge: 67, ...settings }).points[0];
+  assert.ok(point65.pensioners > point67.pensioners);
+  assert.notEqual(point65.contributors, point67.contributors);
+});
+
+test("Ausgleichsindikatoren für Beitragssatz und Bundeszuschuss werden nicht addiert", () => {
+  const fixture = pensionFixture();
+  const point = calculatePensionPath({
+    ...fixture,
+    retirementAge: 67,
+    pensionerRatePct: 90,
+    contributionRatePct: 0,
+    pensionBenefitRatePct: 48,
+    averageAnnualWage: 48_000,
+    pensionIndexationPct: 0,
+    otherContributionBn: 0,
+    federalGrantBn: 0,
+    otherRevenueBn: 0,
+    administrationExpensesBn: 0,
+    sourceIds: [],
+  }).points[0];
+  assert.equal(point.requiredAdditionalContributionRatePct > 0, true);
+  assert.equal(point.requiredAdditionalFederalGrantBn > 0, true);
+  assert.equal(point.totalRevenueBn, 0);
 });
