@@ -54,7 +54,7 @@ jobs:
           retention-days: 7
 
   e2e:
-    name: Playwright Desktop und Mobil
+    name: Playwright Desktop
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -79,7 +79,7 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('package.json') }}
       - name: Chromium und Systemabhängigkeiten bereitstellen
         run: npx playwright install --with-deps chromium
-      - name: Playwright Desktop und Mobil
+      - name: Playwright Desktop
         shell: bash
         run: set -o pipefail; npm run test:e2e 2>&1 | tee playwright.log
       - name: Browser-Screenshots hochladen
