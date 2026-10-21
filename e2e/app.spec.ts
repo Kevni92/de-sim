@@ -29,11 +29,11 @@ test("führt vom Onboarding in das vollständige Desktop-Dashboard", async ({ pa
   await expect(page).toHaveURL(/#\/dashboard$/);
   await expect(page.getByRole("heading", { name: "Einnahmen" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ausgaben" }).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Wasserfall Budgetsaldo" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Budgetsaldo und Änderungen" }).first()).toBeVisible();
   await expect(page.locator(".brand-copy small")).toContainText("Rechtsstand 2026");
   await page.reload();
   await expect(page).toHaveURL(/#\/dashboard$/);
-  await expect(page.getByRole("heading", { name: "Wasserfall Budgetsaldo" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Budgetsaldo und Änderungen" }).first()).toBeVisible();
 });
 
 test("zeigt die unterstützte Grundlage auch auf kleinen Displays", async ({ page }) => {
@@ -44,7 +44,7 @@ test("zeigt die unterstützte Grundlage auch auf kleinen Displays", async ({ pag
   await page.screenshot({ path: "test-results/issue-96-start-mobile.png", fullPage: true });
   await page.getByRole("button", { name: "Simulation starten" }).click();
   await expect(page).toHaveURL(/#\/dashboard$/);
-  await expect(page.getByRole("heading", { name: "Wasserfall Budgetsaldo" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Budgetsaldo und Änderungen" }).first()).toBeVisible();
 });
 
 test("öffnet die Einkommensteuer-Detailansicht und reagiert live", async ({ page, isMobile }) => {
