@@ -158,7 +158,7 @@ export function App() {
       "metric-income-tax-tariff": `${scenario.incomeTax.entryRate.toLocaleString("de-DE")}–${scenario.incomeTax.richRate.toLocaleString("de-DE")} %`,
       "metric-income-tax-distribution": `${formatMillion(taxResult.winnersM)} Mio. Gewinner · ${formatMillion(taxResult.losersM)} Mio. Verlierer`,
       "metric-household-examples": signedEuro(taxResult.medianMonthlyChange),
-      "metric-regional-effects": "noch nicht kalibriert",
+      "metric-regional-effects": "noch nicht berechnet",
       "metric-time-path": balanceDelta === null ? "nicht vollständig" : fmtDiff(balanceDelta),
       "metric-migration-components": migration ? `${fmtBn(migration.value)} · ${migration.components.map((item) => `${item.label} ${item.value.toLocaleString("de-DE", { maximumFractionDigits: 1 })}`).join(" · ")}` : "nicht berechnet",
       ...revenueValues,

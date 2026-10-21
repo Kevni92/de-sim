@@ -7,6 +7,7 @@ const statusLabels: Record<MetricRecord["status"], string> = {
   modell: "Modellrechnung",
   annahme: "Annahme",
   unbekannt: "Status offen",
+  "nicht-berechnet": "Noch nicht berechnet",
 };
 
 const confidencePoints: Record<Confidence, number> = {
@@ -37,7 +38,7 @@ function EvidencePreview({ metric, sources }: { metric?: MetricRecord; sources: 
     <div className="evidence-tooltip-badges">
       <span>Konfidenz {metric.confidence}</span>
       <span>Daten {metric.dataYear ?? "nicht belegt"}</span>
-      <span>Recht {metric.legalYear}</span>
+      <span>Recht {metric.legalYear ?? "nicht anwendbar"}</span>
     </div>
     <dl>
       <div><dt>Grundlage</dt><dd>{sourceInstitutions(metric, sources)}</dd></div>

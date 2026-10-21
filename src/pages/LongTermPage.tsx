@@ -140,6 +140,10 @@ export function LongTermPage({ settings, onTargetYear, onBack, onOpenSource }: {
         </div>
       </header>
 
+      <p className="notice-box long-term-status-note" role="note">
+        <strong>Vereinfachte Modellschätzung, keine amtliche Prognose.</strong> Die Ergebnisse zeigen Folgen der ausgewählten Annahmen; Datenstand, Rechenweg und Grenzen stehen unter „Daten- und Modellstand“.
+      </p>
+
       <section className="long-term-kpis" aria-label="Vier Kernkennzahlen">
         <Metric label="Bevölkerung" value={million(scenarioPopulation.population)} note={`Baseline ${million(basePopulation.population)}`} delta={signed(populationDifference / 1_000_000, " Mio.")} />
         <Metric label="Erwartete Erwerbspersonen" value={million(scenarioLabour.availableWorkers)} note="Erwerbsbeteiligung, nicht nur Altersgruppe" delta={signed(workforceDifference / 1_000_000, " Mio.")} />
@@ -150,7 +154,7 @@ export function LongTermPage({ settings, onTargetYear, onBack, onOpenSource }: {
       <p className="long-term-summary"><strong>Einordnung für {settings.targetYear}:</strong> {causeNote} Der Unterschied zur Baseline beträgt {signed(populationDifference / 1_000_000, " Mio. Menschen")} bei der Bevölkerung und {signed(workforceDifference / 1_000_000, " Mio. Erwerbspersonen")} bei den Erwerbspersonen.</p>
 
       <section className="long-term-section" aria-labelledby="long-term-comparison-title">
-        <div className="section-heading"><div><span className="eyebrow">Ebene 1 · Was verändert sich?</span><h2 id="long-term-comparison-title">Baseline und Szenario im Zieljahr</h2></div><span className="status-chip">Zentralpfad · Datenjahr 2026 · Rechtsstand 2026</span></div>
+        <div className="section-heading"><div><span className="eyebrow">Ebene 1 · Was verändert sich?</span><h2 id="long-term-comparison-title">Baseline und Szenario im Zieljahr</h2></div><span className="status-chip">Modellschätzung · keine Prognose</span></div>
         <div className="long-term-table-wrap" role="region" aria-label={`Langfristkennzahlen für ${settings.targetYear}`} tabIndex={0}>
           <table className="long-term-table long-term-comparison-table">
             <caption className="sr-only">Baseline, Szenario, Differenz und Szenarioband der zentralen Langfristkennzahlen im Jahr {settings.targetYear}</caption>

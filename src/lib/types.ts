@@ -2,7 +2,7 @@ import type { Sgb2ScenarioReference } from "./sgb2-policy";
 
 export type Confidence = "hoch" | "mittel" | "niedrig";
 export type SourceStatus = "amtlich" | "modell" | "annahme";
-export type EvidenceStatus = SourceStatus | "unbekannt";
+export type EvidenceStatus = SourceStatus | "unbekannt" | "nicht-berechnet";
 export type ModelLevel = "statisch" | "verhalten" | "langfrist";
 export type TimeHorizon = 1 | 5 | 10 | 20;
 
@@ -62,7 +62,7 @@ export interface MetricRecord {
   status: EvidenceStatus;
   confidence: Confidence;
   dataYear: number | null;
-  legalYear: number;
+  legalYear: number | null;
   sourceIds: string[];
   formula: string;
   parameters: MetricParameter[];

@@ -15,6 +15,7 @@
 .section-heading { display: flex; align-items: start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
 .section-heading h2 { margin: 6px 0 0; font-size: var(--fs-xl); letter-spacing: -.02em; }
 .status-chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; color: var(--muted-foreground); font-size: var(--fs-xs); white-space: nowrap; }
+.long-term-status-note { margin-top: 0; }
 .long-term-table-wrap { overflow-x: auto; }
 .long-term-table-wrap:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 50%, transparent); outline-offset: 2px; }
 .long-term-table { width: 100%; border-collapse: collapse; font-size: var(--fs-md); }

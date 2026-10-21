@@ -58,7 +58,7 @@
 .evidence-status, .confidence-pill { min-height: 21px; display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; font-size: var(--fs-2xs); font-weight: 750; white-space: nowrap; }
 .evidence-status.amtlich { border-color: color-mix(in srgb, var(--positive) 35%, var(--line)); background: var(--positive-soft); color: var(--positive); }
 .evidence-status.modell { border-color: color-mix(in srgb, var(--primary) 35%, var(--line)); background: var(--primary-soft); color: var(--primary); }
-.evidence-status.annahme, .evidence-status.unbekannt { border-color: color-mix(in srgb, var(--warning) 35%, var(--line)); background: var(--warning-soft); color: var(--warning); }
+.evidence-status.annahme, .evidence-status.unbekannt, .evidence-status.nicht-berechnet { border-color: color-mix(in srgb, var(--warning) 35%, var(--line)); background: var(--warning-soft); color: var(--warning); }
 .confidence-pill { background: var(--surface); color: var(--muted-foreground); }
 .confidence-pill.hoch { color: var(--positive); }
 .confidence-pill.niedrig { color: var(--warning); }
