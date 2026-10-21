@@ -19,7 +19,7 @@ test("ordnet Baseline, Szenario, Differenz und Band für alle Zieljahre zu", asy
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("./#/langfrist");
 
-  const targetYear = page.getByLabel("Zieljahr");
+  const targetYear = page.getByLabel("Zieljahr", { exact: true });
   const headers = page.locator(".long-term-comparison-table thead th");
   await expect(headers).toHaveText(["Kennzahl", "Baseline", "Szenario", "Differenz", "Szenarioband"]);
   await expect(page.locator(".long-term-data-table thead th").nth(3)).toHaveText("Beitragszahlende je 100 Rentenbeziehende");
@@ -63,7 +63,7 @@ test("ordnet Baseline, Szenario, Differenz und Band für alle Zieljahre zu", asy
 test("hält die Langfristtabelle mobil zuordenbar und per Tastatur horizontal scrollbar", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./#/langfrist");
-  await page.getByLabel("Zieljahr").selectOption("2070");
+  await page.getByLabel("Zieljahr", { exact: true }).selectOption("2070");
 
   const region = page.getByRole("region", { name: "Langfristkennzahlen für 2070" });
   await expect(region).toBeVisible();
