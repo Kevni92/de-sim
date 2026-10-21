@@ -38,7 +38,7 @@ test("unterscheidet Browser-Entwurf, gespeicherte Fassung und neue Variante", as
 
   await reloadedDialog.getByLabel("Szenariobeschreibung").fill("Inhalt der neuen Variante");
   await reloadedDialog.getByRole("button", { name: "Als neue Variante sichern" }).click();
-  await expect(page.locator(".toast")).toContainText("Variante lokal gespeichert");
+  await expect(page.locator(".toast")).toContainText("Neue Szenariovariante lokal gespeichert");
   await expect(page.locator(".saved-scenarios")).toContainText("Ausgangsfassung");
   await expect(page.locator(".saved-scenarios")).toContainText("Ausgangsfassung (Kopie)");
   await expect(page.locator(".saved-scenarios header strong")).toHaveText("2");
@@ -99,7 +99,7 @@ test("meldet einen fehlgeschlagenen Autosave und hält Eingaben für den erneute
   await expect(draftCard.locator("strong")).toHaveText("Sicherung fehlgeschlagen");
   await expect(dialog.getByRole("alert")).toContainText("Test-Speicherfehler");
   await expect(description).toHaveValue("Diese Eingabe bleibt erhalten");
-  await expect(page.locator(".toast")).not.toContainText("Szenario lokal gespeichert");
+  await expect(page.locator(".toast")).toHaveCount(0);
 
   await dialog.getByRole("button", { name: "Erneut versuchen" }).click();
   await expect(draftCard.locator("strong")).toHaveText("Gesichert");
