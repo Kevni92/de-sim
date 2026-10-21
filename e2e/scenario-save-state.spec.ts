@@ -45,7 +45,9 @@ test("unterscheidet Browser-Entwurf, gespeicherte Fassung und neue Variante", as
 
   await reloadedDialog.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(reloadedDialog).toHaveCount(0);
-  await page.locator(".saved-scenarios").getByRole("button").filter({ hasText: "Ausgangsfassung" }).first().click();
+  const originalScenario = page.locator(".saved-scenarios li").filter({ has: page.getByText("Ausgangsfassung", { exact: true }) });
+  await expect(originalScenario).toHaveCount(1);
+  await originalScenario.getByRole("button").first().click();
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const originalDialog = page.getByRole("dialog", { name: "Szenario verwalten" });
   await expect(originalDialog.getByLabel("Szenariobeschreibung")).toHaveValue("Änderungen im Browser-Entwurf");
