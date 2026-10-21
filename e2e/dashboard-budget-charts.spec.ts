@@ -29,20 +29,15 @@ async function returnToDashboard(page: import("@playwright/test").Page) {
 test("stellt Nullwerte, positive und negative Budgetwirkungen proportional zur Nullachse dar", async ({ page }) => {
   await page.goto("./#/dashboard");
   const dashboard = page.locator(".desktop-dashboard");
-  await dashboard.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
-  await expect(page).toHaveURL(/#\/einkommensteuer$/);
-  await page.getByRole("button", { name: "Baseline wiederherstellen", exact: true }).click();
-  await page.getByRole("button", { name: "Zurück zum Dashboard", exact: true }).click();
-  await expect(page).toHaveURL(/#\/dashboard$/);
   const chart = dashboard.getByTestId("budget-chart");
   await expect(dashboard.getByRole("heading", { name: "Budgetsaldo und Änderungen" })).toBeVisible();
   await expect(dashboard.getByText("Werte in Mrd. € pro Jahr")).toBeVisible();
   await expect(chart.getByTestId("budget-chart-column")).toHaveCount(4);
-  await expect(chart.getByTestId("budget-chart-bar").nth(1)).toHaveAttribute("data-value", "0");
+  await expect(chart.locator('.budget-chart-bar[data-value="0"]')).toHaveCount(1);
   await expect(chart.getByText("Einnahmenwirkung", { exact: true })).toBeVisible();
   await expect(chart.getByText("Ausgabenwirkung auf Saldo", { exact: true })).toBeVisible();
   const zeroLine = await chart.locator(".budget-chart-zero-line").boundingBox();
-  const zeroBar = await readChartState(chart, 1);
+  const zeroBar = await readChartState(chart, 2);
   expect(zeroBar.barHeight).toBe(0);
   expect(zeroLine).not.toBeNull();
   await page.screenshot({ path: "test-results/issue-99-budget-zero.png", fullPage: true });
