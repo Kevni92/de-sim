@@ -655,7 +655,8 @@ export function App() {
       const imported = scenarioFromJson(await file.text());
       const runs = await localServer.listPopulationRuns();
       const reference = populationReferenceFromScenario(imported);
-      await requestScenarioReplacement("das importierte Szenario laden", () => {
+      const importedName = imported.name.trim() || "Unbenanntes Szenario";
+      await requestScenarioReplacement(`das importierte Szenario „${importedName}“ laden`, () => {
         populationAttemptKey.current = null;
         setActivePopulation(null);
         setPopulationRuns(runs);
