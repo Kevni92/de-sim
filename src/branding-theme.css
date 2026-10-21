@@ -51,21 +51,6 @@
   background: rgba(21, 29, 40, .9);
 }
 
-:root[data-theme="dark"] .waterfall {
-  background: linear-gradient(
-    to bottom,
-    transparent 24%,
-    color-mix(in srgb, var(--line) 55%, transparent) 25%,
-    transparent 26%,
-    transparent 49%,
-    color-mix(in srgb, var(--line) 55%, transparent) 50%,
-    transparent 51%,
-    transparent 74%,
-    color-mix(in srgb, var(--line) 55%, transparent) 75%,
-    transparent 76%
-  );
-}
-
 :root[data-theme="dark"] .income-tax-page .revenue-module-list nav > button.active {
   background: var(--primary-soft);
   box-shadow: inset 3px 0 var(--primary);
