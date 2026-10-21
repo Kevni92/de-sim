@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 import { AppBar, type AppRoute } from "./components/AppBar";
 import { ModelBasisStatus, type ModelBasisStatusKind } from "./components/ModelBasisStatus";
 import { ScenarioPanel } from "./components/ScenarioPanel";
+import { ScenarioGuardDialog, type ScenarioGuardRequest } from "./components/ScenarioGuardDialog";
 import { SourceDrawer } from "./components/SourceDrawer";
 import { calculateExpenseModules, type ExpenseModuleId } from "./lib/expense-modules";
 import { calculateBudgetSummary } from "./lib/budget-summary";
@@ -44,6 +45,18 @@ const formatMillion = (value: number) => value.toLocaleString("de-DE", { minimum
 const centsToBillions = (value: number) => value / 100_000_000_000;
 type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
 
+function createNewScenarioDraft(): ScenarioDraftWithPopulationBasis {
+  return normalizeScenarioDraft({
+    ...defaultScenarioDraft,
+    name: "Neues Szenario",
+    populationRunId: null,
+    populationModelVersion: null,
+    populationBasis: null,
+    effectRunReference: null,
+    sgb2: { ...defaultScenarioDraft.sgb2, populationRunId: null },
+  });
+}
+
 export function App() {
   const [route, setRoute] = useState<AppRoute>(readRoute);
   const [sources, setSources] = useState<SourceRecord[]>([]);
@@ -74,11 +87,15 @@ export function App() {
   const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
   const [draftSavedAt, setDraftSavedAt] = useState<string>();
   const [draftSaveError, setDraftSaveError] = useState("");
+  const [scenarioGuard, setScenarioGuard] = useState<ScenarioGuardRequest | null>(null);
+  const [scenarioGuardBusy, setScenarioGuardBusy] = useState(false);
+  const [scenarioGuardError, setScenarioGuardError] = useState("");
   const populationAttemptKey = useRef<string | null>(null);
   const effectRequest = useRef(0);
   const draftSaveSequence = useRef(0);
   const pendingDraftSaveTimer = useRef<number | null>(null);
   const scenarioSaveInFlight = useRef(false);
+  const scenarioGuardInFlight = useRef(false);
 
   const scenario = history.present;
   const revenueModuleResults = useMemo(() => calculateRevenueModules(scenario.revenueChanges, scenario.modelLevel), [scenario.modelLevel, scenario.revenueChanges]);
@@ -154,6 +171,11 @@ export function App() {
     [activeScenarioId, scenarios],
   );
   const hasChangesSinceSaved = Boolean(activeSavedScenario && scenarioToJson(materializedScenario) !== scenarioToJson(normalizeScenarioDraft(activeSavedScenario)));
+  const isPristineScenarioDraft = scenarioToJson(scenario) === scenarioToJson(normalizeScenarioDraft(defaultScenarioDraft))
+    || scenarioToJson(scenario) === scenarioToJson(createNewScenarioDraft());
+  const hasUnsavedScenarioChanges = activeSavedScenario
+    ? hasChangesSinceSaved
+    : !isPristineScenarioDraft;
 
   const metricValues = useMemo<Record<string, string>>(() => {
     const { revenueTotal, expenseTotal, balance, revenueDelta, balanceDelta } = budgetSummary;
@@ -425,6 +447,92 @@ export function App() {
     setEffectLoading(false);
     setEffectError("");
   };
+  const requestScenarioReplacement = async (actionLabel: string, apply: () => void | Promise<void>) => {
+    if (hasUnsavedScenarioChanges) {
+      setScenarioGuardError("");
+      setScenarioGuard({
+        kind: "replace",
+        scenarioName: scenario.name,
+        actionLabel,
+        savedScenarioExists: Boolean(activeSavedScenario),
+        apply,
+      });
+      return;
+    }
+    await apply();
+  };
+  const cancelScenarioGuard = () => {
+    if (scenarioGuardInFlight.current) return;
+    setScenarioGuard(null);
+    setScenarioGuardError("");
+  };
+  const resolveScenarioReplacement = async (choice: "save" | "discard") => {
+    const request = scenarioGuard;
+    if (request?.kind !== "replace" || scenarioGuardInFlight.current) return;
+    scenarioGuardInFlight.current = true;
+    setScenarioGuardBusy(true);
+    setScenarioGuardError("");
+    let savedVariantName: string | null = null;
+    try {
+      if (choice === "save") {
+        if (scenarioSaveInFlight.current) throw new Error("Ein anderer Speichervorgang läuft bereits.");
+        scenarioSaveInFlight.current = true;
+        try {
+          const now = new Date().toISOString();
+          const name = materializedScenario.name.trim() || "Unbenanntes Szenario";
+          const saved = await localServer.saveScenario({
+            ...materializedScenario,
+            id: crypto.randomUUID(),
+            name: `${name} (Kopie)`,
+            createdAt: now,
+            updatedAt: now,
+          });
+          savedVariantName = saved.name;
+          setScenarios((current) => [saved, ...current.filter((item) => item.id !== saved.id)].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
+        } finally {
+          scenarioSaveInFlight.current = false;
+        }
+      }
+      await request.apply();
+      setScenarioGuard(null);
+      setScenarioGuardError("");
+      if (savedVariantName) showNotice(`„${savedVariantName}“ als Variante gesichert; ${request.actionLabel} abgeschlossen.`);
+    } catch (error) {
+      setScenarioGuardError(error instanceof Error ? error.message : "Der Entwurf konnte nicht gesichert werden.");
+    } finally {
+      scenarioGuardInFlight.current = false;
+      setScenarioGuardBusy(false);
+    }
+  };
+  const requestDeleteScenario = (saved: ScenarioState) => {
+    setScenarioGuardError("");
+    setScenarioGuard({ kind: "delete", scenario: saved, wasActive: saved.id === activeScenarioId });
+  };
+  const confirmDeleteScenario = async () => {
+    const request = scenarioGuard;
+    if (request?.kind !== "delete" || scenarioGuardInFlight.current) return;
+    scenarioGuardInFlight.current = true;
+    setScenarioGuardBusy(true);
+    setScenarioGuardError("");
+    try {
+      if (request.wasActive) {
+        await persistActiveDraft(materializedScenario, null);
+      }
+      await localServer.deleteScenario(request.scenario.id);
+      if (request.wasActive) setActiveScenarioId(null);
+      setScenarios((current) => current.filter((item) => item.id !== request.scenario.id));
+      setScenarioGuard(null);
+      showNotice(request.wasActive
+        ? `„${request.scenario.name}“ gelöscht. Dein aktueller Entwurf bleibt erhalten.`
+        : `„${request.scenario.name}“ gelöscht.`);
+    } catch (error) {
+      const details = error instanceof Error ? error.message : "Unbekannter Speicherfehler.";
+      setScenarioGuardError(`„${request.scenario.name}“ konnte nicht gelöscht werden. ${details}`);
+    } finally {
+      scenarioGuardInFlight.current = false;
+      setScenarioGuardBusy(false);
+    }
+  };
   const adoptPopulation = (run: PopulationRun) => {
     const basis = populationBasisFromRun(run);
     populationAttemptKey.current = basis.runId;
@@ -488,32 +596,30 @@ export function App() {
     }
   };
   const loadScenario = async (saved: ScenarioState) => {
-    const normalized = normalizeScenarioDraft(saved);
-    populationAttemptKey.current = null;
-    setActivePopulation(null);
-    setMissingPopulationReference(null);
-    setPopulationError("");
-    resetEffectState();
-    dispatch({ type: "replace", scenario: normalized });
-    setActiveScenarioId(saved.id);
-    navigate("/dashboard");
-    showNotice(`„${saved.name}“ geladen`);
-  };
-  const deleteScenario = async (saved: ScenarioState) => {
-    await localServer.deleteScenario(saved.id);
-    if (saved.id === activeScenarioId) setActiveScenarioId(null);
-    await refreshScenarios();
-    showNotice(`„${saved.name}“ gelöscht`);
+    await requestScenarioReplacement(`das gespeicherte Szenario „${saved.name}“ laden`, () => {
+      const normalized = normalizeScenarioDraft(saved);
+      populationAttemptKey.current = null;
+      setActivePopulation(null);
+      setMissingPopulationReference(null);
+      setPopulationError("");
+      resetEffectState();
+      dispatch({ type: "replace", scenario: normalized });
+      setActiveScenarioId(saved.id);
+      navigate("/dashboard");
+      showNotice(`„${saved.name}“ geladen`);
+    });
   };
   const newScenario = () => {
-    populationAttemptKey.current = null;
-    setActivePopulation(null);
-    setMissingPopulationReference(null);
-    setPopulationError("");
-    resetEffectState();
-    dispatch({ type: "replace", scenario: { ...defaultScenarioDraft, name: "Neues Szenario", populationRunId: null, populationModelVersion: null, populationBasis: null, effectRunReference: null, sgb2: { ...defaultScenarioDraft.sgb2, populationRunId: null } } });
-    setActiveScenarioId(null);
-    showNotice("Neuer lokaler Entwurf angelegt");
+    void requestScenarioReplacement("einen neuen Entwurf beginnen", () => {
+      populationAttemptKey.current = null;
+      setActivePopulation(null);
+      setMissingPopulationReference(null);
+      setPopulationError("");
+      resetEffectState();
+      dispatch({ type: "replace", scenario: createNewScenarioDraft() });
+      setActiveScenarioId(null);
+      showNotice("Neuer lokaler Entwurf angelegt");
+    });
   };
   const duplicateScenario = async () => {
     if (scenarioSaveInFlight.current) return;
@@ -549,17 +655,25 @@ export function App() {
       const imported = scenarioFromJson(await file.text());
       const runs = await localServer.listPopulationRuns();
       const reference = populationReferenceFromScenario(imported);
-      populationAttemptKey.current = null;
-      setActivePopulation(null);
-      setPopulationRuns(runs);
-      setPopulationError("");
-      resetEffectState();
-      setMissingPopulationReference(reference && !runs.some((run) => run.metadata.id === reference.runId) ? reference : null);
-      dispatch({ type: "replace", scenario: imported });
-      setActiveScenarioId(null);
-      showNotice(reference && !runs.some((run) => run.metadata.id === reference.runId) ? "Szenario importiert; ursprüngliche Modellbasis fehlt lokal" : "Szenario importiert und als Entwurf geladen");
+      const importedName = imported.name.trim() || "Unbenanntes Szenario";
+      await requestScenarioReplacement(`das importierte Szenario „${importedName}“ laden`, () => {
+        populationAttemptKey.current = null;
+        setActivePopulation(null);
+        setPopulationRuns(runs);
+        setPopulationError("");
+        resetEffectState();
+        setMissingPopulationReference(reference && !runs.some((run) => run.metadata.id === reference.runId) ? reference : null);
+        dispatch({ type: "replace", scenario: imported });
+        setActiveScenarioId(null);
+        showNotice(reference && !runs.some((run) => run.metadata.id === reference.runId) ? "Szenario importiert; ursprüngliche Modellbasis fehlt lokal" : "Szenario importiert und als Entwurf geladen");
+      });
     } catch (error) {
-      showNotice(error instanceof Error ? error.message : "Szenario konnte nicht importiert werden");
+      const message = error instanceof SyntaxError
+        ? "Die ausgewählte Datei enthält kein gültiges JSON. Dein aktueller Entwurf bleibt erhalten."
+        : error instanceof Error
+          ? `${error.message} Dein aktueller Entwurf bleibt erhalten.`
+          : "Szenario konnte nicht importiert werden. Dein aktueller Entwurf bleibt erhalten.";
+      showNotice(message, "alert");
     }
   };
   const copyScenario = async () => {
@@ -660,7 +774,7 @@ export function App() {
     <AppBar route={route} scenarioName={scenario.name} canUndo={history.past.length > 0} canRedo={history.future.length > 0} onScenarioName={(name) => updateScenario({ name })} onNavigate={navigate} onUndo={() => dispatch({ type: "undo" })} onRedo={() => dispatch({ type: "redo" })} onSave={() => void saveScenario()} onOpenScenario={() => setScenarioPanelOpen(true)} />
     {showCompactModelBasis && <ModelBasisStatus status={modelBasisStatus} canReconstruct={canReconstructPopulationBasis(missingPopulationReference)} message={populationError || undefined} onReconstruct={() => void reconstructPopulation()} onUseStandard={() => void useStandardPopulation()} onRetry={retryPopulation} onManage={() => navigate("/bevoelkerung")} />}
     {route === "/" && <OnboardingPage modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} onStart={() => navigate("/dashboard")} />}
-    {route === "/dashboard" && <DashboardPage incomeTaxResult={taxResult} budgetSummary={budgetSummary} revenueModuleResults={revenueModuleResults} expenseModuleResults={expenseModuleResults} metrics={metrics} sources={sources} scenarios={scenarios} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onNavigateRevenue={navigateRevenueModule} onNavigateExpense={navigateExpenseModule} onNavigateComparison={() => navigate("/vergleich")} onNavigateLongTerm={() => navigate("/langfrist")} onOpenSource={openSource} onLoadScenario={(saved) => void loadScenario(saved)} onDeleteScenario={(saved) => void deleteScenario(saved)} />}
+    {route === "/dashboard" && <DashboardPage incomeTaxResult={taxResult} budgetSummary={budgetSummary} revenueModuleResults={revenueModuleResults} expenseModuleResults={expenseModuleResults} metrics={metrics} sources={sources} scenarios={scenarios} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onNavigateRevenue={navigateRevenueModule} onNavigateExpense={navigateExpenseModule} onNavigateComparison={() => navigate("/vergleich")} onNavigateLongTerm={() => navigate("/langfrist")} onOpenSource={openSource} onLoadScenario={(saved) => void loadScenario(saved)} onDeleteScenario={requestDeleteScenario} />}
     {route === "/bevoelkerung" && <PopulationPage activeRun={activePopulation} runs={populationRuns} generating={populationLoading || populationGenerating} error={populationError} onGenerate={(options) => void generatePopulation(options)} onActivate={(runId) => void activatePopulation(runId)} onDelete={(runId) => void deletePopulationRun(runId)} onOpenSource={openSource} />}
     {route === "/einkommensteuer" && <IncomeTaxPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} result={taxResult} revenueResults={revenueModuleResults} onSettings={(incomeTax) => updateScenario({ incomeTax })} onNavigateRevenue={navigateRevenueModule} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/einnahmen" && <RevenueModulesPage selectedId={selectedRevenueModule} results={revenueModuleResults} incomeTaxResult={taxResult} parameters={scenario.revenueChanges} modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} effectRun={effectRun} effectStatus={effectStatus} effectError={effectError} populationAvailable={Boolean(activePopulation)} onSelect={setSelectedRevenueModule} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onParameters={(revenueChanges) => updateScenario({ revenueChanges })} onRetryEffects={retryEffects} onOpenAdvancedEffects={() => navigate("/wirkungen")} onManageBasis={() => navigate("/bevoelkerung")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
@@ -691,6 +805,15 @@ export function App() {
       onExport={exportScenario}
       onImport={importScenario}
       onCopy={() => void copyScenario()}
+    />
+    <ScenarioGuardDialog
+      request={scenarioGuard}
+      busy={scenarioGuardBusy}
+      error={scenarioGuardError}
+      onCancel={cancelScenarioGuard}
+      onDelete={() => void confirmDeleteScenario()}
+      onSaveVariant={() => void resolveScenarioReplacement("save")}
+      onDiscard={() => void resolveScenarioReplacement("discard")}
     />
   </div>;
 }
