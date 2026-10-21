@@ -38,7 +38,7 @@ export interface SourceRecord {
   title: string;
   institution: string;
   url: string;
-  dataYear: number;
+  dataYear: number | null;
   legalYear: number;
   status: SourceStatus;
   confidence: Confidence;
@@ -61,7 +61,7 @@ export interface MetricRecord {
   unit: string;
   status: EvidenceStatus;
   confidence: Confidence;
-  dataYear: number;
+  dataYear: number | null;
   legalYear: number;
   sourceIds: string[];
   formula: string;

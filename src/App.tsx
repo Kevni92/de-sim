@@ -152,7 +152,7 @@ export function App() {
       "metric-total-revenue": displayedTotal(revenueTotal),
       "metric-total-expense": displayedTotal(expenseTotal),
       "metric-budget-balance": balance === null ? "nicht vollständig" : `${fmtBn(balance)} · ${balanceDelta === null ? "Änderung nicht berechnet" : fmtDiff(balanceDelta)}`,
-      "metric-public-debt": "2.634,0 Mrd. €",
+      "metric-public-debt": "2.634,0 Mrd. € · Beispielwert; Datenstand nicht belegt",
       "metric-public-budget-lines": "positionsabhängig",
       "metric-income-tax-revenue": `${fmtBn(taxResult.value)} · ${fmtDiff(taxResult.delta)}`,
       "metric-income-tax-tariff": `${scenario.incomeTax.entryRate.toLocaleString("de-DE")}–${scenario.incomeTax.richRate.toLocaleString("de-DE")} %`,

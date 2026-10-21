@@ -22,7 +22,7 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
   await page.goto("./#/dashboard");
   const baselineRevenue = await dashboardValue(page, "Einnahmen");
   const baselineExpense = await dashboardValue(page, "Ausgaben");
-  const baselineBalance = await dashboardValue(page, "Saldo");
+  const baselineBalance = await dashboardValue(page, "Saldo pro Jahr");
 
   await page.getByRole("button", { name: "Vergleich öffnen" }).click();
   await expect(page.getByTestId("comparison-revenue").getByTestId("scenario-a-value")).toHaveText(baselineRevenue);
@@ -61,7 +61,7 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
   const combinedRevenue = await dashboardValue(page, "Einnahmen");
   const combinedExpense = await dashboardValue(page, "Ausgaben");
-  const combinedBalance = await dashboardValue(page, "Saldo");
+  const combinedBalance = await dashboardValue(page, "Saldo pro Jahr");
   expect(combinedRevenue).not.toBe(baselineRevenue);
   expect(combinedExpense).not.toBe(baselineExpense);
 

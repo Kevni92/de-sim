@@ -47,8 +47,8 @@ export function DashboardPage({ incomeTaxResult, budgetSummary, revenueModuleRes
   const totalsComplete = budgetSummary.isComplete;
   const missingModules = [...budgetSummary.missingRevenueModules, ...budgetSummary.missingExpenseModules];
   const totalsNote = totalsComplete
-    ? "Summe der in der Übersicht ausgewiesenen Posten; keine vollständige Haushaltsrechnung."
-    : `Gesamtsumme unvollständig${missingModules.length ? ` · fehlend: ${missingModules.join(", ")}` : ""}.`;
+    ? "Jahressumme der ausgewiesenen Posten; keine vollständige Haushaltsrechnung."
+    : `Jahressumme unvollständig${missingModules.length ? ` · fehlend: ${missingModules.join(", ")}` : ""}.`;
 
   const openRevenueItem = (itemId: string) => itemId === "est" ? onNavigateIncomeTax() : revenueModuleIds.includes(itemId as RevenueModuleId) ? onNavigateRevenue(itemId as RevenueModuleId) : undefined;
   const openExpenseItem = (itemId: string) => { const moduleId = expenseModuleForLineId[itemId]; if (moduleId) onNavigateExpense(moduleId); };
@@ -58,8 +58,8 @@ export function DashboardPage({ incomeTaxResult, budgetSummary, revenueModuleRes
     <section className="sticky-kpis" aria-label="Haushaltsübersicht"><div className="content-width kpi-grid">
       <KpiCard label="Einnahmen" metricId="metric-total-revenue" value={displayTotal(revenueTotal)} delta={displayDelta(revenueTotal === null ? null : revenueTotal - revenueStatusQuo)} tone={revenueTotal === null ? "neutral" : revenueTotal >= revenueStatusQuo ? "positive" : "negative"} note={totalsNote} onSource={() => onOpenSource("metric-total-revenue", displayTotal(revenueTotal))} />
       <KpiCard label="Ausgaben" metricId="metric-total-expense" value={displayTotal(expenseTotal)} delta={displayDelta(expenseTotal === null ? null : expenseTotal - expenseStatusQuo)} tone={expenseTotal === null ? "neutral" : expenseTotal <= expenseStatusQuo ? "positive" : "negative"} note={totalsNote} onSource={() => onOpenSource("metric-total-expense", displayTotal(expenseTotal))} />
-      <KpiCard label="Saldo" metricId="metric-budget-balance" value={displayTotal(balance)} delta={displayDelta(balance === null ? null : balance - balanceStatusQuo)} tone={balance === null ? "neutral" : balance >= balanceStatusQuo ? "positive" : "negative"} note={totalsNote} onSource={() => onOpenSource("metric-budget-balance", displayTotal(balance))} />
-      <KpiCard label="Schuldenstand" metricId="metric-public-debt" value="2.634,0 Mrd. €" delta={displayDelta(balance === null ? null : Math.max(0, -(balance - balanceStatusQuo)))} tone={balance === null ? "neutral" : "warning"} onSource={() => onOpenSource("metric-public-debt", "2.634,0 Mrd. €")} />
+      <KpiCard label="Saldo pro Jahr" metricId="metric-budget-balance" value={displayTotal(balance)} delta={displayDelta(balance === null ? null : balance - balanceStatusQuo)} tone={balance === null ? "neutral" : balance >= balanceStatusQuo ? "positive" : "negative"} note={totalsNote} onSource={() => onOpenSource("metric-budget-balance", displayTotal(balance))} />
+      <KpiCard label="Schuldenstand · Beispiel" testId="debt-stock-kpi" metricId="metric-public-debt" value="2.634,0 Mrd. €" delta="keine Fortschreibung" tone="neutral" note="Fester Beispielwert ohne belegten Stichtag; keine Schuldenprognose." onSource={() => onOpenSource("metric-public-debt", "2.634,0 Mrd. € · Beispielwert")} />
     </div></section>
 
     <main className="content-width dashboard-main">
@@ -75,7 +75,7 @@ export function DashboardPage({ incomeTaxResult, budgetSummary, revenueModuleRes
   </></EvidenceContext.Provider>;
 }
 
-function KpiCard({ label, metricId, value, delta, tone, note, onSource }: { label: string; metricId: string; value: string; delta: string; tone: "positive" | "negative" | "warning" | "neutral"; note?: string; onSource: () => void }) { return <article className="card-flat kpi-card"><div className="kpi-head"><span>{label}</span><SourceButton contextLabel={label} metricId={metricId} onClick={onSource} /></div><div className="kpi-value-row"><strong>{value}</strong><em className={tone}>{delta}</em></div><small>{note ?? (label === "Schuldenstand" ? "rd. 62,1 % des BIP · Bandbreite ± 4 %" : "Bund, Länder, Kommunen, Sozialversicherung")}</small></article>; }
+function KpiCard({ label, testId, metricId, value, delta, tone, note, onSource }: { label: string; testId?: string; metricId: string; value: string; delta: string; tone: "positive" | "negative" | "warning" | "neutral"; note?: string; onSource: () => void }) { return <article className="card-flat kpi-card" data-testid={testId}><div className="kpi-head"><span>{label}</span><SourceButton contextLabel={label} metricId={metricId} onClick={onSource} /></div><div className="kpi-value-row"><strong>{value}</strong><em className={tone}>{delta}</em></div><small>{note ?? "Bund, Länder, Kommunen, Sozialversicherung"}</small></article>; }
 
 function LinePanel({ title, total, totalMetricId, items, expense = false, onOpenSource, onInteractive, isInteractive }: { title: string; total: number | null; totalMetricId: string; items: Array<BudgetRevenueLine | BudgetExpenseLine>; expense?: boolean; onOpenSource: (metricId: string, value?: string) => void; onInteractive?: (itemId: string) => void; isInteractive?: (itemId: string) => boolean }) {
   const statusQuo = items.reduce((sum, item) => sum + item.statusQuo, 0);
