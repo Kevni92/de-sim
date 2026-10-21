@@ -71,7 +71,7 @@ export function SourceDrawer({
           <dl className="meta-grid">
             <Meta label="Kategorie" value={metric.category} />
             <Meta label="Datenjahr" value={metric.dataYear === null ? "nicht belegt" : String(metric.dataYear)} />
-            <Meta label="Rechtsstand" value={String(metric.legalYear)} />
+            <Meta label="Rechtsstand" value={metric.legalYear === null ? "nicht anwendbar" : String(metric.legalYear)} />
             <Meta label="Modellversion" value={scenario.modelVersion} />
             <Meta label="Zeithorizont" value={`${scenario.horizonYears} Jahr${scenario.horizonYears === 1 ? "" : "e"}`} />
             <Meta label="Quellen" value={String(linkedSources.length)} />
@@ -128,6 +128,7 @@ export function SourceDrawer({
           <section>
             <h3>Originalquellen</h3>
             <div className="source-list">
+              {linkedSources.length === 0 && <p>Keine Primärquelle hinterlegt; für Regionaldaten liegt derzeit keine belegte Grundlage vor.</p>}
               {linkedSources.map((source) => (
                 <article key={source.id}>
                   <div><strong>{source.title}</strong><span>{source.institution} · Datenjahr {source.dataYear ?? "nicht belegt"}</span></div>
@@ -155,7 +156,7 @@ export function SourceDrawer({
           </section>
         </div>
 
-        <footer>Datenstand {metric.dataYear ?? "nicht belegt"} · Rechtsstand {metric.legalYear} · {statusLabel(metric.status)}</footer>
+        <footer>Datenstand {metric.dataYear ?? "nicht belegt"} · Rechtsstand {metric.legalYear ?? "nicht anwendbar"} · {statusLabel(metric.status)}</footer>
       </aside>
     </div>
   );
@@ -165,6 +166,7 @@ function statusLabel(status: EvidenceStatus) {
   if (status === "amtlich") return "Amtliche Grundlage";
   if (status === "modell") return "Modellrechnung";
   if (status === "annahme") return "Annahme";
+  if (status === "nicht-berechnet") return "Noch nicht berechnet";
   return "Unbekannter Status";
 }
 

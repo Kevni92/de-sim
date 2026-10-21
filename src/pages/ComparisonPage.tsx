@@ -79,6 +79,9 @@ export function ComparisonPage({
         </div>
         <button className="source-badge" onClick={() => onOpenSource("metric-income-tax-revenue", fmtBn(revenue))}><Info size={10} /> Nachweis</button>
       </header>
+      <p className="notice-box comparison-status-note" role="note">
+        Szenario A verbindet die ausgewiesenen Budgetposten mit den aktiven Einstellungen; je nach Kennzahl gelten Regelberechnungen oder Modellannahmen. Szenario B ist eine feste Einkommensteuer-Annahme ohne vollständigen Modullauf. Gini, Armutsrisiko und regionale Wirkungen sind noch nicht berechnet. Eine amtliche Tarifgrundlage bestätigt keine abgeleiteten Modellwirkungen.
+      </p>
       <section className="card-flat compare-table" role="region" aria-label="Haushaltskennzahlen im Vergleich" tabIndex={0}>
         <div className="compare-row compare-head"><strong>Kennzahl</strong><ColumnHead title="Status quo" note="wie in der Übersicht" /><ColumnHead title="Szenario A" note={`Übersicht · ${modelLevelLabel(modelLevel)}`} active /><ColumnHead title="Szenario B" note="feste ESt-Annahme · kein Modullauf" /></div>
         {rows.map((row) => <div className="compare-row" data-testid={`comparison-${row.id}`} key={row.id}><strong>{row.label}</strong><span>{row.baseline}</span><span data-testid="scenario-a-value" className={row.baseline !== row.current ? "changed" : ""}>{budgetSummary.isComplete || !["revenue", "expense", "balance"].includes(row.id) ? row.current : "Nicht vollständig"}</span><span className="not-comparable">{row.alternative}</span></div>)}

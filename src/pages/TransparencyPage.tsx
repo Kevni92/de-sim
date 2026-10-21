@@ -83,7 +83,7 @@ export function TransparencyPage({
           <div><h2 id="catalogue-title">Kennzahlen und Rechenwege</h2><p>{filtered.length} von {metrics.length} Nachweisen sichtbar</p></div>
           <div className="transparency-filters">
             <label className="search-field"><Search size={14} /><input aria-label="Nachweise durchsuchen" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Kennzahl oder Formel suchen" /></label>
-            <label><span>Status</span><select aria-label="Nachweise nach Status filtern" value={filter} onChange={(event) => setFilter(event.target.value as Filter)}><option value="alle">Alle</option><option value="amtlich">Amtlich</option><option value="modell">Modell</option><option value="annahme">Annahme</option><option value="unbekannt">Unbekannt</option></select></label>
+            <label><span>Status</span><select aria-label="Nachweise nach Status filtern" value={filter} onChange={(event) => setFilter(event.target.value as Filter)}><option value="alle">Alle</option><option value="amtlich">Amtlich</option><option value="modell">Modell</option><option value="annahme">Annahme</option><option value="nicht-berechnet">Noch nicht berechnet</option><option value="unbekannt">Status offen</option></select></label>
           </div>
         </header>
 
@@ -97,7 +97,7 @@ export function TransparencyPage({
                 <h3>{metric.label}</h3>
                 <p>{metric.description}</p>
                 <div className="metric-current-value"><span>Aktueller Wert</span><strong>{values[metric.id] ?? "szenarioabhängig"}</strong><small>{metric.unit}</small></div>
-                <dl><div><dt>Datenjahr</dt><dd>{metric.dataYear ?? "nicht belegt"}</dd></div><div><dt>Rechtsstand</dt><dd>{metric.legalYear}</dd></div><div><dt>Quellen</dt><dd>{linkedSources}</dd></div></dl>
+                <dl><div><dt>Datenjahr</dt><dd>{metric.dataYear ?? "nicht belegt"}</dd></div><div><dt>Rechtsstand</dt><dd>{metric.legalYear ?? "nicht anwendbar"}</dd></div><div><dt>Quellen</dt><dd>{linkedSources}</dd></div></dl>
                 <code>{metric.formula}</code>
                 <button className="button secondary" onClick={() => onOpenMetric(metric.id, values[metric.id])}>Nachweis öffnen</button>
               </article>
@@ -119,5 +119,6 @@ function statusLabel(status: EvidenceStatus) {
   if (status === "amtlich") return "Amtlich";
   if (status === "modell") return "Modell";
   if (status === "annahme") return "Annahme";
+  if (status === "nicht-berechnet") return "Noch nicht berechnet";
   return "Unbekannt";
 }
