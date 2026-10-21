@@ -16,7 +16,9 @@
 .section-heading h2 { margin: 6px 0 0; font-size: var(--fs-xl); letter-spacing: -.02em; }
 .status-chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; color: var(--muted-foreground); font-size: var(--fs-xs); white-space: nowrap; }
 .long-term-table-wrap { overflow-x: auto; }
+.long-term-table-wrap:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 50%, transparent); outline-offset: 2px; }
 .long-term-table { width: 100%; border-collapse: collapse; font-size: var(--fs-md); }
+.long-term-comparison-table { min-width: 850px; }
 .long-term-table th, .long-term-table td { border-bottom: 1px solid var(--line); padding: 11px 10px; text-align: right; vertical-align: top; font-variant-numeric: tabular-nums; }
 .long-term-table tr:last-child th, .long-term-table tr:last-child td { border-bottom: 0; }
 .long-term-table th:first-child, .long-term-table td:first-child { min-width: 210px; text-align: left; }
@@ -61,4 +63,5 @@
   .section-heading { flex-direction: column; }
   .status-chip { white-space: normal; }
   .long-term-table { min-width: 650px; }
+  .long-term-comparison-table { min-width: 850px; }
 }
