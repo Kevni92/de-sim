@@ -33,7 +33,7 @@ test("stellt Nullwerte, positive und negative Budgetwirkungen proportional zur N
   await expect(dashboard.getByRole("heading", { name: "Budgetsaldo und Änderungen" })).toBeVisible();
   await expect(dashboard.getByText("Werte in Mrd. € pro Jahr")).toBeVisible();
   await expect(chart.getByTestId("budget-chart-column")).toHaveCount(4);
-  await expect(chart.locator('.budget-chart-bar[data-value="0"]')).toHaveCount(2);
+  await expect(chart.getByTestId("budget-chart-bar").nth(1)).toHaveAttribute("data-value", "0");
   await expect(chart.getByText("Einnahmenwirkung", { exact: true })).toBeVisible();
   await expect(chart.getByText("Ausgabenwirkung auf Saldo", { exact: true })).toBeVisible();
   const zeroLine = await chart.locator(".budget-chart-zero-line").boundingBox();
@@ -46,7 +46,7 @@ test("stellt Nullwerte, positive und negative Budgetwirkungen proportional zur N
   await page.getByLabel("Regelsteuersatz Wert").fill("20");
   await expect(page.getByTestId("revenue-module-value")).toHaveText("+13,1 Mrd. €");
   await returnToDashboard(page);
-  let revenue = await expectLinearScale(dashboard.getByTestId("budget-chart"), 1);
+  const revenue = await expectLinearScale(dashboard.getByTestId("budget-chart"), 1);
   expect(revenue.value).toBeGreaterThan(0);
   expect(revenue.column).toHaveAttribute("data-direction", "positive");
   const positiveZeroY = (await dashboard.getByTestId("budget-chart").locator(".budget-chart-zero-line").boundingBox())!.y;
