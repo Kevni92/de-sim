@@ -48,7 +48,7 @@ test("schützt geänderte Entwürfe vor Neu und Laden, ohne unveränderte Entwü
   await description.fill("Ungespeicherte Arbeit");
   await panel.getByRole("button", { name: "Neu", exact: true }).click();
   let guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
-  await expect(guard).toContainText("Ungespeicherte Arbeit");
+  await expect(guard).toContainText("Neues Szenario");
   await page.screenshot({ path: "test-results/scenario-protection-replacement-desktop.png", fullPage: true });
   await guard.getByRole("button", { name: "Abbrechen" }).click();
   await expect(guard).toHaveCount(0);
@@ -94,7 +94,7 @@ test("prüft Importe vor dem Wechsel und erhält den Entwurf bei Abbruch", async
   const importInput = panel.getByLabel("Szenario-JSON auswählen");
 
   await importInput.setInputFiles({ name: "ungueltig.json", mimeType: "application/json", buffer: Buffer.from("{kaputt") });
-  await expect(page.locator(".toast")).toContainText("kein unterstütztes");
+  await expect(page.locator(".toast")).toContainText("kein gültiges JSON");
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(description).toHaveValue("Entwurf vor dem Import");
 
@@ -149,7 +149,7 @@ test("blockiert den Wechsel bei fehlgeschlagener Varianten-Sicherung und ist mob
   const guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await expect(guard.getByRole("button", { name: "Abbrechen" })).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(guard).toContainText("Mobil geänderte Arbeit");
+  await expect(guard).toContainText("Mobilbasis");
   await page.keyboard.press("Shift+Tab");
 
   await guard.getByRole("button", { name: "Als Variante sichern und fortfahren" }).click();

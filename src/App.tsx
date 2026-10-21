@@ -171,9 +171,11 @@ export function App() {
     [activeScenarioId, scenarios],
   );
   const hasChangesSinceSaved = Boolean(activeSavedScenario && scenarioToJson(materializedScenario) !== scenarioToJson(normalizeScenarioDraft(activeSavedScenario)));
+  const isPristineScenarioDraft = scenarioToJson(scenario) === scenarioToJson(normalizeScenarioDraft(defaultScenarioDraft))
+    || scenarioToJson(scenario) === scenarioToJson(createNewScenarioDraft());
   const hasUnsavedScenarioChanges = activeSavedScenario
     ? hasChangesSinceSaved
-    : scenarioToJson(scenario) !== scenarioToJson(defaultScenarioDraft) && scenarioToJson(scenario) !== scenarioToJson(createNewScenarioDraft());
+    : !isPristineScenarioDraft;
 
   const metricValues = useMemo<Record<string, string>>(() => {
     const { revenueTotal, expenseTotal, balance, revenueDelta, balanceDelta } = budgetSummary;
@@ -665,7 +667,12 @@ export function App() {
         showNotice(reference && !runs.some((run) => run.metadata.id === reference.runId) ? "Szenario importiert; ursprüngliche Modellbasis fehlt lokal" : "Szenario importiert und als Entwurf geladen");
       });
     } catch (error) {
-      showNotice(error instanceof Error ? error.message : "Szenario konnte nicht importiert werden");
+      const message = error instanceof SyntaxError
+        ? "Die ausgewählte Datei enthält kein gültiges JSON. Dein aktueller Entwurf bleibt erhalten."
+        : error instanceof Error
+          ? `${error.message} Dein aktueller Entwurf bleibt erhalten.`
+          : "Szenario konnte nicht importiert werden. Dein aktueller Entwurf bleibt erhalten.";
+      showNotice(message, "alert");
     }
   };
   const copyScenario = async () => {
