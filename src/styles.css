@@ -298,9 +298,9 @@ h1, h2, h3, p { margin-top: 0; }
 .back-link { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; padding: 0; color: var(--muted-foreground); font-size: var(--fs-xs); }
 .back-link:hover { color: var(--foreground); }
 .comparison-page .detail-header h1 { margin-top: 9px; }
-.compare-table { margin-top: 18px; min-width: 820px; overflow: hidden; }
-.comparison-page { overflow-x: auto; }
-.compare-row { display: grid; grid-template-columns: 210px repeat(3,minmax(0,1fr)); align-items: stretch; border-bottom: 1px solid var(--line); }
+.compare-table { margin-top: 18px; min-width: 0; overflow-x: auto; }
+.compare-table:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 50%, transparent); outline-offset: 2px; }
+.compare-row { min-width: 820px; display: grid; grid-template-columns: 210px repeat(3,minmax(0,1fr)); align-items: stretch; border-bottom: 1px solid var(--line); }
 .compare-row:last-child { border-bottom: 0; }
 .compare-row > * { min-height: 48px; display: flex; align-items: center; border-right: 1px solid var(--line); padding: 9px 13px; font-size: var(--fs-sm); }
 .compare-row > *:last-child { border-right: 0; }
@@ -312,7 +312,10 @@ h1, h2, h3, p { margin-top: 0; }
 .compare-head > span small { margin-top: 3px; color: var(--muted-foreground); font-size: var(--fs-2xs); }
 .active-column, .compare-row .changed { background: var(--primary-soft); }
 .compare-row .changed-alt { background: var(--warning-soft); }
-.comparison-policies { min-width: 820px; margin-top: 22px; }
+.compare-row .not-comparable { color: var(--muted-foreground); font-size: var(--fs-xs); }
+.comparison-scope-note, .budget-scope-note { margin: 8px 0 0; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.5; }
+.comparison-scope-note { margin-top: 10px; }
+.comparison-policies { min-width: 0; margin-top: 22px; }
 .comparison-policies h2 { margin-bottom: 3px; font-size: var(--fs-md); }
 .comparison-policies > p { color: var(--muted-foreground); font-size: var(--fs-xs); }
 .comparison-policies .compare-table { margin-top: 10px; }
