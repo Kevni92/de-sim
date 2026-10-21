@@ -19,6 +19,7 @@ import "./effects.css";
 import "./scenario-calculation.css";
 import "./contextual-effects.css";
 import "./long-term.css";
+import "./scenario-changes.css";
 
 function Root() {
   const [hash, setHash] = useState(window.location.hash.replace(/^#/, "") || "/");

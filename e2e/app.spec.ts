@@ -283,6 +283,7 @@ test("erschließt Modellbasis und Wirkungsregister über Nachweise, ohne sie als
   await page.goto("./#/dashboard");
   const mainNav = page.getByRole("navigation", { name: "Hauptnavigation" });
   await expect(mainNav.getByRole("button", { name: "Übersicht", exact: true })).toBeVisible();
+  await expect(mainNav.getByRole("button", { name: "Deine Änderungen", exact: true })).toBeVisible();
   await expect(mainNav.getByRole("button", { name: "Einnahmen", exact: true })).toBeVisible();
   await expect(mainNav.getByRole("button", { name: "Ausgaben und Leistungen", exact: true })).toBeVisible();
   await expect(mainNav.getByRole("button", { name: "Vergleich", exact: true })).toBeVisible();

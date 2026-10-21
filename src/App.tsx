@@ -16,6 +16,7 @@ import { calculateRevenueModules, type RevenueModuleId } from "./lib/revenue-mod
 import { activeReformContextKeys, contextualSources, deriveReformEffectParameters, effectInputSignature, hasContextualEffects, summarizeScenarioEffects } from "./lib/reform-effects";
 import { resolveCalculationFreshness, type CalculationFreshness } from "./lib/scenario-calculation";
 import { createScenarioHistory, defaultScenarioDraft, normalizeScenarioDraft, scenarioFromJson, scenarioHistoryReducer, scenarioToJson, type ScenarioDraftWithPopulationBasis } from "./lib/scenario-state";
+import { collectScenarioChanges, resetScenarioChange } from "./lib/scenario-changes";
 import { fmtBn, fmtDiff } from "./lib/sim-data";
 import { sgb2PreviewClient } from "./lib/sgb2-preview-client";
 import type { Sgb2UiPreviewResult } from "./lib/sgb2-ui";
@@ -29,10 +30,11 @@ import { PopulationPage } from "./pages/PopulationPage";
 import { RevenueModulesPage } from "./pages/RevenueModulesPage";
 import { TransparencyPage } from "./pages/TransparencyPage";
 import { LongTermPage } from "./pages/LongTermPage";
+import { ScenarioChangesPage } from "./pages/ScenarioChangesPage";
 
 function readRoute(): AppRoute {
   const path = window.location.hash.replace(/^#/, "") || "/";
-  return (["/", "/dashboard", "/bevoelkerung", "/einkommensteuer", "/einnahmen", "/ausgaben", "/vergleich", "/langfrist", "/transparenz"] as AppRoute[]).includes(path as AppRoute) ? path as AppRoute : "/dashboard";
+  return (["/", "/dashboard", "/aenderungen", "/bevoelkerung", "/einkommensteuer", "/einnahmen", "/ausgaben", "/vergleich", "/langfrist", "/transparenz"] as AppRoute[]).includes(path as AppRoute) ? path as AppRoute : "/dashboard";
 }
 
 const legacyMetricIds: Record<string, string> = {
@@ -98,6 +100,7 @@ export function App() {
   const scenarioGuardInFlight = useRef(false);
 
   const scenario = history.present;
+  const scenarioChanges = useMemo(() => collectScenarioChanges(scenario), [scenario]);
   const revenueModuleResults = useMemo(() => calculateRevenueModules(scenario.revenueChanges, scenario.modelLevel), [scenario.modelLevel, scenario.revenueChanges]);
   const baseExpenseModuleResults = useMemo(() => calculateExpenseModules(scenario.expenseChanges, scenario.modelLevel), [scenario.expenseChanges, scenario.modelLevel]);
   const expenseModuleResults = useMemo(() => baseExpenseModuleResults.map((item) => {
@@ -436,6 +439,19 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const updateScenario = (patch: Partial<ScenarioDraftWithPopulationBasis>) => dispatch({ type: "change", patch });
+  const openScenarioChange = (change: (typeof scenarioChanges)[number]) => {
+    if (change.route === "/einnahmen" && change.moduleId) setSelectedRevenueModule(change.moduleId as RevenueModuleId);
+    if (change.route === "/ausgaben" && change.moduleId) setSelectedExpenseModule(change.moduleId as ExpenseModuleId);
+    if (change.route === "/dashboard") {
+      setScenarioPanelOpen(true);
+      return;
+    }
+    navigate(change.route);
+  };
+  const resetScenarioChangeValue = (change: (typeof scenarioChanges)[number]) => {
+    updateScenario(resetScenarioChange(scenario, change.target));
+    showNotice(`${change.label} auf Baseline zurückgesetzt.`);
+  };
   const showNotice = (message: string, role: "status" | "alert" = "status") => {
     setNotice(message);
     setNoticeRole(role);
@@ -774,12 +790,13 @@ export function App() {
     <AppBar route={route} scenarioName={scenario.name} canUndo={history.past.length > 0} canRedo={history.future.length > 0} onScenarioName={(name) => updateScenario({ name })} onNavigate={navigate} onUndo={() => dispatch({ type: "undo" })} onRedo={() => dispatch({ type: "redo" })} onSave={() => void saveScenario()} onOpenScenario={() => setScenarioPanelOpen(true)} />
     {showCompactModelBasis && <ModelBasisStatus status={modelBasisStatus} canReconstruct={canReconstructPopulationBasis(missingPopulationReference)} message={populationError || undefined} onReconstruct={() => void reconstructPopulation()} onUseStandard={() => void useStandardPopulation()} onRetry={retryPopulation} onManage={() => navigate("/bevoelkerung")} />}
     {route === "/" && <OnboardingPage modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} onStart={() => navigate("/dashboard")} />}
+    {route === "/aenderungen" && <ScenarioChangesPage scenario={scenario} changes={scenarioChanges} onBack={() => navigate("/dashboard")} onOpenChange={openScenarioChange} onResetChange={resetScenarioChangeValue} onOpenScenarioSettings={() => setScenarioPanelOpen(true)} onExploreMeasures={() => navigate("/einnahmen")} />}
     {route === "/dashboard" && <DashboardPage incomeTaxResult={taxResult} budgetSummary={budgetSummary} revenueModuleResults={revenueModuleResults} expenseModuleResults={expenseModuleResults} metrics={metrics} sources={sources} scenarios={scenarios} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onNavigateRevenue={navigateRevenueModule} onNavigateExpense={navigateExpenseModule} onNavigateComparison={() => navigate("/vergleich")} onNavigateLongTerm={() => navigate("/langfrist")} onOpenSource={openSource} onLoadScenario={(saved) => void loadScenario(saved)} onDeleteScenario={requestDeleteScenario} />}
     {route === "/bevoelkerung" && <PopulationPage activeRun={activePopulation} runs={populationRuns} generating={populationLoading || populationGenerating} error={populationError} onGenerate={(options) => void generatePopulation(options)} onActivate={(runId) => void activatePopulation(runId)} onDelete={(runId) => void deletePopulationRun(runId)} onOpenSource={openSource} />}
     {route === "/einkommensteuer" && <IncomeTaxPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} result={taxResult} revenueResults={revenueModuleResults} onSettings={(incomeTax) => updateScenario({ incomeTax })} onNavigateRevenue={navigateRevenueModule} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/einnahmen" && <RevenueModulesPage selectedId={selectedRevenueModule} results={revenueModuleResults} incomeTaxResult={taxResult} parameters={scenario.revenueChanges} modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} effectRun={effectRun} effectStatus={effectStatus} effectError={effectError} populationAvailable={Boolean(activePopulation)} onSelect={setSelectedRevenueModule} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onParameters={(revenueChanges) => updateScenario({ revenueChanges })} onRetryEffects={retryEffects} onOpenAdvancedEffects={() => navigate("/wirkungen")} onManageBasis={() => navigate("/bevoelkerung")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/ausgaben" && <ExpenseModulesPage selectedId={selectedExpenseModule} results={expenseModuleResults} parameters={scenario.expenseChanges} modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} effectRun={effectRun} effectStatus={effectStatus} effectError={effectError} sgb2={scenario.sgb2} sgb2Preview={sgb2Preview} sgb2PreviewLoading={sgb2PreviewLoading} sgb2PreviewError={sgb2PreviewError} populationAvailable={Boolean(activePopulation)} onSelect={setSelectedExpenseModule} onParameters={(expenseChanges) => updateScenario({ expenseChanges })} onSgb2={(sgb2) => updateScenario({ sgb2 })} onRetryEffects={retryEffects} onOpenAdvancedEffects={() => navigate("/wirkungen")} onManageBasis={() => navigate("/bevoelkerung")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
-    {route === "/vergleich" && <ComparisonPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} budgetSummary={budgetSummary} revenue={taxResult.value} directFiscalDelta={directFiscalDelta} effectSummary={effectSummary} effectStatus={effectStatus} effectError={effectError} onOpenAdvancedEffects={() => navigate("/wirkungen")} onOpenLongTerm={() => navigate("/langfrist")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
+    {route === "/vergleich" && <ComparisonPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} budgetSummary={budgetSummary} revenue={taxResult.value} directFiscalDelta={directFiscalDelta} effectSummary={effectSummary} effectStatus={effectStatus} effectError={effectError} policyChangeCount={scenarioChanges.filter((change) => change.category === "policy").length} assumptionChangeCount={scenarioChanges.filter((change) => change.category !== "policy").length} onOpenChanges={() => navigate("/aenderungen")} onOpenAdvancedEffects={() => navigate("/wirkungen")} onOpenLongTerm={() => navigate("/langfrist")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/langfrist" && <LongTermPage settings={scenario.longTerm} onTargetYear={(targetYear) => updateScenario({ longTerm: { ...scenario.longTerm, targetYear } })} onBack={() => navigate("/vergleich")} onOpenSource={openSource} />}
     {route === "/transparenz" && <TransparencyPage metrics={metrics} sources={sources} values={metricValues} onOpenMetric={openSource} onNavigatePopulation={() => navigate("/bevoelkerung")} onNavigateEffects={() => navigate("/wirkungen")} />}
     {notice && <div className="toast" role={noticeRole}>{notice}</div>}
