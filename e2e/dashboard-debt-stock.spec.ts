@@ -22,20 +22,22 @@ test("trennt einen illustrativen Schuldenbestand von jährlichen Saldoänderunge
   await expect(debt).not.toContainText(/BIP|62,1 %|± 4 %/);
   await expect(page.locator(".sticky-kpis").getByText("Saldo pro Jahr", { exact: true })).toBeVisible();
   await expect(dashboard.getByText("Werte in Mrd. € pro Jahr")).toBeVisible();
-  const unchangedDebt = (await debt.innerText()).trim();
+  const unchangedDebtValue = await debt.locator(".kpi-value-row strong").innerText();
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
   await page.getByLabel("Regelsteuersatz Wert").fill("30");
   await returnToDashboard(page);
   await expect(dashboard.getByTestId("budget-chart").getByTestId("budget-chart-column").nth(1)).toHaveAttribute("data-direction", "positive");
-  await expect(debt).toHaveText(unchangedDebt);
+  await expect(debt.locator(".kpi-value-row strong")).toHaveText(unchangedDebtValue);
+  await expect(debt.locator(".kpi-value-row em")).toHaveText("keine Fortschreibung");
   await page.screenshot({ path: "test-results/issue-100-debt-stock-better-saldo.png", fullPage: true });
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
   await page.getByLabel("Regelsteuersatz Wert").fill("18");
   await returnToDashboard(page);
   await expect(dashboard.getByTestId("budget-chart").getByTestId("budget-chart-column").nth(1)).toHaveAttribute("data-direction", "negative");
-  await expect(debt).toHaveText(unchangedDebt);
+  await expect(debt.locator(".kpi-value-row strong")).toHaveText(unchangedDebtValue);
+  await expect(debt.locator(".kpi-value-row em")).toHaveText("keine Fortschreibung");
   await page.screenshot({ path: "test-results/issue-100-debt-stock-worse-saldo.png", fullPage: true });
 
   const evidence = debt.getByRole("button");
