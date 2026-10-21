@@ -6,6 +6,7 @@ import { SourceDrawer } from "./components/SourceDrawer";
 import { calculateExpenseModules, expenseLineResultsById, type ExpenseModuleId } from "./lib/expense-modules";
 import { estimateIncomeTaxRevenue, type IncomeTaxResult } from "./lib/income-tax";
 import { localServer } from "./lib/local-server-client";
+import { SUPPORTED_LEGAL_YEAR } from "./lib/model-baseline";
 import type { EffectRun } from "./lib/long-term-effects";
 import { canReconstructPopulationBasis, populationBasisFromRun, type PopulationBasisReference } from "./lib/population-basis";
 import { populationSources } from "./lib/population-model";
@@ -312,7 +313,7 @@ export function App() {
         modelLevel: scenario.modelLevel,
         horizonYears: scenario.horizonYears,
         dataYear: scenario.dataYear,
-        legalYear: scenario.legalYear,
+        legalYear: SUPPORTED_LEGAL_YEAR,
         inputSignature: currentEffectSignature,
         parameters: effectParameters,
       });
@@ -337,7 +338,7 @@ export function App() {
     } finally {
       if (requestId === effectRequest.current) setEffectLoading(false);
     }
-  }, [activePopulation, activeScenarioId, currentEffectSignature, effectParameters, scenario.dataYear, scenario.horizonYears, scenario.legalYear, scenario.modelLevel]);
+  }, [activePopulation, activeScenarioId, currentEffectSignature, effectParameters, scenario.dataYear, scenario.horizonYears, scenario.modelLevel]);
 
   useEffect(() => {
     if (!ready || !routeNeedsEffects || !hasActiveEffects) {
@@ -586,7 +587,7 @@ export function App() {
           : "ready";
 
   return <div className="app-shell">
-    <AppBar route={route} scenarioName={scenario.name} legalYear={scenario.legalYear} dataYear={scenario.dataYear} canUndo={history.past.length > 0} canRedo={history.future.length > 0} onScenarioName={(name) => updateScenario({ name })} onNavigate={navigate} onUndo={() => dispatch({ type: "undo" })} onRedo={() => dispatch({ type: "redo" })} onSave={() => void saveScenario()} onOpenScenario={() => setScenarioPanelOpen(true)} />
+    <AppBar route={route} scenarioName={scenario.name} canUndo={history.past.length > 0} canRedo={history.future.length > 0} onScenarioName={(name) => updateScenario({ name })} onNavigate={navigate} onUndo={() => dispatch({ type: "undo" })} onRedo={() => dispatch({ type: "redo" })} onSave={() => void saveScenario()} onOpenScenario={() => setScenarioPanelOpen(true)} />
     {showCompactModelBasis && <ModelBasisStatus status={modelBasisStatus} canReconstruct={canReconstructPopulationBasis(missingPopulationReference)} message={populationError || undefined} onReconstruct={() => void reconstructPopulation()} onUseStandard={() => void useStandardPopulation()} onRetry={retryPopulation} onManage={() => navigate("/bevoelkerung")} />}
     {route === "/" && <OnboardingPage modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} onStart={() => navigate("/dashboard")} />}
     {route === "/dashboard" && <DashboardPage incomeTaxResult={taxResult} revenueModuleResults={revenueModuleResults} expenseModuleResults={expenseModuleResults} metrics={metrics} sources={sources} scenarios={scenarios} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onNavigateRevenue={navigateRevenueModule} onNavigateExpense={navigateExpenseModule} onNavigateComparison={() => navigate("/vergleich")} onOpenSource={openSource} onLoadScenario={(saved) => void loadScenario(saved)} onDeleteScenario={(saved) => void deleteScenario(saved)} />}

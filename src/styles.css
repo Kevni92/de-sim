@@ -102,6 +102,7 @@ h1, h2, h3, p { margin-top: 0; }
 .onboarding-note li::before { content: ""; position: absolute; left: 0; top: .65em; width: 5px; height: 5px; border-radius: 50%; background: var(--line-strong); }
 .notice-box { margin-top: 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--subtle); padding: 13px; color: var(--muted-foreground); font-size: var(--fs-sm); line-height: 1.6; }
 .notice-box strong { color: var(--foreground); }
+.onboarding-baseline p { margin: 4px 0 0; }
 
 .sticky-kpis { position: sticky; top: 64px; z-index: 40; border-bottom: 1px solid var(--line); background: rgba(244,247,250,.96); backdrop-filter: blur(10px); padding: 12px 0; }
 .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }

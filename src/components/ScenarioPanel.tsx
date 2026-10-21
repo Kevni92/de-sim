@@ -1,6 +1,7 @@
 import { Copy, CopyPlus, Download, FilePlus2, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { localServer } from "../lib/local-server-client";
+import { DEFAULT_EFFECT_START_YEAR, SUPPORTED_LEGAL_YEAR } from "../lib/model-baseline";
 import { MODEL_LEVEL_OPTIONS, modelLevelCaution, TIME_HORIZON_OPTIONS } from "../lib/scenario-calculation";
 import type { ModelLevel, ScenarioDraft, TimeHorizon } from "../lib/types";
 import { SCENARIO_CALCULATION_SETTINGS_EVENT } from "./ModuleDetailComponents";
@@ -36,6 +37,7 @@ export function ScenarioPanel({
   const [requestedCalculationFocus, setRequestedCalculationFocus] = useState(false);
   const effectiveOpen = open || requestedOpen;
   const hasScenarioActions = Boolean(onNew || onDuplicate || onExport || onImport || onCopy);
+  const hasLegacyYearMetadata = scenario.legalYear !== SUPPORTED_LEGAL_YEAR || scenario.dataYear !== DEFAULT_EFFECT_START_YEAR;
 
   const closeAndPersist = () => {
     void localServer.saveActiveDraft({ activeScenarioId, scenario }).finally(() => {
@@ -101,16 +103,15 @@ export function ScenarioPanel({
               <textarea aria-label="Szenariobeschreibung" rows={3} value={scenario.description} onChange={(event) => onPatch({ description: event.target.value })} />
             </label>
 
-            <div className="scenario-form-grid">
-              <label>
-                <span>Rechtsstand</span>
-                <input aria-label="Rechtsstand" type="number" min="2020" max="2040" value={scenario.legalYear} onChange={(event) => onPatch({ legalYear: Number(event.target.value) })} />
-              </label>
-              <label>
-                <span>Datenstand</span>
-                <input aria-label="Datenstand" type="number" min="2015" max="2040" value={scenario.dataYear} onChange={(event) => onPatch({ dataYear: Number(event.target.value) })} />
-              </label>
-            </div>
+            <fieldset className="scenario-calculation-settings scenario-year-context" data-testid="scenario-year-context">
+              <legend>Jahresgrundlagen</legend>
+              <p><strong>Gesetzliche Basis: Rechtsstand {SUPPORTED_LEGAL_YEAR}.</strong> Quellenjahre werden je Kennzahl im jeweiligen Nachweis ausgewiesen.</p>
+              <p>Der Zeitbezug der Wirkungsrechnung beginnt {scenario.dataYear}. Er beschreibt die Zeitachse des Szenarios, nicht das Datenjahr einer Quelle.</p>
+              {hasLegacyYearMetadata && <div className="notice-box legacy-year-warning" role="note">
+                <strong>Abweichende Jahresangaben aus diesem Szenario</strong>
+                <p>Importierter Rechtsstand: {scenario.legalYear} · Zeitbezug der Wirkungsrechnung: {scenario.dataYear}. Diese Angaben bleiben beim Speichern und Export erhalten. Die gesetzliche Berechnungsbasis bleibt 2026; der importierte Rechtsstand ändert sie nicht. Der Zeitbezug bestimmt die Jahresachse der Wirkungsrechnung und nicht die Quellenjahre.</p>
+              </div>}
+            </fieldset>
 
             <fieldset className="scenario-calculation-settings" data-testid="scenario-calculation-settings">
               <legend>Berechnungsrahmen</legend>

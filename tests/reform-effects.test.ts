@@ -4,6 +4,7 @@ import { calculateExpenseModules, expenseParameterKey } from "../src/lib/expense
 import type { EffectModuleResult, EffectRun } from "../src/lib/long-term-effects";
 import { activeReformContextKeys, contextualEffectsFor, deriveReformEffectParameters, effectInputSignature, effectLinksForContext, summarizeScenarioEffects } from "../src/lib/reform-effects";
 import { revenueParameterKey } from "../src/lib/revenue-modules";
+import { SUPPORTED_LEGAL_YEAR } from "../src/lib/model-baseline";
 import { defaultScenarioDraft } from "../src/lib/scenario-state";
 
 const result = (moduleId: string, patch: Partial<EffectModuleResult> = {}): EffectModuleResult => ({
@@ -53,4 +54,7 @@ test("leitet Parameter und Signatur reproduzierbar aus Reformen ab", () => {
   const first = effectInputSignature({ scenario, populationRunId: "population-a", parameters });
   assert.equal(first, effectInputSignature({ scenario, populationRunId: "population-a", parameters: { ...parameters } }));
   assert.notEqual(first, effectInputSignature({ scenario, populationRunId: "population-b", parameters }));
+  assert.equal(JSON.parse(first).legalYear, SUPPORTED_LEGAL_YEAR);
+  assert.equal(first, effectInputSignature({ scenario: { ...scenario, legalYear: 2030 }, populationRunId: "population-a", parameters }));
+  assert.notEqual(first, effectInputSignature({ scenario: { ...scenario, dataYear: 2030 }, populationRunId: "population-a", parameters }));
 });

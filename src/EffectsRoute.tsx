@@ -3,6 +3,7 @@ import { AppBar, type AppRoute } from "./components/AppBar";
 import { ScenarioPanel } from "./components/ScenarioPanel";
 import { calculateExpenseModules } from "./lib/expense-modules";
 import { localServer } from "./lib/local-server-client";
+import { SUPPORTED_LEGAL_YEAR } from "./lib/model-baseline";
 import type { EffectModuleDefinition, EffectRun } from "./lib/long-term-effects";
 import { deriveReformEffectParameters, effectInputSignature } from "./lib/reform-effects";
 import { resolveCalculationFreshness } from "./lib/scenario-calculation";
@@ -24,7 +25,7 @@ export function EffectsRoute() {
   const calculationRequest = useRef(0);
   const expenseResults = useMemo(() => calculateExpenseModules(scenario.expenseChanges, scenario.modelLevel), [scenario.expenseChanges, scenario.modelLevel]);
   const calculationParameters = useMemo(() => deriveReformEffectParameters(scenario, expenseResults), [expenseResults, scenario.effectParameters, scenario.expenseChanges]);
-  const inputSignature = useMemo(() => populationRun ? effectInputSignature({ scenario, populationRunId: scenario.populationRunId ?? populationRun.metadata.id, parameters: calculationParameters }) : undefined, [calculationParameters, populationRun, scenario.dataYear, scenario.expenseChanges, scenario.horizonYears, scenario.legalYear, scenario.modelLevel, scenario.populationRunId, scenario.revenueChanges]);
+  const inputSignature = useMemo(() => populationRun ? effectInputSignature({ scenario, populationRunId: scenario.populationRunId ?? populationRun.metadata.id, parameters: calculationParameters }) : undefined, [calculationParameters, populationRun, scenario.dataYear, scenario.expenseChanges, scenario.horizonYears, scenario.modelLevel, scenario.populationRunId, scenario.revenueChanges]);
 
   const navigate = (route: AppRoute) => {
     window.location.hash = route;
@@ -81,7 +82,7 @@ export function EffectsRoute() {
         modelLevel: scenario.modelLevel,
         horizonYears: scenario.horizonYears,
         dataYear: scenario.dataYear,
-        legalYear: scenario.legalYear,
+        legalYear: SUPPORTED_LEGAL_YEAR,
         inputSignature,
         parameters: calculationParameters,
       });
@@ -105,7 +106,7 @@ export function EffectsRoute() {
     } finally {
       if (requestId === calculationRequest.current) setLoading(false);
     }
-  }, [activeScenarioId, calculationParameters, inputSignature, populationRun?.metadata.id, scenario.dataYear, scenario.horizonYears, scenario.legalYear, scenario.modelLevel, scenario.populationRunId]);
+  }, [activeScenarioId, calculationParameters, inputSignature, populationRun?.metadata.id, scenario.dataYear, scenario.horizonYears, scenario.modelLevel, scenario.populationRunId]);
 
   useEffect(() => {
     if (!ready || !populationRun || modules.length === 0 || !inputSignature) return;
@@ -137,8 +138,6 @@ export function EffectsRoute() {
     <AppBar
       route="/wirkungen"
       scenarioName={scenario.name}
-      legalYear={scenario.legalYear}
-      dataYear={scenario.dataYear}
       canUndo={false}
       canRedo={false}
       onScenarioName={(name) => patch({ name })}
