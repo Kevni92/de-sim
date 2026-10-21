@@ -4,6 +4,7 @@ import { expenseModuleDefinitions, expenseParameterKey } from "./expense-modules
 import type { EffectCausality, EffectEvidenceStatus, EffectModuleResult, EffectRun } from "./long-term-effects";
 import type { RevenueModuleId, RevenueModuleResult } from "./revenue-modules";
 import { revenueModuleDefinitions, revenueParameterKey } from "./revenue-modules";
+import { SUPPORTED_LEGAL_YEAR } from "./model-baseline";
 import type { ScenarioDraft } from "./types";
 
 export type ReformContextKey = `revenue:${RevenueModuleId}` | `expense:${ExpenseModuleId}`;
@@ -268,7 +269,7 @@ export function effectInputSignature({
     modelLevel: scenario.modelLevel,
     horizonYears: scenario.horizonYears,
     dataYear: scenario.dataYear,
-    legalYear: scenario.legalYear,
+    legalYear: SUPPORTED_LEGAL_YEAR,
     contexts: activeReformContextKeys(scenario).sort(),
     parameters: sortedParameters,
   });

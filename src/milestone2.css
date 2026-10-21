@@ -21,6 +21,10 @@
 .scenario-calculation-settings { margin: 2px 0 0; padding: 14px; border: 1px solid color-mix(in srgb, var(--primary) 38%, var(--line)); border-radius: 7px; background: color-mix(in srgb, var(--primary-soft) 55%, var(--surface)); }
 .scenario-calculation-settings legend { padding: 0 5px; font-size: var(--fs-sm); font-weight: 800; }
 .scenario-calculation-settings > p { margin: 0 0 12px; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.5; }
+.scenario-year-context > p { margin-bottom: 8px; }
+.scenario-year-context > p:last-of-type { margin-bottom: 0; }
+.scenario-year-context .notice-box { margin-top: 10px; }
+.scenario-year-context .notice-box p { margin: 5px 0 0; }
 .scenario-calculation-settings .scenario-form-grid { margin-bottom: 11px; }
 .scenario-calculation-explanation { margin: 0 !important; padding: 9px 10px; border-radius: 5px; background: var(--surface); color: var(--muted-foreground); }
 .scenario-calculation-explanation.warning { background: var(--warning-soft); color: #73570f; }

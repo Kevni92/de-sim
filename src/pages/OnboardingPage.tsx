@@ -14,23 +14,18 @@ export function OnboardingPage({
     <div className="onboarding-page">
       <main className="onboarding-grid">
         <section>
-          <span className="badge-label">Onboarding · Schritt 1 von 3</span>
+          <span className="badge-label">Einstieg</span>
           <h1>Ein neutraler Blick auf den deutschen Staatshaushalt.</h1>
           <p className="lead">
             Der Deutschland-Simulator zeigt, wie sich Änderungen an Steuern, Sozialbeiträgen und Ausgaben auf Budget,
-            Haushalte und Regionen auswirken. Jede Zahl ist mit Quelle, Datenjahr und Unsicherheitsgrad hinterlegt.
+            Haushalte und Regionen auswirken. Für jede Kennzahl weisen wir Quelle, Berichtsjahr und Unsicherheitsgrad aus.
             Wir bewerten keine Parteien und vergeben keine Punkte.
           </p>
 
-          <fieldset className="choice-fieldset">
-            <legend>Basisdaten wählen</legend>
-            <p>Bestimme, welchen Rechtsstand deine Simulation nutzt. Änderungen sind später möglich.</p>
-            <div className="choice-grid">
-              <Choice label="Rechtsstand 2024" note="letzter geschlossener Jahresabschluss" />
-              <Choice label="Rechtsstand 2025" note="vorläufig, Bundesbank + BMF" />
-              <Choice label="Rechtsstand 2026" note="Referenzentwurf, empfohlen" active />
-            </div>
-          </fieldset>
+          <div className="notice-box onboarding-baseline" role="note" aria-label="Verwendete gesetzliche Grundlage">
+            <strong>Unterstützte gesetzliche Grundlage: Rechtsstand 2026.</strong>
+            <p>Die Berichtsjahre können je Kennzahl abweichen und stehen beim jeweiligen Nachweis. Der Zeitraum einer Wirkungsrechnung ist davon getrennt. Du kannst ohne weitere Einrichtung direkt in die Übersicht starten.</p>
+          </div>
 
           <section className="onboarding-calculation" aria-label="Berechnungsrahmen des Szenarios">
             <ModuleCalculationContextCard
@@ -60,16 +55,6 @@ export function OnboardingPage({
           </div>
         </aside>
       </main>
-    </div>
-  );
-}
-
-function Choice({ label, note, active = false }: { label: string; note: string; active?: boolean }) {
-  return (
-    <div className={`choice-card ${active ? "active" : ""}`}>
-      <span className="radio-dot">{active && <i />}</span>
-      <strong>{label}</strong>
-      <small>{note}</small>
     </div>
   );
 }

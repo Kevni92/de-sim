@@ -26,12 +26,10 @@ function isActiveRoute(current: AppRoute, target: AppRoute) {
 }
 
 export function AppBar({
-  route, scenarioName, legalYear, dataYear, canUndo, canRedo, onScenarioName, onNavigate, onUndo, onRedo, onSave, onOpenScenario,
+  route, scenarioName, canUndo, canRedo, onScenarioName, onNavigate, onUndo, onRedo, onSave, onOpenScenario,
 }: {
   route: AppRoute;
   scenarioName: string;
-  legalYear: number;
-  dataYear: number;
   canUndo: boolean;
   canRedo: boolean;
   onScenarioName: (name: string) => void;
@@ -114,7 +112,7 @@ export function AppBar({
       <div className="app-bar-inner">
         <button className="brand-link" onClick={() => navigate("/dashboard")} aria-label="Zum HaushaltsKompass-Dashboard">
           <img className="brand-logo" src={darkMode ? haushaltsKompassDarkLogo : haushaltsKompassLightLogo} alt="" aria-hidden="true" />
-          <span className="brand-copy"><strong>HaushaltsKompass</strong><small>Rechtsstand {legalYear} · Datenstand {dataYear} · MODELL</small></span>
+          <span className="brand-copy"><strong>HaushaltsKompass</strong><small>Rechtsstand 2026 · Quellenjahre je Kennzahl · MODELL</small></span>
         </button>
         <nav className="top-nav" aria-label="Hauptnavigation">
           {navigationItems.map((item) => {
@@ -168,7 +166,7 @@ export function AppBar({
             </nav>
             <div className="mobile-nav-footer">
               <button className="button primary" onClick={openScenario}><SlidersHorizontal size={15} /> Szenario verwalten</button>
-              <small>Rechtsstand {legalYear} · Datenstand {dataYear} · Modellrechnung</small>
+              <small>Rechtsstand 2026 · Quellenjahre je Kennzahl · Modellrechnung</small>
             </div>
           </div>
         </div>

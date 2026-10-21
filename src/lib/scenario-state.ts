@@ -1,5 +1,6 @@
 import { defaultEffectParameters } from "./long-term-effects";
 import { defaultLongTermScenarioSettings } from "./long-term-scenario";
+import { DEFAULT_EFFECT_START_YEAR, SUPPORTED_LEGAL_YEAR } from "./model-baseline";
 import type { PopulationBasisReference } from "./population-basis";
 import {
   cloneSgb2ScenarioReference,
@@ -28,8 +29,8 @@ type ScenarioInput = Partial<ScenarioDraft> & { populationBasis?: unknown; effec
 export const defaultScenarioDraft: ScenarioDraftWithPopulationBasis = {
   name: "Reformentwurf A",
   description: "Arbeitsstand für eine neutrale Simulation des Staatshaushalts mit Einnahmen-, Steuer-, Beitrags-, Ausgaben- und Wirkungsmodulen.",
-  legalYear: 2026,
-  dataYear: 2025,
+  legalYear: SUPPORTED_LEGAL_YEAR,
+  dataYear: DEFAULT_EFFECT_START_YEAR,
   horizonYears: 5,
   modelLevel: "verhalten",
   revenueChanges: {},
