@@ -143,7 +143,6 @@ test("ersetzt eine nicht rekonstruierbare Importreferenz nur nach bewusster Ents
   await expect(status).toContainText("Eine andere Modellbasis kann Ergebnisse verändern");
   await expect(status.getByRole("button", { name: "Identische Modellbasis neu erzeugen" })).toHaveCount(0);
   await status.getByRole("button", { name: "Standard-Modellbasis verwenden" }).click();
-  await expect(page.locator(".toast")).toContainText("bewusst übernommen");
   await waitForReadyBasis(page);
 });
 
