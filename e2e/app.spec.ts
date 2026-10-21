@@ -227,7 +227,9 @@ test("exportiert, importiert und dupliziert Szenarien mit abweichenden Jahresmet
 test("ordnet importierte Jahresmetadaten im mobilen Szenariodialog ein", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./#/dashboard");
-  await page.getByRole("button", { name: "Szenario", exact: true }).click();
+  await page.getByRole("button", { name: "Hauptmenü öffnen" }).click();
+  await expect(page.getByText("Rechtsstand 2026 · Quellenjahre je Kennzahl · Modellrechnung")).toBeVisible();
+  await page.getByRole("button", { name: "Szenario verwalten" }).click();
   const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
   await dialog.getByLabel("Szenario-JSON auswählen").setInputFiles({
     name: "altes-szenario.json",
