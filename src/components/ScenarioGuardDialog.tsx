@@ -61,7 +61,13 @@ export function ScenarioGuardDialog({
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      if (previousFocus?.isConnected) previousFocus.focus();
+      if (previousFocus?.isConnected) {
+        previousFocus.focus();
+        return;
+      }
+      const fallback = Array.from(document.querySelectorAll<HTMLButtonElement>(".scenario-button, .mobile-menu-button"))
+        .find((button) => button.isConnected && !button.disabled && button.getClientRects().length > 0);
+      fallback?.focus();
     };
   }, [request?.kind]);
 

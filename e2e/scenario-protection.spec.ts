@@ -26,6 +26,7 @@ test("fragt vor dem Löschen nach und erhält ein abgebrochenes Szenario", async
   await row.getByRole("button", { name: "Zu löschendes Szenario löschen" }).click();
   await page.getByRole("alertdialog", { name: "Szenario löschen?" }).getByRole("button", { name: "Szenario löschen" }).click();
   await expect(page.locator(".saved-scenarios")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Szenario", exact: true })).toBeFocused();
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const panelAfterDelete = page.getByRole("dialog", { name: "Szenario verwalten" });
   await expect(panelAfterDelete.getByLabel("Szenarioname im Dialog")).toHaveValue("Zu löschendes Szenario");
