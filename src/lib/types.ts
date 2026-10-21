@@ -309,7 +309,7 @@ export interface ScenarioDraft {
 }
 
 export interface ScenarioState extends ScenarioDraft { id: string; createdAt: string; updatedAt: string; }
-export interface ActiveScenarioDraft { activeScenarioId: string | null; scenario: ScenarioDraft; }
+export interface ActiveScenarioDraft { activeScenarioId: string | null; scenario: ScenarioDraft; savedAt?: string; }
 
 export type LocalRequest =
   | { id: string; type: "sources:list" }
