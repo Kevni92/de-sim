@@ -36,7 +36,7 @@ function EvidencePreview({ metric, sources }: { metric?: MetricRecord; sources: 
     </div>
     <div className="evidence-tooltip-badges">
       <span>Konfidenz {metric.confidence}</span>
-      <span>Daten {metric.dataYear}</span>
+      <span>Daten {metric.dataYear ?? "nicht belegt"}</span>
       <span>Recht {metric.legalYear}</span>
     </div>
     <dl>

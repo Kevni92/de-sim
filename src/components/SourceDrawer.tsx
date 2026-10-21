@@ -70,7 +70,7 @@ export function SourceDrawer({
 
           <dl className="meta-grid">
             <Meta label="Kategorie" value={metric.category} />
-            <Meta label="Datenjahr" value={String(metric.dataYear)} />
+            <Meta label="Datenjahr" value={metric.dataYear === null ? "nicht belegt" : String(metric.dataYear)} />
             <Meta label="Rechtsstand" value={String(metric.legalYear)} />
             <Meta label="Modellversion" value={scenario.modelVersion} />
             <Meta label="Zeithorizont" value={`${scenario.horizonYears} Jahr${scenario.horizonYears === 1 ? "" : "e"}`} />
@@ -130,7 +130,7 @@ export function SourceDrawer({
             <div className="source-list">
               {linkedSources.map((source) => (
                 <article key={source.id}>
-                  <div><strong>{source.title}</strong><span>{source.institution} · Datenjahr {source.dataYear}</span></div>
+                  <div><strong>{source.title}</strong><span>{source.institution} · Datenjahr {source.dataYear ?? "nicht belegt"}</span></div>
                   <a href={source.url} target="_blank" rel="noreferrer" aria-label={`${source.title} öffnen`}><ExternalLink size={13} /></a>
                   <p>{source.summary}</p>
                 </article>
@@ -155,7 +155,7 @@ export function SourceDrawer({
           </section>
         </div>
 
-        <footer>Datenstand {metric.dataYear} · Rechtsstand {metric.legalYear} · {statusLabel(metric.status)}</footer>
+        <footer>Datenstand {metric.dataYear ?? "nicht belegt"} · Rechtsstand {metric.legalYear} · {statusLabel(metric.status)}</footer>
       </aside>
     </div>
   );

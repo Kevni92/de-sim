@@ -97,7 +97,7 @@ export function TransparencyPage({
                 <h3>{metric.label}</h3>
                 <p>{metric.description}</p>
                 <div className="metric-current-value"><span>Aktueller Wert</span><strong>{values[metric.id] ?? "szenarioabhängig"}</strong><small>{metric.unit}</small></div>
-                <dl><div><dt>Datenjahr</dt><dd>{metric.dataYear}</dd></div><div><dt>Rechtsstand</dt><dd>{metric.legalYear}</dd></div><div><dt>Quellen</dt><dd>{linkedSources}</dd></div></dl>
+                <dl><div><dt>Datenjahr</dt><dd>{metric.dataYear ?? "nicht belegt"}</dd></div><div><dt>Rechtsstand</dt><dd>{metric.legalYear}</dd></div><div><dt>Quellen</dt><dd>{linkedSources}</dd></div></dl>
                 <code>{metric.formula}</code>
                 <button className="button secondary" onClick={() => onOpenMetric(metric.id, values[metric.id])}>Nachweis öffnen</button>
               </article>
