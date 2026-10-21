@@ -7,25 +7,35 @@ import { SUPPORTED_LEGAL_YEAR } from "./lib/model-baseline";
 import type { EffectModuleDefinition, EffectRun } from "./lib/long-term-effects";
 import { deriveReformEffectParameters, effectInputSignature } from "./lib/reform-effects";
 import { resolveCalculationFreshness } from "./lib/scenario-calculation";
-import { defaultScenarioDraft, normalizeScenarioDraft, type ScenarioDraftWithPopulationBasis } from "./lib/scenario-state";
+import { defaultScenarioDraft, normalizeScenarioDraft, scenarioToJson, type ScenarioDraftWithPopulationBasis } from "./lib/scenario-state";
 import type { PopulationRun, ScenarioState } from "./lib/types";
 import { EffectsPage } from "./pages/EffectsPage";
 
 export function EffectsRoute() {
   const [scenario, setScenario] = useState<ScenarioDraftWithPopulationBasis>(defaultScenarioDraft);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
-  const [savedCount, setSavedCount] = useState(0);
+  const [scenarios, setScenarios] = useState<ScenarioState[]>([]);
   const [scenarioPanelOpen, setScenarioPanelOpen] = useState(false);
   const [modules, setModules] = useState<EffectModuleDefinition[]>([]);
   const [populationRun, setPopulationRun] = useState<PopulationRun | null>(null);
   const [run, setRun] = useState<EffectRun | null>(null);
   const [ready, setReady] = useState(false);
+  const [draftSaveStatus, setDraftSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [draftSavedAt, setDraftSavedAt] = useState<string>();
+  const [draftSaveError, setDraftSaveError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [noticeRole, setNoticeRole] = useState<"status" | "alert">("status");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const calculationRequest = useRef(0);
+  const draftSaveSequence = useRef(0);
+  const pendingDraftSaveTimer = useRef<number | null>(null);
+  const scenarioSaveInFlight = useRef(false);
   const expenseResults = useMemo(() => calculateExpenseModules(scenario.expenseChanges, scenario.modelLevel), [scenario.expenseChanges, scenario.modelLevel]);
   const calculationParameters = useMemo(() => deriveReformEffectParameters(scenario, expenseResults), [expenseResults, scenario.effectParameters, scenario.expenseChanges]);
   const inputSignature = useMemo(() => populationRun ? effectInputSignature({ scenario, populationRunId: scenario.populationRunId ?? populationRun.metadata.id, parameters: calculationParameters }) : undefined, [calculationParameters, populationRun, scenario.dataYear, scenario.expenseChanges, scenario.horizonYears, scenario.modelLevel, scenario.populationRunId, scenario.revenueChanges]);
+  const activeSavedScenario = useMemo(() => activeScenarioId ? scenarios.find((item) => item.id === activeScenarioId) : undefined, [activeScenarioId, scenarios]);
+  const hasChangesSinceSaved = Boolean(activeSavedScenario && scenarioToJson(scenario) !== scenarioToJson(normalizeScenarioDraft(activeSavedScenario)));
 
   const navigate = (route: AppRoute) => {
     window.location.hash = route;
@@ -44,7 +54,9 @@ export function EffectsRoute() {
       const nextScenario = normalizeScenarioDraft(draft?.scenario ?? defaultScenarioDraft);
       setScenario(nextScenario);
       setActiveScenarioId(draft?.activeScenarioId ?? null);
-      setSavedCount(savedScenarios.length);
+      setScenarios(savedScenarios);
+      setDraftSavedAt(draft?.savedAt);
+      setDraftSaveStatus(draft?.savedAt ? "saved" : "idle");
       setModules(loadedModules);
       setPopulationRun(population);
       setReady(true);
@@ -57,13 +69,48 @@ export function EffectsRoute() {
     return () => { cancelled = true; };
   }, []);
 
+  const persistActiveDraft = useCallback(async (
+    draftScenario: ScenarioDraftWithPopulationBasis = scenario,
+    draftScenarioId: string | null = activeScenarioId,
+    requestSequence = ++draftSaveSequence.current,
+  ) => {
+    if (pendingDraftSaveTimer.current !== null) {
+      window.clearTimeout(pendingDraftSaveTimer.current);
+      pendingDraftSaveTimer.current = null;
+    }
+    setDraftSaveStatus("saving");
+    setDraftSaveError("");
+    const savedAt = new Date().toISOString();
+    try {
+      await localServer.saveActiveDraft({ activeScenarioId: draftScenarioId, scenario: draftScenario, savedAt });
+      if (requestSequence === draftSaveSequence.current) {
+        setDraftSavedAt(savedAt);
+        setDraftSaveStatus("saved");
+      }
+    } catch (cause) {
+      if (requestSequence === draftSaveSequence.current) {
+        setDraftSaveStatus("error");
+        setDraftSaveError(cause instanceof Error ? cause.message : "Unbekannter Speicherfehler.");
+      }
+      throw cause;
+    }
+  }, [activeScenarioId, scenario]);
+
   useEffect(() => {
     if (!ready) return;
+    const requestSequence = ++draftSaveSequence.current;
+    setDraftSaveStatus("saving");
+    setDraftSaveError("");
     const timeout = window.setTimeout(() => {
-      void localServer.saveActiveDraft({ activeScenarioId, scenario });
+      if (pendingDraftSaveTimer.current === timeout) pendingDraftSaveTimer.current = null;
+      void persistActiveDraft(scenario, activeScenarioId, requestSequence).catch(() => undefined);
     }, 250);
-    return () => window.clearTimeout(timeout);
-  }, [activeScenarioId, ready, scenario]);
+    pendingDraftSaveTimer.current = timeout;
+    return () => {
+      window.clearTimeout(timeout);
+      if (pendingDraftSaveTimer.current === timeout) pendingDraftSaveTimer.current = null;
+    };
+  }, [activeScenarioId, persistActiveDraft, ready, scenario]);
 
   const calculate = useCallback(async (requestId: number) => {
     const populationRunId = scenario.populationRunId ?? populationRun?.metadata.id;
@@ -123,6 +170,57 @@ export function EffectsRoute() {
     void calculate(requestId);
   };
   const patch = (value: Partial<ScenarioDraftWithPopulationBasis>) => setScenario((current) => normalizeScenarioDraft({ ...current, ...value }));
+  const refreshScenarios = useCallback(async () => setScenarios(await localServer.listScenarios()), []);
+  const showNotice = (message: string, role: "status" | "alert" = "status") => {
+    setNotice(message);
+    setNoticeRole(role);
+    window.setTimeout(() => setNotice(""), 2600);
+  };
+  const saveScenario = async () => {
+    if (scenarioSaveInFlight.current) return;
+    scenarioSaveInFlight.current = true;
+    try {
+      const now = new Date().toISOString();
+      const existing = activeScenarioId ? scenarios.find((item) => item.id === activeScenarioId) : undefined;
+      if (activeScenarioId && !existing) throw new Error("Die gespeicherte Szenariofassung wurde nicht gefunden. Lade die Seite neu und prüfe deine gespeicherten Szenarien.");
+      const saved = await localServer.saveScenario({
+        ...scenario,
+        id: existing?.id ?? crypto.randomUUID(),
+        name: scenario.name.trim() || "Unbenanntes Szenario",
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      });
+      setActiveScenarioId(saved.id);
+      await refreshScenarios();
+      await persistActiveDraft(scenario, saved.id);
+      showNotice("Szenario lokal gespeichert");
+    } catch (cause) {
+      const details = cause instanceof Error ? cause.message : "Unbekannter Speicherfehler.";
+      showNotice(`Szenario konnte nicht vollständig gespeichert werden. Deine Eingaben bleiben erhalten. ${details}`, "alert");
+    } finally {
+      scenarioSaveInFlight.current = false;
+    }
+  };
+  const duplicateScenario = async () => {
+    if (scenarioSaveInFlight.current) return;
+    scenarioSaveInFlight.current = true;
+    try {
+      const now = new Date().toISOString();
+      const duplicate = { ...scenario, id: crypto.randomUUID(), name: `${scenario.name} (Kopie)`, createdAt: now, updatedAt: now };
+      const saved = await localServer.saveScenario(duplicate);
+      const nextScenario = normalizeScenarioDraft(saved);
+      setScenario(nextScenario);
+      setActiveScenarioId(saved.id);
+      await refreshScenarios();
+      await persistActiveDraft(nextScenario, saved.id);
+      showNotice("Neue Szenariovariante lokal gespeichert");
+    } catch (cause) {
+      const details = cause instanceof Error ? cause.message : "Unbekannter Speicherfehler.";
+      showNotice(`Neue Variante konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten. ${details}`, "alert");
+    } finally {
+      scenarioSaveInFlight.current = false;
+    }
+  };
   const calculationStatus = resolveCalculationFreshness({
     loading: loading || !ready,
     hasResult: Boolean(run),
@@ -144,7 +242,7 @@ export function EffectsRoute() {
       onNavigate={navigate}
       onUndo={() => undefined}
       onRedo={() => undefined}
-      onSave={() => void localServer.saveActiveDraft({ activeScenarioId, scenario })}
+      onSave={() => void saveScenario()}
       onOpenScenario={() => setScenarioPanelOpen(true)}
     />
     <EffectsPage
@@ -166,9 +264,20 @@ export function EffectsRoute() {
       open={scenarioPanelOpen}
       scenario={scenario}
       activeScenarioId={activeScenarioId}
-      savedCount={savedCount}
+      savedCount={scenarios.length}
+      draftSaveStatus={draftSaveStatus}
+      draftSavedAt={draftSavedAt}
+      draftSaveError={draftSaveError}
+      savedScenarioExists={Boolean(activeSavedScenario)}
+      savedScenarioUpdatedAt={activeSavedScenario?.updatedAt}
+      hasChangesSinceSaved={hasChangesSinceSaved}
       onPatch={patch}
       onClose={() => setScenarioPanelOpen(false)}
+      onSaveDraft={() => persistActiveDraft()}
+      onRetryDraftSave={() => persistActiveDraft()}
+      onSave={() => void saveScenario()}
+      onDuplicate={() => void duplicateScenario()}
     />
+    {notice && <div className="toast" role={noticeRole}>{notice}</div>}
   </div>;
 }

@@ -11,6 +11,16 @@
 .scenario-status > div { min-height: 72px; border: 1px solid var(--line); border-radius: 6px; background: var(--subtle); padding: 10px; }
 .scenario-status span { display: block; color: var(--muted-foreground); font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: .06em; }
 .scenario-status strong { display: block; margin-top: 8px; font-size: var(--fs-sm); line-height: 1.35; }
+.scenario-status { grid-template-columns: repeat(2, minmax(0,1fr)); margin-top: 8px; }
+.scenario-storage-status { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.scenario-storage-card { min-width: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--subtle); padding: 12px; }
+.scenario-storage-card > span { display: block; color: var(--muted-foreground); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.scenario-storage-card > strong { display: block; margin-top: 8px; font-size: var(--fs-sm); line-height: 1.4; overflow-wrap: anywhere; }
+.scenario-storage-card > small { display: block; margin-top: 6px; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.45; }
+.scenario-storage-card > p { margin: 8px 0; color: var(--warning-foreground, #73570f); font-size: var(--fs-xs); line-height: 1.5; overflow-wrap: anywhere; }
+.scenario-storage-card.is-error { border-color: color-mix(in srgb, var(--warning-soft) 60%, #b17c14); background: var(--warning-soft); }
+.scenario-storage-card.has-changes { border-color: color-mix(in srgb, var(--primary) 42%, var(--line)); }
+.scenario-storage-card .button { margin-top: 4px; }
 
 .scenario-form { display: grid; gap: 13px; margin-top: 18px; }
 .scenario-form label { display: grid; gap: 6px; }
@@ -38,6 +48,7 @@
 @media (max-width: 720px) {
   .scenario-status { grid-template-columns: 1fr; }
   .scenario-status > div { min-height: 58px; }
+  .scenario-storage-status { grid-template-columns: 1fr; }
   .scenario-form-grid { grid-template-columns: 1fr; }
   .scenario-actions-grid { grid-template-columns: 1fr; }
   .scenario-copy { grid-column: auto; }

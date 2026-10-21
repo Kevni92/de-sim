@@ -219,8 +219,8 @@ test("exportiert, importiert und dupliziert Szenarien mit abweichenden Jahresmet
   const reloadedDialog = page.getByRole("dialog", { name: "Szenario verwalten" });
   await expect(reloadedDialog.getByTestId("scenario-year-context")).toContainText("Importierter Rechtsstand: 2030 · Zeitbezug der Wirkungsrechnung: 2024");
 
-  await reloadedDialog.getByRole("button", { name: "Duplizieren" }).click();
-  await expect(page.getByRole("status")).toContainText("dupliziert");
+  await reloadedDialog.getByRole("button", { name: "Als neue Variante sichern" }).click();
+  await expect(page.getByRole("status")).toContainText("Variante lokal gespeichert");
   await expect(reloadedDialog.getByLabel("Szenarioname im Dialog")).toHaveValue("Importiertes Szenario (Kopie)");
 });
 

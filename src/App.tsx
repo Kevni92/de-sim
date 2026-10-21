@@ -42,6 +42,7 @@ const legacyMetricIds: Record<string, string> = {
 const signedEuro = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : "±"}${Math.abs(Math.round(value)).toLocaleString("de-DE")} € / Monat`;
 const formatMillion = (value: number) => value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const centsToBillions = (value: number) => value / 100_000_000_000;
+type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
 
 export function App() {
   const [route, setRoute] = useState<AppRoute>(readRoute);
@@ -69,8 +70,15 @@ export function App() {
   const [effectError, setEffectError] = useState("");
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
+  const [noticeRole, setNoticeRole] = useState<"status" | "alert">("status");
+  const [draftSaveStatus, setDraftSaveStatus] = useState<DraftSaveStatus>("idle");
+  const [draftSavedAt, setDraftSavedAt] = useState<string>();
+  const [draftSaveError, setDraftSaveError] = useState("");
   const populationAttemptKey = useRef<string | null>(null);
   const effectRequest = useRef(0);
+  const draftSaveSequence = useRef(0);
+  const pendingDraftSaveTimer = useRef<number | null>(null);
+  const scenarioSaveInFlight = useRef(false);
 
   const scenario = history.present;
   const revenueModuleResults = useMemo(() => calculateRevenueModules(scenario.revenueChanges, scenario.modelLevel), [scenario.modelLevel, scenario.revenueChanges]);
@@ -141,6 +149,11 @@ export function App() {
       ...Object.fromEntries(expenseModuleResults.map((item) => [item.id, item.delta])),
     },
   }), [activeEffectContexts, expenseModuleResults, revenueModuleResults, scenario, sgb2Preview?.sourceIds, taxResult.delta]);
+  const activeSavedScenario = useMemo(
+    () => activeScenarioId ? scenarios.find((item) => item.id === activeScenarioId) : undefined,
+    [activeScenarioId, scenarios],
+  );
+  const hasChangesSinceSaved = Boolean(activeSavedScenario && scenarioToJson(materializedScenario) !== scenarioToJson(normalizeScenarioDraft(activeSavedScenario)));
 
   const metricValues = useMemo<Record<string, string>>(() => {
     const { revenueTotal, expenseTotal, balance, revenueDelta, balanceDelta } = budgetSummary;
@@ -169,6 +182,33 @@ export function App() {
   const refreshScenarios = useCallback(async () => setScenarios(await localServer.listScenarios()), []);
   const refreshPopulationRuns = useCallback(async () => setPopulationRuns(await localServer.listPopulationRuns()), []);
 
+  const persistActiveDraft = useCallback(async (
+    draftScenario: ScenarioDraftWithPopulationBasis = materializedScenario,
+    draftScenarioId: string | null = activeScenarioId,
+    requestSequence = ++draftSaveSequence.current,
+  ) => {
+    if (pendingDraftSaveTimer.current !== null) {
+      window.clearTimeout(pendingDraftSaveTimer.current);
+      pendingDraftSaveTimer.current = null;
+    }
+    setDraftSaveStatus("saving");
+    setDraftSaveError("");
+    const savedAt = new Date().toISOString();
+    try {
+      await localServer.saveActiveDraft({ activeScenarioId: draftScenarioId, scenario: draftScenario, savedAt });
+      if (requestSequence === draftSaveSequence.current) {
+        setDraftSavedAt(savedAt);
+        setDraftSaveStatus("saved");
+      }
+    } catch (error) {
+      if (requestSequence === draftSaveSequence.current) {
+        setDraftSaveStatus("error");
+        setDraftSaveError(error instanceof Error ? error.message : "Unbekannter Speicherfehler.");
+      }
+      throw error;
+    }
+  }, [activeScenarioId, materializedScenario]);
+
   useEffect(() => {
     let cancelled = false;
     const listener = () => setRoute(readRoute());
@@ -182,6 +222,8 @@ export function App() {
         if (draft) {
           dispatch({ type: "replace", scenario: normalizeScenarioDraft(draft.scenario) });
           setActiveScenarioId(draft.activeScenarioId);
+          setDraftSavedAt(draft.savedAt);
+          setDraftSaveStatus(draft.savedAt ? "saved" : "idle");
         }
         setReady(true);
       })
@@ -271,9 +313,19 @@ export function App() {
 
   useEffect(() => {
     if (!ready) return;
-    const timeout = window.setTimeout(() => void localServer.saveActiveDraft({ activeScenarioId, scenario: materializedScenario }), 250);
-    return () => window.clearTimeout(timeout);
-  }, [activeScenarioId, materializedScenario, ready]);
+    const requestSequence = ++draftSaveSequence.current;
+    setDraftSaveStatus("saving");
+    setDraftSaveError("");
+    const timeout = window.setTimeout(() => {
+      if (pendingDraftSaveTimer.current === timeout) pendingDraftSaveTimer.current = null;
+      void persistActiveDraft(materializedScenario, activeScenarioId, requestSequence).catch(() => undefined);
+    }, 250);
+    pendingDraftSaveTimer.current = timeout;
+    return () => {
+      window.clearTimeout(timeout);
+      if (pendingDraftSaveTimer.current === timeout) pendingDraftSaveTimer.current = null;
+    };
+  }, [activeScenarioId, materializedScenario, persistActiveDraft, ready]);
 
   useEffect(() => {
     let cancelled = false;
@@ -362,8 +414,9 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const updateScenario = (patch: Partial<ScenarioDraftWithPopulationBasis>) => dispatch({ type: "change", patch });
-  const showNotice = (message: string) => {
+  const showNotice = (message: string, role: "status" | "alert" = "status") => {
     setNotice(message);
+    setNoticeRole(role);
     window.setTimeout(() => setNotice(""), 2600);
   };
   const resetEffectState = () => {
@@ -410,18 +463,29 @@ export function App() {
   };
 
   const saveScenario = async () => {
-    const now = new Date().toISOString();
-    const existing = activeScenarioId ? scenarios.find((item) => item.id === activeScenarioId) : undefined;
-    const saved = await localServer.saveScenario({
-      ...materializedScenario,
-      id: existing?.id ?? crypto.randomUUID(),
-      name: materializedScenario.name.trim() || "Unbenanntes Szenario",
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    });
-    setActiveScenarioId(saved.id);
-    await refreshScenarios();
-    showNotice("Szenario lokal gespeichert");
+    if (scenarioSaveInFlight.current) return;
+    scenarioSaveInFlight.current = true;
+    try {
+      const now = new Date().toISOString();
+      const existing = activeScenarioId ? scenarios.find((item) => item.id === activeScenarioId) : undefined;
+      if (activeScenarioId && !existing) throw new Error("Die gespeicherte Szenariofassung wurde nicht gefunden. Lade die Seite neu und prüfe deine gespeicherten Szenarien.");
+      const saved = await localServer.saveScenario({
+        ...materializedScenario,
+        id: existing?.id ?? crypto.randomUUID(),
+        name: materializedScenario.name.trim() || "Unbenanntes Szenario",
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      });
+      setActiveScenarioId(saved.id);
+      await refreshScenarios();
+      await persistActiveDraft(materializedScenario, saved.id);
+      showNotice("Szenario lokal gespeichert");
+    } catch (error) {
+      const details = error instanceof Error ? error.message : "Unbekannter Speicherfehler.";
+      showNotice(`Szenario konnte nicht vollständig gespeichert werden. Deine Eingaben bleiben erhalten. ${details}`, "alert");
+    } finally {
+      scenarioSaveInFlight.current = false;
+    }
   };
   const loadScenario = async (saved: ScenarioState) => {
     const normalized = normalizeScenarioDraft(saved);
@@ -452,13 +516,23 @@ export function App() {
     showNotice("Neuer lokaler Entwurf angelegt");
   };
   const duplicateScenario = async () => {
-    const now = new Date().toISOString();
-    const duplicate = { ...materializedScenario, id: crypto.randomUUID(), name: `${materializedScenario.name} (Kopie)`, createdAt: now, updatedAt: now };
-    await localServer.saveScenario(duplicate);
-    dispatch({ type: "replace", scenario: duplicate });
-    setActiveScenarioId(duplicate.id);
-    await refreshScenarios();
-    showNotice("Szenario dupliziert");
+    if (scenarioSaveInFlight.current) return;
+    scenarioSaveInFlight.current = true;
+    try {
+      const now = new Date().toISOString();
+      const duplicate = { ...materializedScenario, id: crypto.randomUUID(), name: `${materializedScenario.name} (Kopie)`, createdAt: now, updatedAt: now };
+      const saved = await localServer.saveScenario(duplicate);
+      dispatch({ type: "replace", scenario: saved });
+      setActiveScenarioId(saved.id);
+      await refreshScenarios();
+      await persistActiveDraft(normalizeScenarioDraft(saved), saved.id);
+      showNotice("Neue Szenariovariante lokal gespeichert");
+    } catch (error) {
+      const details = error instanceof Error ? error.message : "Unbekannter Speicherfehler.";
+      showNotice(`Neue Variante konnte nicht gespeichert werden. Deine Eingaben bleiben erhalten. ${details}`, "alert");
+    } finally {
+      scenarioSaveInFlight.current = false;
+    }
   };
   const exportScenario = () => {
     const blob = new Blob([scenarioToJson(materializedScenario)], { type: "application/json" });
@@ -594,9 +668,30 @@ export function App() {
     {route === "/vergleich" && <ComparisonPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} budgetSummary={budgetSummary} revenue={taxResult.value} directFiscalDelta={directFiscalDelta} effectSummary={effectSummary} effectStatus={effectStatus} effectError={effectError} onOpenAdvancedEffects={() => navigate("/wirkungen")} onOpenLongTerm={() => navigate("/langfrist")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/langfrist" && <LongTermPage settings={scenario.longTerm} onTargetYear={(targetYear) => updateScenario({ longTerm: { ...scenario.longTerm, targetYear } })} onBack={() => navigate("/vergleich")} onOpenSource={openSource} />}
     {route === "/transparenz" && <TransparencyPage metrics={metrics} sources={sources} values={metricValues} onOpenMetric={openSource} onNavigatePopulation={() => navigate("/bevoelkerung")} onNavigateEffects={() => navigate("/wirkungen")} />}
-    {notice && <div className="toast" role="status">{notice}</div>}
+    {notice && <div className="toast" role={noticeRole}>{notice}</div>}
     <SourceDrawer metric={drawer?.metric ?? null} sources={sources} scenario={scenario} value={drawer?.value} onClose={() => setDrawer(null)} />
-    <ScenarioPanel open={scenarioPanelOpen} scenario={scenario} activeScenarioId={activeScenarioId} savedCount={scenarios.length} onPatch={updateScenario} onClose={() => setScenarioPanelOpen(false)} onNew={newScenario} onDuplicate={() => void duplicateScenario()} onExport={exportScenario} onImport={importScenario} onCopy={() => void copyScenario()} />
+    <ScenarioPanel
+      open={scenarioPanelOpen}
+      scenario={scenario}
+      activeScenarioId={activeScenarioId}
+      savedCount={scenarios.length}
+      draftSaveStatus={draftSaveStatus}
+      draftSavedAt={draftSavedAt}
+      draftSaveError={draftSaveError}
+      savedScenarioExists={Boolean(activeSavedScenario)}
+      hasChangesSinceSaved={hasChangesSinceSaved}
+      savedScenarioUpdatedAt={activeSavedScenario?.updatedAt}
+      onPatch={updateScenario}
+      onClose={() => setScenarioPanelOpen(false)}
+      onSaveDraft={() => persistActiveDraft()}
+      onRetryDraftSave={() => persistActiveDraft()}
+      onSave={() => void saveScenario()}
+      onNew={newScenario}
+      onDuplicate={() => void duplicateScenario()}
+      onExport={exportScenario}
+      onImport={importScenario}
+      onCopy={() => void copyScenario()}
+    />
   </div>;
 }
 

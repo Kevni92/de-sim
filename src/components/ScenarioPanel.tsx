@@ -1,6 +1,5 @@
-import { Copy, CopyPlus, Download, FilePlus2, Upload, X } from "lucide-react";
+import { Copy, CopyPlus, Download, FilePlus2, Save, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { localServer } from "../lib/local-server-client";
 import { DEFAULT_EFFECT_START_YEAR, SUPPORTED_LEGAL_YEAR } from "../lib/model-baseline";
 import { MODEL_LEVEL_OPTIONS, modelLevelCaution, TIME_HORIZON_OPTIONS } from "../lib/scenario-calculation";
 import type { ModelLevel, ScenarioDraft, TimeHorizon } from "../lib/types";
@@ -11,8 +10,17 @@ export function ScenarioPanel({
   scenario,
   activeScenarioId,
   savedCount = 0,
+  draftSaveStatus,
+  draftSavedAt,
+  draftSaveError,
+  savedScenarioExists,
+  savedScenarioUpdatedAt,
+  hasChangesSinceSaved,
   onPatch,
   onClose,
+  onSaveDraft,
+  onRetryDraftSave,
+  onSave,
   onNew,
   onDuplicate,
   onExport,
@@ -23,8 +31,17 @@ export function ScenarioPanel({
   scenario: ScenarioDraft;
   activeScenarioId: string | null;
   savedCount?: number;
+  draftSaveStatus: "idle" | "saving" | "saved" | "error";
+  draftSavedAt?: string;
+  draftSaveError: string;
+  savedScenarioExists: boolean;
+  savedScenarioUpdatedAt?: string;
+  hasChangesSinceSaved: boolean;
   onPatch: (patch: Partial<ScenarioDraft>) => void;
   onClose: () => void;
+  onSaveDraft: () => Promise<void>;
+  onRetryDraftSave: () => Promise<void>;
+  onSave: () => void;
   onNew?: () => void;
   onDuplicate?: () => void;
   onExport?: () => void;
@@ -33,18 +50,25 @@ export function ScenarioPanel({
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const modelLevelInput = useRef<HTMLSelectElement>(null);
+  const closingRef = useRef(false);
   const [requestedOpen, setRequestedOpen] = useState(false);
   const [requestedCalculationFocus, setRequestedCalculationFocus] = useState(false);
   const effectiveOpen = open || requestedOpen;
-  const hasScenarioActions = Boolean(onNew || onDuplicate || onExport || onImport || onCopy);
+  const hasScenarioActions = Boolean(onSave || onNew || onDuplicate || onExport || onImport || onCopy);
   const hasLegacyYearMetadata = scenario.legalYear !== SUPPORTED_LEGAL_YEAR || scenario.dataYear !== DEFAULT_EFFECT_START_YEAR;
 
-  const closeAndPersist = () => {
-    void localServer.saveActiveDraft({ activeScenarioId, scenario }).finally(() => {
+  const closeAndPersist = async () => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    try {
+      await onSaveDraft();
       setRequestedOpen(false);
       setRequestedCalculationFocus(false);
+      closingRef.current = false;
       onClose();
-    });
+    } catch {
+      closingRef.current = false;
+    }
   };
 
   useEffect(() => {
@@ -61,7 +85,7 @@ export function ScenarioPanel({
     const listener = (event: KeyboardEvent) => event.key === "Escape" && closeAndPersist();
     document.addEventListener("keydown", listener);
     return () => document.removeEventListener("keydown", listener);
-  }, [effectiveOpen, activeScenarioId, scenario]);
+  }, [effectiveOpen, onSaveDraft]);
 
   useEffect(() => {
     if (!effectiveOpen || !requestedCalculationFocus) return;
@@ -87,8 +111,24 @@ export function ScenarioPanel({
         </header>
 
         <div className="scenario-scroll">
-          <section className="scenario-status">
-            <div><span>Status</span><strong>{activeScenarioId ? "Gespeichertes Szenario" : "Lokaler Entwurf"}</strong></div>
+          <section className="scenario-storage-status" aria-label="Speicherstatus" aria-live="polite" data-testid="scenario-save-status">
+            <div className={`scenario-storage-card ${draftSaveStatus === "error" ? "is-error" : ""}`}>
+              <span>Arbeitsentwurf in diesem Browser</span>
+              <strong>{draftSaveStatus === "saving" ? "Wird gesichert …" : draftSaveStatus === "error" ? "Sicherung fehlgeschlagen" : draftSavedAt ? "Gesichert" : "Wird vorbereitet"}</strong>
+              {draftSavedAt && <small>Zuletzt gesichert: {formatSavedAt(draftSavedAt)}</small>}
+              {draftSaveStatus === "error" && <>
+                <p role="alert">{draftSaveError || "Der Entwurf konnte nicht gesichert werden."} Deine Eingaben bleiben hier erhalten.</p>
+                <button className="button secondary small" onClick={() => { void onRetryDraftSave().catch(() => undefined); }}>Erneut versuchen</button>
+              </>}
+            </div>
+            <div className={`scenario-storage-card ${hasChangesSinceSaved ? "has-changes" : ""}`}>
+              <span>Gespeicherte Szenariofassung</span>
+              <strong>{!activeScenarioId ? "Noch nicht gespeichert" : !savedScenarioExists ? "Gespeicherte Fassung nicht gefunden" : hasChangesSinceSaved ? "Änderungen seit gespeichertem Stand" : "Entspricht dem gespeicherten Stand"}</strong>
+              {savedScenarioUpdatedAt && <small>Zuletzt gespeichert: {formatSavedAt(savedScenarioUpdatedAt)}</small>}
+            </div>
+          </section>
+
+          <section className="scenario-status" aria-label="Szenariodetails">
             <div><span>Lokale Szenarien</span><strong>{savedCount}</strong></div>
             <div><span>Modellversion</span><strong>{scenario.modelVersion}</strong></div>
           </section>
@@ -150,8 +190,9 @@ export function ScenarioPanel({
           </section>
 
           {hasScenarioActions && <section className="scenario-actions-grid" aria-label="Szenarioaktionen">
+            {onSave && <button className="button primary" onClick={onSave}><Save size={14} /> {activeScenarioId ? "Änderungen speichern" : "Szenario speichern"}</button>}
             {onNew && <button className="button secondary" onClick={onNew}><FilePlus2 size={14} /> Neu</button>}
-            {onDuplicate && <button className="button secondary" onClick={onDuplicate}><CopyPlus size={14} /> Duplizieren</button>}
+            {onDuplicate && <button className="button secondary" onClick={onDuplicate}><CopyPlus size={14} /> Als neue Variante sichern</button>}
             {onExport && <button className="button secondary" onClick={onExport}><Download size={14} /> JSON exportieren</button>}
             {onImport && <button className="button secondary" onClick={() => fileInput.current?.click()}><Upload size={14} /> JSON importieren</button>}
             {onCopy && <button className="button primary scenario-copy" onClick={onCopy}><Copy size={14} /> Als JSON kopieren</button>}
@@ -170,8 +211,13 @@ export function ScenarioPanel({
           </section>}
         </div>
 
-        <footer>Änderungen werden automatisch über den lokalen Worker in IndexedDB gesichert.</footer>
+        <footer>Der Entwurf bleibt in diesem Browser auf diesem Gerät und wird nicht mit anderen Geräten synchronisiert.</footer>
       </aside>
     </div>
   );
+}
+
+function formatSavedAt(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Zeitpunkt nicht verfügbar" : date.toLocaleString("de-DE");
 }
