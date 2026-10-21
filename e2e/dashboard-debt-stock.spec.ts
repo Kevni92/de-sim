@@ -21,7 +21,7 @@ test("trennt einen illustrativen Schuldenbestand von jährlichen Saldoänderunge
   await expect(debt).toContainText("keine Schuldenprognose");
   await expect(debt).not.toContainText(/BIP|62,1 %|± 4 %/);
   await expect(page.locator(".sticky-kpis").getByText("Saldo pro Jahr", { exact: true })).toBeVisible();
-  await expect(chart.getByText("Werte in Mrd. € pro Jahr")).toBeVisible();
+  await expect(dashboard.getByText("Werte in Mrd. € pro Jahr")).toBeVisible();
   const unchangedDebt = (await debt.innerText()).trim();
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
