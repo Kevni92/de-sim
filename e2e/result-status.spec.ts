@@ -16,7 +16,7 @@ test("ordnet die Ergebnisse am Einstieg und in den zentralen Ansichten ein", asy
   const overviewStatus = page.locator(".dashboard-result-status");
   await expect(overviewStatus).toContainText("Rechtsstand 2026");
   await expect(overviewStatus).toContainText("Beispielwert");
-  await expect(dashboard.getByTestId("debt-stock-kpi")).toContainText("Schuldenstand · Beispiel");
+  await expect(page.getByTestId("debt-stock-kpi")).toContainText("Schuldenstand · Beispiel");
 
   const regions = dashboard.getByRole("button", { name: "Regionen · noch nicht berechnet" });
   await expect(regions).toBeVisible();
