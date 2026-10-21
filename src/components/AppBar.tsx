@@ -4,11 +4,12 @@ import { haushaltsKompassDarkLogo, haushaltsKompassLightLogo } from "../branding
 import "../branding-theme.css";
 import "../mobile-navigation.css";
 
-export type AppRoute = "/" | "/dashboard" | "/bevoelkerung" | "/einkommensteuer" | "/einnahmen" | "/ausgaben" | "/wirkungen" | "/vergleich" | "/langfrist" | "/transparenz";
+export type AppRoute = "/" | "/dashboard" | "/aenderungen" | "/bevoelkerung" | "/einkommensteuer" | "/einnahmen" | "/ausgaben" | "/wirkungen" | "/vergleich" | "/langfrist" | "/transparenz";
 type AppTheme = "light" | "dark";
 const themeStorageKey = "haushaltskompass-theme";
 const navigationItems: Array<{ route: AppRoute; label: string }> = [
   { route: "/dashboard", label: "Übersicht" },
+  { route: "/aenderungen", label: "Deine Änderungen" },
   { route: "/einnahmen", label: "Einnahmen" },
   { route: "/ausgaben", label: "Ausgaben und Leistungen" },
   { route: "/vergleich", label: "Vergleich" },

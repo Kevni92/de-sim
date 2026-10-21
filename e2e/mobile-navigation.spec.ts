@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const navigationLabels = [
   "Übersicht",
+  "Deine Änderungen",
   "Einnahmen",
   "Ausgaben und Leistungen",
   "Vergleich",

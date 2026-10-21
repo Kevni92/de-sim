@@ -17,6 +17,9 @@ export function ComparisonPage({
   effectSummary,
   effectStatus,
   effectError,
+  policyChangeCount,
+  assumptionChangeCount,
+  onOpenChanges,
   onBack,
   onOpenSource,
   onOpenAdvancedEffects,
@@ -30,6 +33,9 @@ export function ComparisonPage({
   effectSummary: ScenarioEffectSummary;
   effectStatus: CalculationFreshness;
   effectError: string;
+  policyChangeCount: number;
+  assumptionChangeCount: number;
+  onOpenChanges: () => void;
   onBack: () => void;
   onOpenSource: (metricId: string, value?: string) => void;
   onOpenAdvancedEffects: () => void;
@@ -79,6 +85,10 @@ export function ComparisonPage({
         </div>
         <button className="source-badge" onClick={() => onOpenSource("metric-income-tax-revenue", fmtBn(revenue))}><Info size={10} /> Nachweis</button>
       </header>
+      <section className="card-flat comparison-change-summary" aria-label="Zusammenfassung der Szenarioänderungen" data-testid="comparison-change-summary">
+        <div><strong>{policyChangeCount} politische Änderungen · {assumptionChangeCount} getrennte Annahmen und Einstellungen</strong><p>Prüfe das gesamte Paket mit Vorher/Nachher-Werten, bevor du die Ergebnisse vergleichst. Einzelwirkungen werden nicht naiv addiert.</p></div>
+        <button className="button secondary small" type="button" onClick={onOpenChanges}>Deine Änderungen ansehen <ExternalLink size={13} /></button>
+      </section>
       <p className="notice-box comparison-status-note" role="note">
         Szenario A verbindet die ausgewiesenen Budgetposten mit den aktiven Einstellungen; je nach Kennzahl gelten Regelberechnungen oder Modellannahmen. Szenario B ist eine feste Einkommensteuer-Annahme ohne vollständigen Modullauf. Gini, Armutsrisiko und regionale Wirkungen sind noch nicht berechnet. Eine amtliche Tarifgrundlage bestätigt keine abgeleiteten Modellwirkungen.
       </p>

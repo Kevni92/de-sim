@@ -24,6 +24,7 @@
     "sgb2-simple-controls.test.ts",
     "sgb2-release-validation.test.ts",
     "scenario-calculation.test.ts",
+    "scenario-changes.test.ts",
     "reform-effects.test.ts",
     "personal-effect-contracts.test.ts",
     "budget-summary.test.ts",
@@ -54,6 +55,7 @@
     "../src/lib/sgb2-simple-controls.ts",
     "../src/lib/scenario-calculation.ts",
     "../src/lib/scenario-state.ts",
+    "../src/lib/scenario-changes.ts",
     "../src/lib/types.ts",
     "../src/lib/long-term-scenario.ts"
   ]
