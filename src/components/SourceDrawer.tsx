@@ -128,7 +128,7 @@ export function SourceDrawer({
           <section>
             <h3>Originalquellen</h3>
             <div className="source-list">
-              {linkedSources.length === 0 && <p>Keine Primärquelle hinterlegt; für Regionaldaten liegt derzeit keine belegte Grundlage vor.</p>}
+              {linkedSources.length === 0 && <p>Keine Primärquelle hinterlegt.</p>}
               {linkedSources.map((source) => (
                 <article key={source.id}>
                   <div><strong>{source.title}</strong><span>{source.institution} · Datenjahr {source.dataYear ?? "nicht belegt"}</span></div>

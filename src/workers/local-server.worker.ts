@@ -330,7 +330,7 @@ const seedMetrics: MetricRecord[] = [
     parameters: [],
     calculation: [{ label: "Status", expression: "kein regionaler Modullauf" }],
     uncertainty: { kind: "not-applicable", description: "Ohne regionale Ergebnisse lässt sich keine Unsicherheit beziffern." },
-    limitations: ["Keine regionale Abdeckung vorhanden.", "Keine Karte, Rangfolge oder regionalen Werte interpretieren."],
+    limitations: ["Keine regionale Abdeckung vorhanden.", "Für Regionaldaten liegt keine belegte Grundlage vor.", "Keine Karte, Rangfolge oder regionalen Werte interpretieren."],
     changeLog: sharedChangeLog,
   },
   {
