@@ -29,6 +29,11 @@ async function returnToDashboard(page: import("@playwright/test").Page) {
 test("stellt Nullwerte, positive und negative Budgetwirkungen proportional zur Nullachse dar", async ({ page }) => {
   await page.goto("./#/dashboard");
   const dashboard = page.locator(".desktop-dashboard");
+  await dashboard.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
+  await expect(page).toHaveURL(/#\/einkommensteuer$/);
+  await page.getByRole("button", { name: "Baseline wiederherstellen", exact: true }).click();
+  await page.getByRole("button", { name: "Zurück zum Dashboard", exact: true }).click();
+  await expect(page).toHaveURL(/#\/dashboard$/);
   const chart = dashboard.getByTestId("budget-chart");
   await expect(dashboard.getByRole("heading", { name: "Budgetsaldo und Änderungen" })).toBeVisible();
   await expect(dashboard.getByText("Werte in Mrd. € pro Jahr")).toBeVisible();
