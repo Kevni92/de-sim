@@ -46,7 +46,7 @@ test("kennzeichnet die Einkommensteuer als Umfang der Haushalts- und Verteilungs
   await expect(scope).not.toContainText("Nicht abgebildet:");
   await expect(center.locator(".result-content")).toContainText("Referenzhaushalte · Einkommensteuer");
   await center.getByRole("button", { name: "Quelle für Referenzhaushalte" }).click();
-  const source = page.getByRole("dialog", { name: "Nachweis: Referenzhaushalte" });
+  const source = page.getByRole("dialog", { name: "Nachweis: Wirkung auf Referenzhaushalte" });
   await expect(source).toBeVisible();
   await source.getByRole("button", { name: "Schließen", exact: true }).click();
   if (isMobile) {
