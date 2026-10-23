@@ -14,7 +14,7 @@ import type { LongTermScenarioSettings } from "../lib/types";
 const targetYears = [2030, 2040, 2050, 2070];
 const number = (value: number) => Math.round(value).toLocaleString("de-DE");
 const million = (value: number) => `${(value / 1_000_000).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Mio.`;
-const billion = (value: number) => `${value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mrd. €`;
+const billion = (value: number) => `${value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Mrd. € pro Jahr`;
 const signed = (value: number, unit = "") => `${value > 0 ? "+" : value < 0 ? "−" : "±"}${Math.abs(value).toLocaleString("de-DE", { maximumFractionDigits: 1 })}${unit}`;
 
 function pathFor(population: ProjectionYear[], settings: LongTermScenarioSettings) {
@@ -114,10 +114,10 @@ export function LongTermPage({ settings, onTargetYear, onBack, onOpenSource }: {
     },
     {
       id: "pension-balance",
-      label: "Finanzierungssaldo",
+      label: "Saldo der Alterssicherung",
       baseline: billion(basePension.balanceBn),
       scenario: billion(scenarioPension.balanceBn),
-      difference: signed(scenarioPension.balanceBn - basePension.balanceBn, " Mrd. €"),
+      difference: signed(scenarioPension.balanceBn - basePension.balanceBn, " Mrd. € pro Jahr"),
       band: `${billion(lowerPension.balanceBn)} bis ${billion(upperPension.balanceBn)}`,
     },
   ];
@@ -143,12 +143,13 @@ export function LongTermPage({ settings, onTargetYear, onBack, onOpenSource }: {
       <p className="notice-box long-term-status-note" role="note">
         <strong>Vereinfachte Modellschätzung, keine amtliche Prognose.</strong> Die Ergebnisse zeigen Folgen der ausgewählten Annahmen; Datenstand, Rechenweg und Grenzen stehen unter „Daten- und Modellstand“.
       </p>
+      <p className="money-context-note long-term-money-context" role="note" data-testid="long-term-money-context">Alterssicherung als staatlicher Teilhaushalt · Geldwerte sind Jahresströme in Mrd. € im Zieljahr {settings.targetYear} · Preisgrundlage nicht ausgewiesen; keine reale oder nominale Umrechnung.</p>
 
       <section className="long-term-kpis" aria-label="Vier Kernkennzahlen">
         <Metric label="Bevölkerung" value={million(scenarioPopulation.population)} note={`Baseline ${million(basePopulation.population)}`} delta={signed(populationDifference / 1_000_000, " Mio.")} />
         <Metric label="Erwartete Erwerbspersonen" value={million(scenarioLabour.availableWorkers)} note="Erwerbsbeteiligung, nicht nur Altersgruppe" delta={signed(workforceDifference / 1_000_000, " Mio.")} />
         <Metric label="Beitragszahlende je 100 Rentenbeziehende" value={ratio(scenarioPension.contributorsPer100Pensioners)} note={`Baseline ${ratio(basePension.contributorsPer100Pensioners)} je 100 Rentenbeziehende · Strukturindikator, keine Finanzrechnung`} delta={signed(scenarioPension.contributorsPer100Pensioners - basePension.contributorsPer100Pensioners, " je 100 Rentenbeziehende")} />
-        <Metric label="Vereinfachter Finanzierungssaldo" value={billion(scenarioPension.balanceBn)} note={`Baseline ${billion(basePension.balanceBn)}`} delta={signed(scenarioPension.balanceBn - basePension.balanceBn, " Mrd. €")} />
+        <Metric label="Saldo der Alterssicherung" value={billion(scenarioPension.balanceBn)} note={`Baseline ${billion(basePension.balanceBn)}`} delta={signed(scenarioPension.balanceBn - basePension.balanceBn, " Mrd. € pro Jahr")} />
       </section>
 
       <p className="long-term-summary"><strong>Einordnung für {settings.targetYear}:</strong> {causeNote} Der Unterschied zur Baseline beträgt {signed(populationDifference / 1_000_000, " Mio. Menschen")} bei der Bevölkerung und {signed(workforceDifference / 1_000_000, " Mio. Erwerbspersonen")} bei den Erwerbspersonen.</p>
@@ -177,7 +178,7 @@ export function LongTermPage({ settings, onTargetYear, onBack, onOpenSource }: {
 
       <details className="long-term-section long-term-method"><summary><span><span className="eyebrow">Ebene 4 · Berechnung und Quellen</span><strong>Modellgrenzen und Rechenweg anzeigen</strong></span><span>+</span></summary><div className="long-term-method-grid"><div><h3>Rechenweg</h3><p>Kohorten werden jährlich fortgeschrieben. Erwerbspersonen entstehen aus Erwerbsalter, Beteiligung und Beschäftigung; Rentenbeziehende aus der Bevölkerung ab Rentenalter multipliziert mit einer Bezugsquote. Beiträge, Bundeszuschuss und Ausgaben werden separat aggregiert.</p></div><div><h3>Bewusste Modellgrenze</h3><p>Keine individuellen Entgeltpunkte, vollständige Rentenarten oder exakte Rentenanpassungsformel. Ein negativer Saldo ist ein Szenarioindikator und keine Aussage über einen Zahlungsausfall.</p></div></div><ul className="long-term-warning-list">{model.projection.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></details>
 
-      <section className="long-term-section long-term-data-table" aria-labelledby="long-term-series-title"><div className="section-heading"><div><span className="eyebrow">Ebene 3 · Zeitpfad</span><h2 id="long-term-series-title">Zeitreihe bis zum Zieljahr</h2></div></div><div className="long-term-table-wrap" role="region" aria-label="Zeitreihe der zentralen Szenariowerte" tabIndex={0}><table className="long-term-table"><caption className="sr-only">Zeitreihe der zentralen Szenariowerte; Beitragszahlende je 100 Rentenbeziehende und Finanzierungssaldo.</caption><thead><tr><th scope="col">Jahr</th><th scope="col">Bevölkerung</th><th scope="col">Erwerbspersonen</th><th scope="col">Beitragszahlende je 100 Rentenbeziehende</th><th scope="col">Saldo</th></tr></thead><tbody>{model.projection.scenario.filter((_, index) => index === 0 || index === model.projection.scenario.length - 1 || [2030, 2040, 2050].includes(model.projection.scenario[index].year)).map((point) => { const labour = findYear(model.scenario.labour.points, point.year); const pension = findYear(model.scenario.pension.points, point.year); return <tr key={point.year}><th scope="row">{point.year}</th><td>{million(point.population)}</td><td>{million(labour.availableWorkers)}</td><td>{pension.contributorsPer100Pensioners.toLocaleString("de-DE", { maximumFractionDigits: 1 })}</td><td>{billion(pension.balanceBn)}</td></tr>; })}</tbody></table></div><p className="table-note">Die Quote zeigt Beitragszahlende je 100 Rentenbeziehende. Die Tabelle ergänzt jede Grafik durch konkrete Werte und bleibt auch bei schmalen Ansichten horizontal lesbar.</p></section>
+      <section className="long-term-section long-term-data-table" aria-labelledby="long-term-series-title"><div className="section-heading"><div><span className="eyebrow">Ebene 3 · Zeitpfad</span><h2 id="long-term-series-title">Zeitreihe bis zum Zieljahr</h2></div></div><div className="long-term-table-wrap" role="region" aria-label="Zeitreihe der zentralen Szenariowerte" tabIndex={0}><table className="long-term-table"><caption className="sr-only">Zeitreihe der zentralen Szenariowerte; Beitragszahlende je 100 Rentenbeziehende und Jahressaldo der Alterssicherung in Mrd. € pro Jahr.</caption><thead><tr><th scope="col">Jahr</th><th scope="col">Bevölkerung</th><th scope="col">Erwerbspersonen</th><th scope="col">Beitragszahlende je 100 Rentenbeziehende</th><th scope="col">Saldo der Alterssicherung · Mrd. € pro Jahr</th></tr></thead><tbody>{model.projection.scenario.filter((_, index) => index === 0 || index === model.projection.scenario.length - 1 || [2030, 2040, 2050].includes(model.projection.scenario[index].year)).map((point) => { const labour = findYear(model.scenario.labour.points, point.year); const pension = findYear(model.scenario.pension.points, point.year); return <tr key={point.year}><th scope="row">{point.year}</th><td>{million(point.population)}</td><td>{million(labour.availableWorkers)}</td><td>{pension.contributorsPer100Pensioners.toLocaleString("de-DE", { maximumFractionDigits: 1 })}</td><td>{billion(pension.balanceBn)}</td></tr>; })}</tbody></table></div><p className="table-note">Die Quote zeigt Beitragszahlende je 100 Rentenbeziehende. Die Tabelle ergänzt jede Grafik durch konkrete Werte und bleibt auch bei schmalen Ansichten horizontal lesbar.</p></section>
     </main>
   );
 }

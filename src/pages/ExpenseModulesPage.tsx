@@ -47,6 +47,7 @@ export function ExpenseModulesPage({ selectedId, results, parameters, modelLevel
 
   return <main className="content-width revenue-modules-page expense-modules-page">
     <ModulePageHeader eyebrow="Milestone 6 · Ausgabenmodule" title="Ausgaben und Leistungen" description="Neun priorisierte Module mit einheitlichem Aufbau für Baseline, Szenario, direkte Wirkung, zentralen Berechnungsrahmen und Nachweise." onBack={onBack} />
+    <p className="money-context-note module-money-context" role="note" data-testid="module-money-context">Staatliche Ausgabenperspektive · aggregierte Modulwerte sind Jahreswerte in Mrd. € · Referenzdatenjahr 2025, Rechtsstand 2026 · Preisgrundlage nicht ausgewiesen. Einzelne monatliche Leistungsbeträge sind separat beschriftet.</p>
 
     <section className="revenue-module-layout">
       <aside className="card-flat revenue-module-list expense-module-list" aria-label="Ausgabenmodule"><header><h2>Module</h2><span>{results.length}</span></header><nav>{expenseModuleDefinitions.map((module) => {

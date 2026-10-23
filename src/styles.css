@@ -108,6 +108,11 @@ h1, h2, h3, p { margin-top: 0; }
 .notice-box { margin-top: 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--subtle); padding: 13px; color: var(--muted-foreground); font-size: var(--fs-sm); line-height: 1.6; }
 .notice-box strong { color: var(--foreground); }
 .onboarding-baseline p { margin: 4px 0 0; }
+.money-context-note { margin: 10px 0; border-left: 3px solid var(--line-strong); padding: 2px 0 2px 10px; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.5; }
+.dashboard-money-context { margin: 0 0 10px; }
+.comparison-money-context { margin: 0 0 10px; }
+.comparison-effects-context { margin: 10px 0; }
+.module-money-context { margin: -5px 0 14px; }
 
 .sticky-kpis { position: sticky; top: 64px; z-index: 40; border-bottom: 1px solid var(--line); background: rgba(244,247,250,.96); backdrop-filter: blur(10px); padding: 12px 0; }
 .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
