@@ -4,7 +4,9 @@ test.describe.configure({ timeout: 210_000 });
 
 test("ordnet Wirkungen automatisch Reformmodulen und Vergleichsebenen zu", async ({ page, isMobile }, testInfo) => {
   await page.goto("./#/einnahmen");
-  await page.getByLabel("Regelsteuersatz Wert").fill("20");
+  const standardRate = page.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("20");
+  await standardRate.press("Enter");
   const revenueFollowUp = page.getByTestId("reform-follow-up-section");
   const revenueSummary = revenueFollowUp.locator("summary");
   await revenueSummary.focus();

@@ -16,7 +16,7 @@
 .reform-primary-control p { margin: 0; color: var(--muted, #5f6b78); font-size: var(--fs-xs); line-height: 1.5; }
 .reform-primary-control-body { min-width: 0; }
 .reform-primary-control .revenue-parameter { grid-template-columns: 1fr; gap: 8px; padding: 0; border: 0; }
-.reform-primary-control .revenue-parameter > span { display: none; }
+.reform-primary-control .parameter-heading { display: none; }
 .reform-kpi-grid { margin-top: 12px; }
 .reform-disclosure { overflow: hidden; }
 .reform-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 18px; cursor: pointer; list-style: none; }

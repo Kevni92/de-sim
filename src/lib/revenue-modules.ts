@@ -1,18 +1,10 @@
 import type { Confidence, ModelLevel } from "./types";
+import type { FlexibleParameterSpec } from "./parameter-control";
 
 export const revenueModuleIds = ["ust", "erb", "verm", "sozb", "kst", "kap", "energie"] as const;
 export type RevenueModuleId = (typeof revenueModuleIds)[number];
 
-export interface RevenueParameterDefinition {
-  key: string;
-  label: string;
-  baseline: number;
-  min: number;
-  max: number;
-  step: number;
-  unit: string;
-  description: string;
-}
+export interface RevenueParameterDefinition extends FlexibleParameterSpec {}
 
 export interface RevenueModuleDefinition {
   id: RevenueModuleId;
@@ -54,7 +46,22 @@ const parameter = (
   step: number,
   unit: string,
   description: string,
-): RevenueParameterDefinition => ({ key, label, baseline, min, max, step, unit, description });
+): RevenueParameterDefinition => ({
+  key,
+  label,
+  baseline,
+  sliderMin: min,
+  sliderMax: max,
+  validatedMin: min,
+  validatedMax: max,
+  // Existing parameter definitions use non-negative scenario values. The visible
+  // slider and validated model interval are independent from these hard limits.
+  hardMin: 0,
+  hardMax: Number.MAX_SAFE_INTEGER,
+  step,
+  unit,
+  description,
+});
 
 export const revenueModuleDefinitions: RevenueModuleDefinition[] = [
   {

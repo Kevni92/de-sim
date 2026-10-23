@@ -10,7 +10,9 @@ test("vergleicht eigene gespeicherte Varianten mit ihren Einnahmen, Ausgaben und
   await page.goto("./#/dashboard");
   await page.getByLabel("Szenarioname").fill("Alternative A");
   await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("22");
+  const standardRate = page.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("22");
+  await standardRate.press("Enter");
   await goToDashboard(page);
   await page.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
   await page.getByLabel("Grundfreibetrag Wert").fill("15000");
@@ -28,7 +30,8 @@ test("vergleicht eigene gespeicherte Varianten mit ihren Einnahmen, Ausgaben und
   await scenarioPanel.getByLabel("Zeithorizont").selectOption("10");
   await scenarioPanel.getByRole("button", { name: "Schließen", exact: true }).click();
   await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("25");
+  await standardRate.fill("25");
+  await standardRate.press("Enter");
   await goToDashboard(page);
   await page.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
   await page.getByLabel("Grundfreibetrag Wert").fill("18000");

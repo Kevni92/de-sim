@@ -38,7 +38,9 @@ test("ordnet die Ergebnisse am Einstieg und in den zentralen Ansichten ein", asy
   await regionalEvidence.getByRole("button", { name: "Schließen", exact: true }).click();
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("30");
+  const standardRate = page.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("30");
+  await standardRate.press("Enter");
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
   await expect(page).toHaveURL(/#\/dashboard$/);
   await expect(overviewStatus).toContainText("Rechtsstand 2026");

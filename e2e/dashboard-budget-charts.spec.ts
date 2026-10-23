@@ -48,7 +48,9 @@ test("stellt Nullwerte, positive und negative Budgetwirkungen proportional zur N
   await page.screenshot({ path: "test-results/issue-99-budget-zero.png", fullPage: true });
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("20");
+  const standardRate = page.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("20");
+  await standardRate.press("Enter");
   await expect(page.getByTestId("revenue-module-value")).toHaveText("+13,1 Mrd. €");
   await returnToDashboard(page);
   const revenue = await expectLinearScale(dashboard.getByTestId("budget-chart"), 1);
@@ -59,13 +61,15 @@ test("stellt Nullwerte, positive und negative Budgetwirkungen proportional zur N
   await page.screenshot({ path: "test-results/issue-99-budget-positive.png", fullPage: true });
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("21");
+  await standardRate.fill("21");
+  await standardRate.press("Enter");
   await returnToDashboard(page);
   const doubled = await expectLinearScale(dashboard.getByTestId("budget-chart"), 1);
   expect(doubled.value).toBeGreaterThan(revenue.value);
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("18");
+  await standardRate.fill("18");
+  await standardRate.press("Enter");
   await returnToDashboard(page);
   const negative = await expectLinearScale(dashboard.getByTestId("budget-chart"), 1);
   expect(negative.value).toBeLessThan(0);
@@ -75,7 +79,8 @@ test("stellt Nullwerte, positive und negative Budgetwirkungen proportional zur N
   await page.screenshot({ path: "test-results/issue-99-budget-negative.png", fullPage: true });
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("30");
+  await standardRate.fill("30");
+  await standardRate.press("Enter");
   await returnToDashboard(page);
   const large = await expectLinearScale(dashboard.getByTestId("budget-chart"), 1);
   expect(large.value).toBeGreaterThan(doubled.value);

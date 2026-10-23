@@ -9,7 +9,9 @@ test("kennzeichnet Dashboardzustände eindeutig", async ({ page, isMobile }) => 
 
   let revenuePanel = page.getByRole("complementary", { name: "Einnahmen" });
   await revenuePanel.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("20");
+  const standardRate = page.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("20");
+  await standardRate.press("Enter");
   await page.getByRole("button", { name: "Zurück zum Dashboard" }).click();
 
   if (isMobile) {
