@@ -66,7 +66,7 @@ test("vergleicht eigene gespeicherte Varianten mit ihren Einnahmen, Ausgaben und
   await expect(page.locator(".comparison-no-changes")).toContainText("dieselben Werte");
   await page.getByLabel("Nur Unterschiede anzeigen").uncheck();
 
-  await page.getByRole("button", { name: "Nachweis" }).click();
+  await page.getByRole("button", { name: "Nachweis", exact: true }).click();
   const evidence = page.getByRole("dialog", { name: /Nachweis:/ });
   await expect(evidence).toBeVisible();
   await evidence.getByRole("button", { name: "Schließen", exact: true }).click();
