@@ -1,5 +1,5 @@
-import type { ChangeEvent } from "react";
 import { ContextualEffectsPanel } from "../components/ContextualEffectsPanel";
+import { FlexibleParameterControl } from "../components/FlexibleParameterControl";
 import { ModuleCalculationContextCard, ModulePageHeader } from "../components/ModuleDetailComponents";
 import { ReformIcon, type ReformIconName } from "../components/ReformIcon";
 import { ReformDisclosureSection, ReformResultLayout, type ReformMetric, type ReformResultStatus } from "../components/ReformResultLayout";
@@ -136,7 +136,7 @@ export function RevenueModulesPage({
             onReset={resetModule}
             primaryTitle={primaryParameter?.label ?? "Keine Stellschraube verfügbar"}
             primaryDescription={primaryParameter?.description ?? "Für dieses Modul ist noch keine veränderbare Maßnahme hinterlegt."}
-            primaryControl={primaryParameter ? <RevenueParameterControl item={primaryParameter} value={parameterValue(parameters, selectedId, primaryParameter)} onValue={(value) => updateParameter(primaryParameter.key, value)} /> : null}
+            primaryControl={primaryParameter ? <FlexibleParameterControl key={`${selectedId}:${primaryParameter.key}`} item={primaryParameter} value={parameterValue(parameters, selectedId, primaryParameter)} onValue={(value) => updateParameter(primaryParameter.key, value)} /> : null}
             metrics={metrics}
             status={status}
           >
@@ -195,7 +195,7 @@ export function RevenueModulesPage({
               <ReformDisclosureSection title="Erweiterte Parameter" summary="Weitere Annahmen bleiben verfügbar, dominieren aber nicht die Standardansicht." testId="reform-advanced-section">
                 <p className="reform-parameter-intro">Die wichtigste Stellschraube bleibt oben sichtbar. Hier können die ergänzenden Modellparameter verändert werden.</p>
                 {additionalParameters.length > 0 ? <div className="parameter-list">
-                  {additionalParameters.map((item) => <RevenueParameterControl key={item.key} item={item} value={parameterValue(parameters, selectedId, item)} onValue={(value) => updateParameter(item.key, value)} />)}
+                  {additionalParameters.map((item) => <FlexibleParameterControl key={`${selectedId}:${item.key}`} item={item} value={parameterValue(parameters, selectedId, item)} onValue={(value) => updateParameter(item.key, value)} />)}
                 </div> : <p className="reform-parameter-intro">Für dieses Modul gibt es keine weiteren Parameter.</p>}
               </ReformDisclosureSection>
             </>}
@@ -203,19 +203,6 @@ export function RevenueModulesPage({
         </div>
       </section>
     </main>
-  );
-}
-
-function RevenueParameterControl({ item, value, onValue }: { item: RevenueParameterDefinition; value: number; onValue: (value: number) => void }) {
-  return (
-    <label className="revenue-parameter">
-      <span><strong>{item.label}</strong><small>{item.description}</small></span>
-      <div className="parameter-controls">
-        <input aria-label={`${item.label} Regler`} type="range" min={item.min} max={item.max} step={item.step} value={value} onChange={(event: ChangeEvent<HTMLInputElement>) => onValue(Number(event.target.value))} />
-        <input aria-label={`${item.label} Wert`} type="number" min={item.min} max={item.max} step={item.step} value={value} onChange={(event: ChangeEvent<HTMLInputElement>) => onValue(Number(event.target.value))} />
-        <b>{item.unit}</b>
-      </div>
-    </label>
   );
 }
 

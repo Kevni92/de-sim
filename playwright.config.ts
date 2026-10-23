@@ -13,7 +13,7 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile-chromium", testMatch: ["**/household-coverage.spec.ts", "**/metric-context.spec.ts", "**/issue-81-reform-icons.spec.ts"], use: { ...devices["Pixel 7"] } },
+    { name: "mobile-chromium", testMatch: ["**/household-coverage.spec.ts", "**/metric-context.spec.ts", "**/issue-81-reform-icons.spec.ts", "**/issue-82-flexible-parameter-control.spec.ts"], use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
     command: "npm run dev -- --host 127.0.0.1",

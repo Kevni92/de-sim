@@ -48,7 +48,36 @@
 .revenue-editor-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr); gap: 18px; align-items: start; }
 .revenue-parameters { padding: 18px; }
 .parameter-list { display: grid; gap: 0; margin-top: 8px; }
-.revenue-parameter { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(270px, 1.2fr); gap: 18px; align-items: center; padding: 15px 0; border-top: 1px solid var(--border, #d6dde5); }
+.revenue-parameter { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(270px, 1.2fr); gap: 18px; align-items: center; min-width: 0; padding: 15px 0; border-top: 1px solid var(--border, #d6dde5); }
+.parameter-heading { min-width: 0; }
+.parameter-heading strong { display: block; font-size: var(--fs-sm); }
+.parameter-heading small { display: block; margin-top: 4px; color: var(--muted, #5f6b78); font-size: var(--fs-2xs); line-height: 1.45; }
+.flexible-parameter-body { display: grid; gap: 8px; min-width: 0; }
+.parameter-slider-group { min-width: 0; }
+.parameter-current-line { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.parameter-current-value { color: var(--foreground); font-size: var(--fs-md); font-weight: 800; font-variant-numeric: tabular-nums; }
+.parameter-baseline-label { color: var(--muted-foreground); font-size: var(--fs-2xs); white-space: nowrap; }
+.parameter-range-wrap { position: relative; display: flex; align-items: center; min-width: 0; height: 26px; }
+.parameter-range-wrap input[type="range"] { width: 100%; margin: 0; accent-color: #147d7e; touch-action: pan-y; }
+.parameter-range-wrap input[type="range"]:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary, #147d7e) 35%, transparent); outline-offset: 2px; border-radius: 4px; }
+.parameter-baseline-marker { position: absolute; top: 50%; width: 2px; height: 13px; transform: translate(-50%, -50%); border-radius: 2px; background: var(--warning, #8a6516); box-shadow: 0 0 0 1px var(--surface, #fff); pointer-events: none; }
+.parameter-scale-labels { display: flex; justify-content: space-between; gap: 8px; color: var(--muted, #5f6b78); font-size: var(--fs-2xs); font-variant-numeric: tabular-nums; }
+.parameter-value-actions { position: relative; display: grid; grid-template-columns: 36px minmax(70px, 110px) 36px auto auto; gap: 6px; align-items: center; }
+.parameter-input-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+.parameter-value-actions input[type="text"] { width: 100%; min-width: 0; padding: 7px 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); color: var(--foreground); font: inherit; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.parameter-value-actions input[type="text"]:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary, #147d7e) 35%, transparent); outline-offset: 1px; }
+.parameter-value-actions input[aria-invalid="true"] { border-color: var(--negative, #a33b3b); }
+.parameter-step-button { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 20px; line-height: 1; cursor: pointer; }
+.parameter-step-button:hover, .parameter-reset-button:hover, .parameter-range-action:hover:not(:disabled) { border-color: var(--primary, #147d7e); background: var(--subtle, #f4f7fa); }
+.parameter-step-button:focus-visible, .parameter-reset-button:focus-visible, .parameter-range-action:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary, #147d7e) 35%, transparent); outline-offset: 2px; }
+.parameter-unit { min-width: 30px; color: var(--muted-foreground); font-size: var(--fs-2xs); font-weight: 700; white-space: nowrap; }
+.parameter-reset-button, .parameter-range-action { min-height: 34px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); color: var(--foreground); font: inherit; font-size: var(--fs-2xs); font-weight: 700; cursor: pointer; white-space: nowrap; }
+.parameter-range-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.parameter-range-action:disabled { color: var(--muted-foreground); opacity: .65; cursor: not-allowed; }
+.parameter-validation-error, .parameter-range-note { margin: 0; padding: 7px 9px; border-radius: 5px; color: var(--muted-foreground); font-size: var(--fs-2xs); line-height: 1.45; }
+.parameter-validation-error { color: var(--negative); background: color-mix(in srgb, var(--negative) 7%, var(--surface)); }
+.parameter-range-note.is-extrapolated { border-left: 3px solid var(--warning); background: color-mix(in srgb, var(--warning) 9%, var(--surface)); color: var(--foreground); }
+/* Legacy controls on the income-tax and expense pages keep their existing layout. */
 .revenue-parameter > span strong { display: block; font-size: var(--fs-sm); }
 .revenue-parameter > span small { display: block; margin-top: 4px; color: var(--muted, #5f6b78); font-size: var(--fs-2xs); line-height: 1.45; }
 .parameter-controls { display: grid; grid-template-columns: minmax(90px, 1fr) 92px auto; gap: 8px; align-items: center; }
@@ -110,6 +139,8 @@
   .module-summary-actions { justify-content: flex-start; }
   .revenue-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .revenue-parameter { grid-template-columns: 1fr; gap: 9px; }
+  .parameter-value-actions { grid-template-columns: 36px minmax(55px, 1fr) 36px auto auto; gap: 5px; }
+  .parameter-reset-button { padding-inline: 7px; }
   .parameter-controls { grid-template-columns: minmax(80px, 1fr) 88px auto; }
   .revenue-side-stack { grid-template-columns: 1fr; }
   .revenue-overview-table { overflow-x: auto; }
