@@ -18,7 +18,7 @@ test("trennt einen illustrativen Schuldenbestand von jährlichen Saldoänderunge
   await expect(debt.getByText("2.634,0 Mrd. €", { exact: true })).toBeVisible();
   await expect(debt.getByText("keine Fortschreibung", { exact: true })).toBeVisible();
   await expect(debt).toContainText("ohne belegten Stichtag");
-  await expect(debt).toContainText("keine Schuldenprognose");
+  await expect(debt).toContainText(/keine Schuldenprognose/i);
   await expect(debt).not.toContainText(/BIP|62,1 %|± 4 %/);
   await expect(page.locator(".sticky-kpis").getByText("Saldo pro Jahr", { exact: true })).toBeVisible();
   await expect(dashboard.getByText("Werte in Mrd. € pro Jahr")).toBeVisible();

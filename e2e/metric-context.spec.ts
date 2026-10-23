@@ -14,7 +14,7 @@ test("ordnet zentrale Dashboardwerte und Referenzhaushalte ein und macht den Nac
 
   const householdTab = page.getByRole("button", { name: "Haushalte", exact: true });
   await householdTab.click();
-  await expect(page.getByText("Private Haushaltsperspektive: direkte Monatswirkung; Steuerwerte pro Jahr.")).toBeVisible();
+  await expect(page.locator(".section-description:visible").filter({ hasText: "Private Haushaltsperspektive: direkte Monatswirkung; Steuerwerte pro Jahr." })).toBeVisible();
 
   const evidenceButton = page.getByRole("button", { name: "Quelle für Referenzhaushalte" });
   await evidenceButton.focus();
