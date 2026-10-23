@@ -5,6 +5,7 @@ import { icons, type IconName } from "../components/icons";
 import { expenseModuleForLineId, expenseResultsById, type ExpenseModuleId, type ExpenseModuleResult } from "../lib/expense-modules";
 import type { BudgetExpenseLine, BudgetRevenueLine, BudgetSummary } from "../lib/budget-summary";
 import type { IncomeTaxResult } from "../lib/income-tax";
+import type { ScenarioChange } from "../lib/scenario-changes";
 import { revenueModuleIds, type RevenueModuleId, type RevenueModuleResult } from "../lib/revenue-modules";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
 import type { MetricRecord, ScenarioState, SourceRecord } from "../lib/types";
@@ -23,6 +24,7 @@ type Props = {
   metrics: MetricRecord[];
   sources: SourceRecord[];
   scenarios: ScenarioState[];
+  scenarioChanges: ScenarioChange[];
   onNavigateIncomeTax: () => void;
   onNavigateRevenue: (id: RevenueModuleId) => void;
   onNavigateExpense: (id: ExpenseModuleId) => void;
@@ -33,7 +35,7 @@ type Props = {
   onDeleteScenario: (scenario: ScenarioState) => void;
 };
 
-export function DashboardPage({ incomeTaxResult, budgetSummary, revenueModuleResults, expenseModuleResults, metrics, sources, scenarios, onNavigateIncomeTax, onNavigateRevenue, onNavigateExpense, onNavigateComparison, onNavigateLongTerm, onOpenSource, onLoadScenario, onDeleteScenario }: Props) {
+export function DashboardPage({ incomeTaxResult, budgetSummary, revenueModuleResults, expenseModuleResults, metrics, sources, scenarios, scenarioChanges, onNavigateIncomeTax, onNavigateRevenue, onNavigateExpense, onNavigateComparison, onNavigateLongTerm, onOpenSource, onLoadScenario, onDeleteScenario }: Props) {
   const [tab, setTab] = useState<Tab>("budget");
   const [mobileTab, setMobileTab] = useState<MobileTab>("ergebnis");
   const expenseById = useMemo(() => expenseResultsById(expenseModuleResults), [expenseModuleResults]);
@@ -52,7 +54,7 @@ export function DashboardPage({ incomeTaxResult, budgetSummary, revenueModuleRes
 
   const openRevenueItem = (itemId: string) => itemId === "est" ? onNavigateIncomeTax() : revenueModuleIds.includes(itemId as RevenueModuleId) ? onNavigateRevenue(itemId as RevenueModuleId) : undefined;
   const openExpenseItem = (itemId: string) => { const moduleId = expenseModuleForLineId[itemId]; if (moduleId) onNavigateExpense(moduleId); };
-  const centerProps = { tab, setTab, incomeTaxResult, revenueModuleResults, expenseModuleResults, totalRevenueDelta, totalExpenseDelta, totalBudgetDelta, baselineBalance: budgetSummary.balanceBaseline, totalsComplete, totalsNote, onOpenSource, onNavigateComparison, onNavigateLongTerm, onNavigateExpense, onLoadScenario, onDeleteScenario };
+  const centerProps = { tab, setTab, scenarioChanges, incomeTaxResult, revenueModuleResults, expenseModuleResults, totalRevenueDelta, totalExpenseDelta, totalBudgetDelta, baselineBalance: budgetSummary.balanceBaseline, totalsComplete, totalsNote, onOpenSource, onNavigateComparison, onNavigateLongTerm, onNavigateExpense, onLoadScenario, onDeleteScenario };
 
   return <EvidenceContext.Provider value={evidence}><>
     <section className="sticky-kpis" aria-label="Haushaltsübersicht"><div className="content-width kpi-grid">
@@ -90,8 +92,31 @@ function LinePanel({ title, total, totalMetricId, items, expense = false, onOpen
 function metricIdForLine(itemId: string) { if (itemId === "est") return "metric-income-tax-revenue"; if (revenueModuleIds.includes(itemId as RevenueModuleId)) return `metric-revenue-${itemId}`; if (expenseModuleForLineId[itemId]) return `metric-expense-${expenseModuleForLineId[itemId]}`; if (itemId === "kredit") return "metric-budget-balance"; return "metric-public-budget-lines"; }
 function LineRow({ item, metricId, expense, onClick, onSource }: { item: BudgetRevenueLine | BudgetExpenseLine; metricId: string; expense: boolean; onClick?: () => void; onSource: () => void }) { const Icon = icons[item.icon as IconName]; const positive = item.delta === null ? false : expense ? item.delta <= 0 : item.delta >= 0; return <li className={`${item.delta !== null && item.delta !== 0 ? "changed" : ""} ${item.confidence === "niedrig" ? "uncertain" : ""}`}><button className="line-row-main" onClick={onClick} disabled={!onClick} aria-label={onClick ? `${item.label} bearbeiten` : undefined}><span className={`category-icon ${expense ? "expense" : ""}`}><Icon size={14} strokeWidth={1.8} /></span><span className="line-copy"><strong>{item.label}</strong><small>{item.available ? <>{fmtBn(item.statusQuo)} → <b>{displayTotal(item.value)}</b></> : <b>Ergebnis nicht verfügbar</b>}{"note" in item && item.note ? ` · ${item.note}` : ""}</small></span></button><span className="line-side"><em className={item.delta === null ? "neutral" : item.delta === 0 ? "neutral" : positive ? "positive" : "negative"}>{displayDelta(item.delta)}</em><ConfidenceIndicator confidence={item.confidence} /><SourceButton contextLabel={item.label} iconOnly metricId={metricId} onClick={onSource} /></span></li>; }
 
-type CenterProps = { tab: Tab; setTab: (tab: Tab) => void; incomeTaxResult: IncomeTaxResult; revenueModuleResults: RevenueModuleResult[]; expenseModuleResults: ExpenseModuleResult[]; totalRevenueDelta: number | null; totalExpenseDelta: number | null; totalBudgetDelta: number | null; baselineBalance: number; totalsComplete: boolean; totalsNote: string; onOpenSource: (metricId: string, value?: string) => void; onNavigateComparison: () => void; onNavigateLongTerm: () => void; onNavigateExpense: (id: ExpenseModuleId) => void; scenarios: ScenarioState[]; showSavedScenarios?: boolean; migration?: ExpenseModuleResult; onLoadScenario: (scenario: ScenarioState) => void; onDeleteScenario: (scenario: ScenarioState) => void };
-function CenterPanel(props: CenterProps) { const { tab, setTab, incomeTaxResult, revenueModuleResults, expenseModuleResults, totalRevenueDelta, totalExpenseDelta, totalBudgetDelta, baselineBalance, totalsComplete, totalsNote, onOpenSource, onNavigateComparison, onNavigateLongTerm, onNavigateExpense, scenarios, showSavedScenarios = true, migration, onLoadScenario, onDeleteScenario } = props; return <section className="center-panel"><div className="card-flat result-card"><div className="result-tabs">{([ ["budget", "Budget"], ["haushalte", "Haushalte"], ["verteilung", "Verteilung"], ["regionen", "Regionen"], ["zeit", "Zeitverlauf"] ] as const).map(([key, label]) => <button key={key} className={tab === key ? "active" : ""} aria-label={key === "regionen" ? "Regionen · noch nicht berechnet" : label} onClick={() => setTab(key)}>{label}{key === "regionen" && <span className="tab-status-badge">noch nicht berechnet</span>}</button>)}<div className="result-tabs-actions"><span className="scenario-chip">8 Einnahmen · 9 Ausgaben</span><button className="button secondary small" onClick={onNavigateComparison}>Vergleich öffnen</button></div></div><div className="result-content">{tab === "budget" && <BudgetTab result={incomeTaxResult} revenueModules={revenueModuleResults} expenseModules={expenseModuleResults} revenueDelta={totalRevenueDelta} expenseDelta={totalExpenseDelta} budgetDelta={totalBudgetDelta} baselineBalance={baselineBalance} complete={totalsComplete} note={totalsNote} onOpenSource={onOpenSource} />}{tab === "haushalte" && <HouseholdsTab result={incomeTaxResult} onOpenSource={onOpenSource} />}{tab === "verteilung" && <DistributionTab result={incomeTaxResult} onOpenSource={onOpenSource} />}{tab === "regionen" && <RegionsTab onOpenSource={onOpenSource} />}{tab === "zeit" && <TimeTab totalDelta={totalBudgetDelta} onOpenSource={onOpenSource} onNavigateLongTerm={onNavigateLongTerm} />}</div></div>{migration ? <MigrationCard result={migration} onOpenSource={onOpenSource} onOpen={() => onNavigateExpense("migration")} /> : <p className="notice-box" role="status">Das Modul „Migration und Asyl“ ist nicht verfügbar und wird nicht in eine Gesamtsumme eingerechnet.</p>}{showSavedScenarios && <SavedScenarios scenarios={scenarios} onLoad={onLoadScenario} onDelete={onDeleteScenario} />}</section>; }
+type CenterProps = { tab: Tab; setTab: (tab: Tab) => void; incomeTaxResult: IncomeTaxResult; revenueModuleResults: RevenueModuleResult[]; expenseModuleResults: ExpenseModuleResult[]; totalRevenueDelta: number | null; totalExpenseDelta: number | null; totalBudgetDelta: number | null; baselineBalance: number; totalsComplete: boolean; totalsNote: string; onOpenSource: (metricId: string, value?: string) => void; onNavigateComparison: () => void; onNavigateLongTerm: () => void; onNavigateExpense: (id: ExpenseModuleId) => void; scenarios: ScenarioState[]; scenarioChanges: ScenarioChange[]; showSavedScenarios?: boolean; migration?: ExpenseModuleResult; onLoadScenario: (scenario: ScenarioState) => void; onDeleteScenario: (scenario: ScenarioState) => void };
+function CenterPanel(props: CenterProps) { const { tab, setTab, incomeTaxResult, revenueModuleResults, expenseModuleResults, totalRevenueDelta, totalExpenseDelta, totalBudgetDelta, baselineBalance, totalsComplete, totalsNote, onOpenSource, onNavigateComparison, onNavigateLongTerm, onNavigateExpense, scenarios, scenarioChanges, showSavedScenarios = true, migration, onLoadScenario, onDeleteScenario } = props; return <section className="center-panel"><div className="card-flat result-card"><HouseholdScopeNote changes={scenarioChanges} /><div className="result-tabs">{([ ["budget", "Budget"], ["haushalte", "Haushalte"], ["verteilung", "Verteilung"], ["regionen", "Regionen"], ["zeit", "Zeitverlauf"] ] as const).map(([key, label]) => <button key={key} className={tab === key ? "active" : ""} aria-label={key === "regionen" ? "Regionen · noch nicht berechnet" : label} onClick={() => setTab(key)}>{label}{key === "regionen" && <span className="tab-status-badge">noch nicht berechnet</span>}</button>)}<div className="result-tabs-actions"><span className="scenario-chip">8 Einnahmen · 9 Ausgaben</span><button className="button secondary small" onClick={onNavigateComparison}>Vergleich öffnen</button></div></div><div className="result-content">{tab === "budget" && <BudgetTab result={incomeTaxResult} revenueModules={revenueModuleResults} expenseModules={expenseModuleResults} revenueDelta={totalRevenueDelta} expenseDelta={totalExpenseDelta} budgetDelta={totalBudgetDelta} baselineBalance={baselineBalance} complete={totalsComplete} note={totalsNote} onOpenSource={onOpenSource} />}{tab === "haushalte" && <HouseholdsTab result={incomeTaxResult} onOpenSource={onOpenSource} />}{tab === "verteilung" && <DistributionTab result={incomeTaxResult} onOpenSource={onOpenSource} />}{tab === "regionen" && <RegionsTab onOpenSource={onOpenSource} />}{tab === "zeit" && <TimeTab totalDelta={totalBudgetDelta} onOpenSource={onOpenSource} onNavigateLongTerm={onNavigateLongTerm} />}</div></div>{migration ? <MigrationCard result={migration} onOpenSource={onOpenSource} onOpen={() => onNavigateExpense("migration")} /> : <p className="notice-box" role="status">Das Modul „Migration und Asyl“ ist nicht verfügbar und wird nicht in eine Gesamtsumme eingerechnet.</p>}{showSavedScenarios && <SavedScenarios scenarios={scenarios} onLoad={onLoadScenario} onDelete={onDeleteScenario} />}</section>; }
+
+function HouseholdScopeNote({ changes }: { changes: ScenarioChange[] }) {
+  const changedPolicyModules = [...new Set(changes.filter((change) => change.category === "policy").map((change) => change.module))];
+  const incomeTaxChanged = changedPolicyModules.includes("Einkommensteuer");
+  const unrepresentedModules = changedPolicyModules.filter((module) => module !== "Einkommensteuer");
+  let details: string;
+
+  if (changedPolicyModules.length === 0) {
+    details = "Im aktuellen Paket ist keine politische Maßnahme geändert. Angezeigt wird die Einkommensteuer-Ausgangslage.";
+  } else if (unrepresentedModules.length === 0) {
+    details = "Geändert und in dieser Ansicht enthalten: Einkommensteuer.";
+  } else {
+    const incomeTaxStatus = incomeTaxChanged
+      ? "Geändert und enthalten: Einkommensteuer."
+      : "Einkommensteuer wird angezeigt, ist in diesem Paket aber unverändert.";
+    details = `${incomeTaxStatus} Geändert, hier nicht abgebildet: ${unrepresentedModules.join(", ")}. Unveränderte Einkommensteuerwerte belegen keine Wirkungslosigkeit dieser Maßnahmen.`;
+  }
+
+  return <aside className="dashboard-household-scope" role="note" aria-label="Umfang der Haushalts- und Verteilungsansicht" data-testid="household-distribution-scope">
+    <strong>Haushalte und Verteilung zeigen derzeit nur die Einkommensteuer.</strong>
+    <span>{details}</span>
+  </aside>;
+}
 
 function BudgetTab({ result, revenueModules, expenseModules, revenueDelta, expenseDelta, budgetDelta, baselineBalance, complete, note, onOpenSource }: { result: IncomeTaxResult; revenueModules: RevenueModuleResult[]; expenseModules: ExpenseModuleResult[]; revenueDelta: number | null; expenseDelta: number | null; budgetDelta: number | null; baselineBalance: number; complete: boolean; note: string; onOpenSource: (metricId: string, value?: string) => void }) {
   if (!complete || revenueDelta === null || expenseDelta === null || budgetDelta === null) return <p className="notice-box" role="status">{note} Fehlende Teilwerte werden nicht als null gerechnet.</p>;

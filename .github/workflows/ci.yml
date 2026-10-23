@@ -54,7 +54,7 @@ jobs:
           retention-days: 7
 
   e2e:
-    name: Playwright Desktop
+    name: Playwright Desktop und mobil
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 20
