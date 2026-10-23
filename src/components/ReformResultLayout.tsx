@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { ModuleMetric, ModuleSummaryHeader } from "./ModuleDetailComponents";
+import type { ReformIconName, ReformIconTone } from "./ReformIcon";
 import type { Confidence } from "../lib/types";
 
 export type ReformResultStatus =
@@ -15,6 +16,8 @@ export type ReformMetric = {
   value: string;
   note: string;
   tone?: "positive" | "negative" | "neutral";
+  icon?: ReformIconName;
+  iconTone?: ReformIconTone;
   testId?: string;
 };
 
@@ -23,6 +26,8 @@ export function ReformResultLayout({
   badgeTone,
   title,
   description,
+  icon,
+  resetIcon,
   onOpenSource,
   onReset,
   primaryTitle,
@@ -36,6 +41,8 @@ export function ReformResultLayout({
   badgeTone?: Confidence;
   title: string;
   description: string;
+  icon?: ReformIconName;
+  resetIcon?: ReformIconName;
   onOpenSource: () => void;
   onReset: () => void;
   primaryTitle: string;
@@ -54,6 +61,8 @@ export function ReformResultLayout({
         badgeTone={badgeTone}
         title={title}
         description={description}
+        icon={icon}
+        resetIcon={resetIcon}
         onOpenSource={onOpenSource}
         onReset={onReset}
       />

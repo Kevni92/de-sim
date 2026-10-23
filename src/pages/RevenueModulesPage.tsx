@@ -1,6 +1,7 @@
 import type { ChangeEvent } from "react";
 import { ContextualEffectsPanel } from "../components/ContextualEffectsPanel";
 import { ModuleCalculationContextCard, ModulePageHeader } from "../components/ModuleDetailComponents";
+import { ReformIcon, type ReformIconName } from "../components/ReformIcon";
 import { ReformDisclosureSection, ReformResultLayout, type ReformMetric, type ReformResultStatus } from "../components/ReformResultLayout";
 import type { IncomeTaxResult } from "../lib/income-tax";
 import type { EffectRun } from "../lib/long-term-effects";
@@ -17,6 +18,16 @@ import { contextKeyForRevenue } from "../lib/reform-effects";
 import type { CalculationFreshness } from "../lib/scenario-calculation";
 import { fmtBn, fmtDiff } from "../lib/sim-data";
 import type { ModelLevel, TimeHorizon } from "../lib/types";
+
+const revenueModuleIcons: Record<RevenueModuleId, ReformIconName> = {
+  ust: "valueAddedTax",
+  erb: "inheritanceTax",
+  verm: "wealthTax",
+  sozb: "socialContributions",
+  kst: "corporateTax",
+  kap: "capitalIncomeTax",
+  energie: "energyTax",
+};
 
 export function RevenueModulesPage({
   selectedId,
@@ -78,10 +89,10 @@ export function RevenueModulesPage({
   const status = resultStatus(result);
   const topIncidence = result?.incidence.reduce((largest, item) => item.share > largest.share ? item : largest, result.incidence[0]);
   const metrics: ReformMetric[] = result ? [
-    { label: "Ausgangswert", value: fmtBn(result.baseline), note: definition.legalBasis },
-    { label: "Direkte staatliche Wirkung", value: fmtDiff(result.staticDelta), note: `direkter Szenariowert ${fmtBn(result.staticValue)}`, tone: result.staticDelta >= 0 ? "positive" : "negative", testId: "revenue-module-value" },
-    { label: "Am stärksten betroffen", value: topIncidence?.label ?? "Noch offen", note: topIncidence ? `${topIncidence.share} % der modellierten Belastung` : "keine belastbare Verteilung vorhanden" },
-    { label: "Belastbarkeit", value: confidenceLabel(definition.confidence), note: `Ergebnisband ± ${result.uncertaintyPercent} %` },
+    { label: "Ausgangswert", value: fmtBn(result.baseline), note: definition.legalBasis, icon: "baseline" },
+    { label: "Direkte staatliche Wirkung", value: fmtDiff(result.staticDelta), note: `direkter Szenariowert ${fmtBn(result.staticValue)}`, tone: result.staticDelta >= 0 ? "positive" : "negative", icon: "directEffect", iconTone: result.staticDelta >= 0 ? "positive" : "negative", testId: "revenue-module-value" },
+    { label: "Am stärksten betroffen", value: topIncidence?.label ?? "Noch offen", note: topIncidence ? `${topIncidence.share} % der modellierten Belastung` : "keine belastbare Verteilung vorhanden", icon: "affectedGroup", iconTone: "affected" },
+    { label: "Belastbarkeit", value: confidenceLabel(definition.confidence), note: `Ergebnisband ± ${result.uncertaintyPercent} %`, icon: "confidence", iconTone: definition.confidence === "hoch" ? "information" : "caution" },
   ] : [];
 
   return (
@@ -99,14 +110,14 @@ export function RevenueModulesPage({
           <header><h2>Module</h2><span>{results.length + 1}</span></header>
           <nav>
             <button onClick={onNavigateIncomeTax}>
-              <span><strong>Einkommensteuer</strong><small>§ 32a EStG · gesetzlicher Tarif 2026</small></span>
+              <span className="revenue-module-name"><ReformIcon name="incomeTax" size={20} className="revenue-module-icon reform-visual-neutral" /><span className="revenue-module-copy"><strong>Einkommensteuer</strong><small>§ 32a EStG · gesetzlicher Tarif 2026</small></span></span>
               <span className="module-list-value"><b>{fmtBn(incomeTaxResult.value)}</b><em className={incomeTaxResult.delta >= 0 ? "positive" : "negative"}>{fmtDiff(incomeTaxResult.delta)}</em></span>
             </button>
             {revenueModuleDefinitions.map((module) => {
               const moduleResult = results.find((item) => item.id === module.id)!;
               return (
                 <button key={module.id} className={module.id === selectedId ? "active" : ""} onClick={() => onSelect(module.id)} aria-current={module.id === selectedId ? "page" : undefined}>
-                  <span><strong>{module.label}</strong><small>{module.id === "verm" ? "Hypothetisches Szenario · Baseline 0" : module.legalBasis}</small></span>
+                  <span className="revenue-module-name"><ReformIcon name={revenueModuleIcons[module.id]} size={20} className="revenue-module-icon reform-visual-neutral" /><span className="revenue-module-copy"><strong>{module.label}</strong><small>{module.id === "verm" ? "Hypothetisches Szenario · Baseline 0" : module.legalBasis}</small></span></span>
                   <span className="module-list-value"><b>{fmtBn(moduleResult.value)}</b><em className={moduleResult.delta >= 0 ? "positive" : "negative"}>{fmtDiff(moduleResult.delta)}</em></span>
                 </button>
               );
@@ -119,6 +130,8 @@ export function RevenueModulesPage({
             badge="Einnahmenmaßnahme"
             title={definition.label}
             description={definition.description}
+            icon={revenueModuleIcons[selectedId]}
+            resetIcon="resetBaseline"
             onOpenSource={() => result && onOpenSource(`metric-revenue-${selectedId}`, `${fmtBn(result.value)} · ${fmtDiff(result.delta)}`)}
             onReset={resetModule}
             primaryTitle={primaryParameter?.label ?? "Keine Stellschraube verfügbar"}

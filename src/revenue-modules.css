@@ -15,6 +15,13 @@
 .revenue-module-list nav > button:last-child { border-bottom: 0; }
 .revenue-module-list nav > button:hover { background: #f5f8fa; }
 .revenue-module-list nav > button.active { background: #e1efef; box-shadow: inset 3px 0 #147d7e; }
+.revenue-module-name { display: flex; align-items: flex-start; gap: 9px; min-width: 0; }
+.revenue-module-copy { min-width: 0; }
+.revenue-module-icon { flex: 0 0 20px; margin-top: 1px; color: var(--muted-foreground); }
+.revenue-module-list nav > button:hover .revenue-module-icon,
+.revenue-module-list nav > button:focus-visible .revenue-module-icon,
+.revenue-module-list nav > button.active .revenue-module-icon { color: var(--primary); }
+.revenue-module-list nav > button:disabled .revenue-module-icon { color: var(--muted-foreground); }
 .revenue-module-list nav strong { display: block; font-size: var(--fs-sm); }
 .revenue-module-list nav small { display: block; margin-top: 3px; color: var(--muted, #5f6b78); font-size: var(--fs-2xs); line-height: 1.35; }
 .module-list-value { text-align: right; }
