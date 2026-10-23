@@ -23,7 +23,7 @@ test("vergleicht eigene gespeicherte Varianten mit ihren Einnahmen, Ausgaben und
 
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const scenarioPanel = page.getByRole("dialog", { name: "Szenario verwalten" });
-  await scenarioPanel.getByRole("button", { name: "Neu", exact: true }).click();
+  await scenarioPanel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   await scenarioPanel.getByLabel("Szenarioname im Dialog").fill("Alternative B");
   await scenarioPanel.getByLabel("Zeithorizont").selectOption("10");
   await scenarioPanel.getByRole("button", { name: "Schließen", exact: true }).click();

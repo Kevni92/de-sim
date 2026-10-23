@@ -104,36 +104,14 @@ export function ScenarioPanel({
       <aside className="scenario-drawer">
         <header>
           <div>
-            <span className="eyebrow">Zentrales Szenariomodell</span>
+            <span className="eyebrow">Dein Szenario</span>
             <h2>Szenario verwalten</h2>
           </div>
           <button className="icon-button" onClick={closeAndPersist} aria-label="Schließen"><X size={15} /></button>
         </header>
 
         <div className="scenario-scroll">
-          <section className="scenario-storage-status" aria-label="Speicherstatus" aria-live="polite" data-testid="scenario-save-status">
-            <div className={`scenario-storage-card ${draftSaveStatus === "error" ? "is-error" : ""}`}>
-              <span>Arbeitsentwurf in diesem Browser</span>
-              <strong>{draftSaveStatus === "saving" ? "Wird gesichert …" : draftSaveStatus === "error" ? "Sicherung fehlgeschlagen" : draftSavedAt ? "Gesichert" : "Wird vorbereitet"}</strong>
-              {draftSavedAt && <small>Zuletzt gesichert: {formatSavedAt(draftSavedAt)}</small>}
-              {draftSaveStatus === "error" && <>
-                <p role="alert">{draftSaveError || "Der Entwurf konnte nicht gesichert werden."} Deine Eingaben bleiben hier erhalten.</p>
-                <button className="button secondary small" onClick={() => { void onRetryDraftSave().catch(() => undefined); }}>Erneut versuchen</button>
-              </>}
-            </div>
-            <div className={`scenario-storage-card ${hasChangesSinceSaved ? "has-changes" : ""}`}>
-              <span>Gespeicherte Szenariofassung</span>
-              <strong>{!activeScenarioId ? "Noch nicht gespeichert" : !savedScenarioExists ? "Gespeicherte Fassung nicht gefunden" : hasChangesSinceSaved ? "Änderungen seit gespeichertem Stand" : "Entspricht dem gespeicherten Stand"}</strong>
-              {savedScenarioUpdatedAt && <small>Zuletzt gespeichert: {formatSavedAt(savedScenarioUpdatedAt)}</small>}
-            </div>
-          </section>
-
-          <section className="scenario-status" aria-label="Szenariodetails">
-            <div><span>Lokale Szenarien</span><strong>{savedCount}</strong></div>
-            <div><span>Modellversion</span><strong>{scenario.modelVersion}</strong></div>
-          </section>
-
-          <section className="scenario-form">
+          <section className="scenario-form scenario-primary-fields" aria-label="Name und Beschreibung">
             <label>
               <span>Name</span>
               <input aria-label="Szenarioname im Dialog" value={scenario.name} onChange={(event) => onPatch({ name: event.target.value })} />
@@ -142,6 +120,49 @@ export function ScenarioPanel({
               <span>Beschreibung</span>
               <textarea aria-label="Szenariobeschreibung" rows={3} value={scenario.description} onChange={(event) => onPatch({ description: event.target.value })} />
             </label>
+          </section>
+
+          <section className="scenario-storage-status" aria-label="Speicherstatus" aria-live="polite" data-testid="scenario-save-status">
+            <div className={`scenario-storage-card ${draftSaveStatus === "error" ? "is-error" : ""}`}>
+              <span>Dein Arbeitsentwurf</span>
+              <strong>{draftSaveStatus === "saving" ? "Wird gesichert …" : draftSaveStatus === "error" ? "Sicherung fehlgeschlagen" : draftSavedAt ? "Gesichert" : "Wird vorbereitet"}</strong>
+              {draftSavedAt && <small>Zuletzt gesichert: {formatSavedAt(draftSavedAt)}</small>}
+              {draftSaveStatus === "error" && <>
+                <p role="alert">{draftSaveError || "Der Entwurf konnte nicht gesichert werden."} Deine Eingaben bleiben hier erhalten.</p>
+                <button className="button secondary small" onClick={() => { void onRetryDraftSave().catch(() => undefined); }}>Erneut versuchen</button>
+              </>}
+              <small>{savedCount} gespeicherte {savedCount === 1 ? "Variante" : "Varianten"} in diesem Browser</small>
+            </div>
+            <div className={`scenario-storage-card ${hasChangesSinceSaved ? "has-changes" : ""}`}>
+              <span>Gespeicherte Fassung</span>
+              <strong>{!activeScenarioId ? "Noch nicht gespeichert" : !savedScenarioExists ? "Gespeicherte Fassung nicht gefunden" : hasChangesSinceSaved ? "Änderungen seit gespeichertem Stand" : "Entspricht dem gespeicherten Stand"}</strong>
+              {savedScenarioUpdatedAt && <small>Zuletzt gespeichert: {formatSavedAt(savedScenarioUpdatedAt)}</small>}
+            </div>
+          </section>
+
+          {hasScenarioActions && <section className="scenario-actions-grid" aria-label="Szenarioaktionen">
+            {onSave && <button className="button primary" onClick={onSave}><Save size={14} /> {activeScenarioId ? "Änderungen speichern" : "Szenario speichern"}</button>}
+            {onNew && <button className="button secondary" onClick={onNew}><FilePlus2 size={14} /> Neues Szenario</button>}
+            {onDuplicate && <button className="button secondary" onClick={onDuplicate}><CopyPlus size={14} /> Als neue Variante sichern</button>}
+            {onExport && <button className="button secondary" onClick={onExport}><Download size={14} /> Szenario herunterladen</button>}
+            {onImport && <button className="button secondary" onClick={() => fileInput.current?.click()}><Upload size={14} /> Szenario aus Datei übernehmen</button>}
+            {onCopy && <button className="button primary scenario-copy" onClick={onCopy}><Copy size={14} /> Szenario-Daten kopieren</button>}
+            {onImport && <input
+              ref={fileInput}
+              className="visually-hidden"
+              type="file"
+              accept="application/json,.json"
+              aria-label="Szenario-Datei auswählen"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void onImport(file);
+                event.currentTarget.value = "";
+              }}
+            />}
+          </section>}
+          {hasScenarioActions && <p className="scenario-file-help">Die Szenario-Datei und die kopierten Szenario-Daten nutzen das JSON-Format. Lade die Datei herunter, um eine Variante auf ein anderes Gerät mitzunehmen, und übernimm sie dort aus einer Datei. Eine automatische Synchronisierung gibt es nicht.</p>}
+
+          <section className="scenario-form scenario-additional-settings" aria-label="Weitere Einstellungen">
 
             <fieldset className="scenario-calculation-settings scenario-year-context" data-testid="scenario-year-context">
               <legend>Jahresgrundlagen</legend>
@@ -182,36 +203,20 @@ export function ScenarioPanel({
                 onChange={(event) => onPatch({ assumptions: event.target.value.split("\n").map((item) => item.trim()).filter(Boolean) })}
               />
             </label>
-
-            <div className="scenario-sources">
-              <span>Verknüpfte Quellen</span>
-              <div>{scenario.sourceIds.map((sourceId) => <code key={sourceId}>{sourceId}</code>)}</div>
-            </div>
           </section>
 
-          {hasScenarioActions && <section className="scenario-actions-grid" aria-label="Szenarioaktionen">
-            {onSave && <button className="button primary" onClick={onSave}><Save size={14} /> {activeScenarioId ? "Änderungen speichern" : "Szenario speichern"}</button>}
-            {onNew && <button className="button secondary" onClick={onNew}><FilePlus2 size={14} /> Neu</button>}
-            {onDuplicate && <button className="button secondary" onClick={onDuplicate}><CopyPlus size={14} /> Als neue Variante sichern</button>}
-            {onExport && <button className="button secondary" onClick={onExport}><Download size={14} /> JSON exportieren</button>}
-            {onImport && <button className="button secondary" onClick={() => fileInput.current?.click()}><Upload size={14} /> JSON importieren</button>}
-            {onCopy && <button className="button primary scenario-copy" onClick={onCopy}><Copy size={14} /> Als JSON kopieren</button>}
-            {onImport && <input
-              ref={fileInput}
-              className="visually-hidden"
-              type="file"
-              accept="application/json,.json"
-              aria-label="Szenario-JSON auswählen"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void onImport(file);
-                event.currentTarget.value = "";
-              }}
-            />}
-          </section>}
+          <details className="scenario-technical-details">
+            <summary>Technische Nachweise</summary>
+            <p>Diese Angaben bleiben für Prüfung und Wiederherstellung erhalten. Für die normale Nutzung musst du sie nicht kennen.</p>
+            <dl>
+              <div><dt>Modellversion</dt><dd><code>{scenario.modelVersion}</code></dd></div>
+              <div><dt>Interne Szenario-ID</dt><dd><code>{activeScenarioId ?? "Noch nicht gespeichert"}</code></dd></div>
+              <div><dt>Quellenkennungen</dt><dd>{scenario.sourceIds.length ? scenario.sourceIds.map((sourceId) => <code key={sourceId}>{sourceId}</code>) : "Keine hinterlegt"}</dd></div>
+            </dl>
+          </details>
         </div>
 
-        <footer>Der Entwurf bleibt in diesem Browser auf diesem Gerät und wird nicht mit anderen Geräten synchronisiert.</footer>
+        <footer>Dein Entwurf wird nur in diesem Browser auf diesem Gerät gesichert. Andere Geräte sehen ihn nicht automatisch.</footer>
       </aside>
     </div>
   );

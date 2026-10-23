@@ -41,12 +41,12 @@ test("schützt geänderte Entwürfe vor Neu und Laden, ohne unveränderte Entwü
   await panel.getByRole("button", { name: "Szenario speichern" }).click();
   await expect(page.locator(".toast")).toContainText("Szenario lokal gespeichert");
 
-  await panel.getByRole("button", { name: "Neu", exact: true }).click();
+  await panel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(panel.getByLabel("Szenarioname im Dialog")).toHaveValue("Neues Szenario");
   const description = panel.getByLabel("Szenariobeschreibung");
   await description.fill("Ungespeicherte Arbeit");
-  await panel.getByRole("button", { name: "Neu", exact: true }).click();
+  await panel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   let guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await expect(guard).toContainText("Neues Szenario");
   await page.screenshot({ path: "test-results/scenario-protection-replacement-desktop.png", fullPage: true });
@@ -54,7 +54,7 @@ test("schützt geänderte Entwürfe vor Neu und Laden, ohne unveränderte Entwü
   await expect(guard).toHaveCount(0);
   await expect(description).toHaveValue("Ungespeicherte Arbeit");
 
-  await panel.getByRole("button", { name: "Neu", exact: true }).click();
+  await panel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await guard.getByRole("button", { name: "Als Variante sichern und fortfahren" }).click();
   await expect(guard).toHaveCount(0);
@@ -91,7 +91,7 @@ test("prüft Importe vor dem Wechsel und erhält den Entwurf bei Abbruch", async
   const panel = page.getByRole("dialog", { name: "Szenario verwalten" });
   const description = panel.getByLabel("Szenariobeschreibung");
   await description.fill("Entwurf vor dem Import");
-  const importInput = panel.getByLabel("Szenario-JSON auswählen");
+  const importInput = panel.getByLabel("Szenario-Datei auswählen");
 
   await importInput.setInputFiles({ name: "ungueltig.json", mimeType: "application/json", buffer: Buffer.from("{kaputt") });
   await expect(page.locator(".toast")).toContainText("kein gültiges JSON");
@@ -145,7 +145,7 @@ test("blockiert den Wechsel bei fehlgeschlagener Varianten-Sicherung und ist mob
   const description = panel.getByLabel("Szenariobeschreibung");
   await description.fill("Mobil geänderte Arbeit");
   await page.evaluate(() => sessionStorage.setItem("fail-next-scenario-save", "true"));
-  await panel.getByRole("button", { name: "Neu", exact: true }).click();
+  await panel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   const guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await expect(guard.getByRole("button", { name: "Abbrechen" })).toBeFocused();
   await page.keyboard.press("Tab");

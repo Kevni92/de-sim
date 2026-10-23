@@ -173,11 +173,11 @@ test("exportiert, importiert und dupliziert Szenarien mit abweichenden Jahresmet
   const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
 
   const downloadPromise = page.waitForEvent("download");
-  await dialog.getByRole("button", { name: "JSON exportieren" }).click();
+  await dialog.getByRole("button", { name: "Szenario herunterladen" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/\.json$/);
 
-  await dialog.getByLabel("Szenario-JSON auswählen").setInputFiles({
+  await dialog.getByLabel("Szenario-Datei auswählen").setInputFiles({
     name: "import-szenario.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify({
@@ -205,7 +205,7 @@ test("exportiert, importiert und dupliziert Szenarien mit abweichenden Jahresmet
   await page.screenshot({ path: "test-results/issue-96-legacy-import-desktop.png", fullPage: true });
 
   const importedExportPromise = page.waitForEvent("download");
-  await dialog.getByRole("button", { name: "JSON exportieren" }).click();
+  await dialog.getByRole("button", { name: "Szenario herunterladen" }).click();
   const importedExport = await importedExportPromise;
   const importedExportPath = await importedExport.path();
   expect(importedExportPath).not.toBeNull();
@@ -231,7 +231,7 @@ test("ordnet importierte Jahresmetadaten im mobilen Szenariodialog ein", async (
   await expect(page.getByText("Rechtsstand 2026 · Quellenjahre je Kennzahl · Modellrechnung")).toBeVisible();
   await page.getByRole("button", { name: "Szenario verwalten" }).click();
   const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
-  await dialog.getByLabel("Szenario-JSON auswählen").setInputFiles({
+  await dialog.getByLabel("Szenario-Datei auswählen").setInputFiles({
     name: "altes-szenario.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify({
