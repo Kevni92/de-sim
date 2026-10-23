@@ -39,13 +39,13 @@ test("unterscheidet Browser-Entwurf, gespeicherte Fassung und neue Variante", as
   await reloadedDialog.getByLabel("Szenariobeschreibung").fill("Inhalt der neuen Variante");
   await reloadedDialog.getByRole("button", { name: "Als neue Variante sichern" }).click();
   await expect(page.locator(".toast")).toContainText("Neue Szenariovariante lokal gespeichert");
-  await expect(page.locator(".saved-scenarios")).toContainText("Ausgangsfassung");
-  await expect(page.locator(".saved-scenarios")).toContainText("Ausgangsfassung (Kopie)");
-  await expect(page.locator(".saved-scenarios header strong")).toHaveText("2");
+  await expect(page.locator(".saved-scenarios:visible")).toContainText("Ausgangsfassung");
+  await expect(page.locator(".saved-scenarios:visible")).toContainText("Ausgangsfassung (Kopie)");
+  await expect(page.locator(".saved-scenarios:visible header strong")).toHaveText("2");
 
   await reloadedDialog.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(reloadedDialog).toHaveCount(0);
-  const originalScenario = page.locator(".saved-scenarios li").filter({ has: page.getByText("Ausgangsfassung", { exact: true }) });
+  const originalScenario = page.locator(".saved-scenarios:visible li").filter({ has: page.getByText("Ausgangsfassung", { exact: true }) });
   await expect(originalScenario).toHaveCount(1);
   await originalScenario.getByRole("button").first().click();
   await page.getByRole("button", { name: "Szenario", exact: true }).click();

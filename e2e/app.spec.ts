@@ -316,7 +316,7 @@ test("speichert und lädt ein Szenario über Worker und IndexedDB", async ({ pag
   await page.getByRole("button", { name: /Speichern/ }).click();
   await expect(page.getByRole("status")).toContainText("lokal gespeichert");
   await page.reload();
-  const savedRow = page.locator(".saved-scenarios li").filter({ hasText: name });
+  const savedRow = page.locator(".saved-scenarios:visible li").filter({ hasText: name });
   await expect(savedRow.getByRole("button").first()).toBeVisible();
 });
 

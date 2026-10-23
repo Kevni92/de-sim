@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 test("zeigt Szenarioverwaltung und Speicherort in Alltagssprache auf Desktop und Mobil", async ({ page }) => {
   await page.goto("./#/dashboard");
 
-  const savedList = page.locator(".saved-scenarios");
+  const savedList = page.locator(".saved-scenarios:visible");
   await expect(savedList).toContainText("Nur in diesem Browser gespeichert");
   await expect(savedList).toContainText("Noch keine Szenarien gespeichert");
   await expect(savedList).not.toContainText(/IndexedDB|lokaler Worker/i);
@@ -103,7 +103,7 @@ test("Szenario-Dateien behalten Beschreibung, Werte und technische Referenzen be
   expect(exported.scenario.name).toBe("Mitnahme-Test");
   expect(exported.scenario.description).toBe("Diese Variante kann ich auf ein anderes Gerät mitnehmen.");
   expect(exported.scenario.incomeTax.allowance).toBe(14_500);
-  expect(exported.scenario.modelVersion).toBe("long-term-effects-0.8.0");
+  expect(exported.scenario.modelVersion).toBe("synthetic-population-0.7.0");
   expect(exported.scenario.sourceIds).toContain("source-budget");
 
   await panel.getByLabel("Szenariobeschreibung").fill("Ungesicherte Änderung vor dem Import.");
@@ -115,6 +115,6 @@ test("Szenario-Dateien behalten Beschreibung, Werte und technische Referenzen be
   await expect(panel.getByLabel("Szenariobeschreibung")).toHaveValue("Diese Variante kann ich auf ein anderes Gerät mitnehmen.");
   const details = panel.locator("details.scenario-technical-details");
   await details.locator("summary").click();
-  await expect(details).toContainText("long-term-effects-0.8.0");
+  await expect(details).toContainText("synthetic-population-0.7.0");
   await expect(details).toContainText("source-budget");
 });

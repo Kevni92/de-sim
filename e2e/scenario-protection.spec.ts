@@ -10,7 +10,7 @@ test("fragt vor dem Löschen nach und erhält ein abgebrochenes Szenario", async
   await panel.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(panel).toHaveCount(0);
 
-  const list = page.locator(".saved-scenarios");
+  const list = page.locator(".saved-scenarios:visible");
   await expect(list).toContainText("Zu löschendes Szenario");
   const row = list.locator("li").filter({ has: page.getByText("Zu löschendes Szenario", { exact: true }) });
   await row.getByRole("button", { name: "Zu löschendes Szenario löschen" }).click();
@@ -25,7 +25,8 @@ test("fragt vor dem Löschen nach und erhält ein abgebrochenes Szenario", async
 
   await row.getByRole("button", { name: "Zu löschendes Szenario löschen" }).click();
   await page.getByRole("alertdialog", { name: "Szenario löschen?" }).getByRole("button", { name: "Szenario löschen" }).click();
-  await expect(page.locator(".saved-scenarios")).toHaveCount(0);
+  await expect(page.locator(".saved-scenarios:visible li")).toHaveCount(0);
+  await expect(page.locator(".saved-scenarios:visible")).toContainText("Noch keine Szenarien gespeichert");
   await expect(page.getByRole("button", { name: "Szenario", exact: true })).toBeFocused();
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const panelAfterDelete = page.getByRole("dialog", { name: "Szenario verwalten" });
@@ -59,13 +60,13 @@ test("schützt geänderte Entwürfe vor Neu und Laden, ohne unveränderte Entwü
   await guard.getByRole("button", { name: "Als Variante sichern und fortfahren" }).click();
   await expect(guard).toHaveCount(0);
   await expect(panel.getByLabel("Szenarioname im Dialog")).toHaveValue("Neues Szenario");
-  await expect(page.locator(".saved-scenarios")).toContainText("Neues Szenario (Kopie)");
+  await expect(page.locator(".saved-scenarios:visible")).toContainText("Neues Szenario (Kopie)");
 
   const nextDescription = panel.getByLabel("Szenariobeschreibung");
   await nextDescription.fill("Noch nicht abgelegte Änderung");
   await panel.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(panel).toHaveCount(0);
-  const original = page.locator(".saved-scenarios li").filter({ has: page.getByText("Basis", { exact: true }) });
+  const original = page.locator(".saved-scenarios:visible li").filter({ has: page.getByText("Basis", { exact: true }) });
   await original.getByRole("button").first().click();
   guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await expect(guard).toContainText("das gespeicherte Szenario „Basis“ laden");
@@ -163,5 +164,5 @@ test("blockiert den Wechsel bei fehlgeschlagener Varianten-Sicherung und ist mob
   await guard.getByRole("button", { name: "Als Variante sichern und fortfahren" }).click();
   await expect(guard).toHaveCount(0);
   await expect(panel.getByLabel("Szenarioname im Dialog")).toHaveValue("Neues Szenario");
-  await expect(page.locator(".saved-scenarios")).toContainText("Mobilbasis (Kopie)");
+  await expect(page.locator(".saved-scenarios:visible")).toContainText("Mobilbasis (Kopie)");
 });
