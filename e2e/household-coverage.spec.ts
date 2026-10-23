@@ -57,14 +57,22 @@ test("kennzeichnet die Einkommensteuer als Umfang der Haushalts- und Verteilungs
 });
 
 test("erklärt bei einer reinen Umsatzsteueränderung die fehlende Haushaltsabdeckung", async ({ page, isMobile }) => {
-  await page.goto("./#/dashboard");
+  const incomeTaxBaseline = {
+    allowance: 12_348,
+    entryRate: 14,
+    topRate: 42,
+    topThreshold: 69_879,
+    richRate: 45,
+    childAllowance: 9_756,
+    spouseSplitting: true,
+  };
+  await importScenario(page, isMobile, { name: "Unveränderte Einkommensteuer", incomeTax: incomeTaxBaseline });
   const baselineCenter = await openHouseholdView(page, isMobile);
   const baselineHouseholds = await baselineCenter.locator(".result-content").innerText();
 
-  await importScenario(page, isMobile, {
-    name: "Nur Umsatzsteuer",
-    revenueChanges: { "param.ust.standardRate": 21 },
-  });
+  await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
+  await page.getByLabel("Regelsteuersatz Wert").fill("21");
+  await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
   const center = await openHouseholdView(page, isMobile);
   const scope = center.getByTestId("household-distribution-scope");
   await expect(scope).toContainText("Einkommensteuer wird angezeigt, ist in diesem Paket aber unverändert.");
