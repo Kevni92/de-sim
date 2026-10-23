@@ -79,7 +79,9 @@ test("erklärt bei einer reinen Umsatzsteueränderung die fehlende Haushaltsabde
   }
   const revenueSummary = page.locator(".reform-result-layout");
   await expect(revenueSummary.getByLabel("Regelsteuersatz Wert")).toBeVisible();
-  await revenueSummary.getByLabel("Regelsteuersatz Wert").fill("21");
+  const standardRate = revenueSummary.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("21");
+  await standardRate.press("Enter");
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
   await expect(page).toHaveURL(/#\/dashboard$/);
   const center = await openHouseholdView(page, isMobile);

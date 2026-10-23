@@ -92,7 +92,9 @@ test("öffnet die Umsatzsteuer aus dem Dashboard und berechnet eine Satzänderun
   await expect(page.getByRole("heading", { name: "Steuern und Sozialbeiträge" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Umsatzsteuer" })).toBeVisible();
 
-  await page.getByLabel("Regelsteuersatz Wert").fill("20");
+  const standardRate = page.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("20");
+  await standardRate.press("Enter");
   await expect(page.getByTestId("revenue-module-value")).toHaveText("+13,1 Mrd. €");
   await expect(page.getByText("Direkte staatliche Wirkung").first()).toBeVisible();
   await page.getByText("Mögliche Folgewirkungen", { exact: true }).click();
@@ -110,7 +112,9 @@ test("aktiviert ein Vermögensteuer-Szenario aus einer Null-Baseline", async ({ 
   const kpiGrid = page.getByTestId("reform-kpi-grid");
   await expect(kpiGrid.getByText("Derzeit keine Erhebung", { exact: false })).toBeVisible();
 
-  await page.getByLabel("Steuersatz Wert").fill("1");
+  const wealthTaxRate = page.getByLabel("Steuersatz Wert");
+  await wealthTaxRate.fill("1");
+  await wealthTaxRate.press("Enter");
   await expect(page.getByTestId("revenue-module-value")).toHaveText("+11,0 Mrd. €");
   await expect(kpiGrid.getByText("Topvermögen", { exact: true })).toBeVisible();
 });
@@ -132,6 +136,7 @@ test("sichert Parameter eines Einnahmemoduls per Autosave und IndexedDB", async 
   await page.getByText("Erweiterte Parameter", { exact: true }).click();
   const reducedRate = page.getByLabel("Ermäßigter Steuersatz Wert");
   await reducedRate.fill("8");
+  await reducedRate.press("Enter");
   await expect(reducedRate).toHaveValue("8");
   await page.waitForTimeout(450);
   await page.reload();

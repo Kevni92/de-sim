@@ -25,7 +25,9 @@ test("trennt einen illustrativen Schuldenbestand von jährlichen Saldoänderunge
   const unchangedDebtValue = await debt.locator(".kpi-value-row strong").innerText();
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("30");
+  const standardRate = page.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("30");
+  await standardRate.press("Enter");
   await returnToDashboard(page);
   await expect(dashboard.getByTestId("budget-chart").getByTestId("budget-chart-column").nth(1)).toHaveAttribute("data-direction", "positive");
   await expect(debt.locator(".kpi-value-row strong")).toHaveText(unchangedDebtValue);
@@ -33,7 +35,8 @@ test("trennt einen illustrativen Schuldenbestand von jährlichen Saldoänderunge
   await page.screenshot({ path: "test-results/issue-100-debt-stock-better-saldo.png", fullPage: true });
 
   await dashboard.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("18");
+  await standardRate.fill("18");
+  await standardRate.press("Enter");
   await returnToDashboard(page);
   await expect(dashboard.getByTestId("budget-chart").getByTestId("budget-chart-column").nth(1)).toHaveAttribute("data-direction", "negative");
   await expect(debt.locator(".kpi-value-row strong")).toHaveText(unchangedDebtValue);

@@ -143,7 +143,9 @@ test.describe("Standardfluss C: Erweiterte Prüfung ohne Zustandsverlust", () =>
     testInfo.setTimeout(150_000);
 
     const summary = await openRevenueModule(page);
-    await summary.getByLabel("Regelsteuersatz Wert").fill("22");
+    const standardRate = summary.getByLabel("Regelsteuersatz Wert");
+    await standardRate.fill("22");
+    await standardRate.press("Enter");
     await page.waitForTimeout(900);
 
     const mainNav = page.getByRole("navigation", { name: "Hauptnavigation" });

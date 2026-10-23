@@ -35,7 +35,9 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
 
   await page.getByRole("button", { name: "Zurück zum Dashboard" }).click();
   await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("20");
+  const standardRate = page.getByLabel("Regelsteuersatz Wert");
+  await standardRate.fill("20");
+  await standardRate.press("Enter");
   await expect(page.getByTestId("revenue-module-value")).toHaveText("+13,1 Mrd. €");
   const revenueOnlyValue = await compareDashboardValue(page, "revenue", "Einnahmen");
   await expect(page.getByTestId("comparison-expense").getByTestId("scenario-current-value")).toHaveText(baselineExpense);
@@ -44,7 +46,8 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
 
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
   await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("19");
+  await standardRate.fill("19");
+  await standardRate.press("Enter");
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
   await page.getByRole("button", { name: "Rente bearbeiten" }).click();
   await page.getByLabel("Rentenwert Wert").fill("105");
@@ -55,7 +58,8 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
 
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
   await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("20");
+  await standardRate.fill("20");
+  await standardRate.press("Enter");
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
   await page.getByRole("button", { name: "Einkommensteuer bearbeiten" }).click();
   await page.getByLabel("Grundfreibetrag Wert").fill("15000");
