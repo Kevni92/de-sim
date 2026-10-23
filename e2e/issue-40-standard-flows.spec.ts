@@ -35,8 +35,8 @@ test.describe("Standardfluss A: Einnahmen/Steueränderung", () => {
 
     const summary = page.locator(".reform-result-layout");
     await expect(summary.getByText("Was wird geändert?", { exact: true })).toBeVisible();
-    const slider = summary.getByLabel("Regelsteuersatz Wert");
-    await expect(slider).toBeVisible();
+    const rateInput = summary.getByLabel("Regelsteuersatz Wert");
+    await expect(rateInput).toBeVisible();
 
     const kpis = summary.getByTestId("reform-kpi-grid");
     await expect(kpis.locator("article")).toHaveCount(4);
@@ -44,7 +44,8 @@ test.describe("Standardfluss A: Einnahmen/Steueränderung", () => {
     await expect(summary.getByText("Am stärksten betroffen", { exact: true })).toBeVisible();
     await expect(summary.getByText("Belastbarkeit", { exact: true })).toBeVisible();
 
-    await slider.fill("21");
+    await rateInput.fill("21");
+    await rateInput.press("Enter");
     await expect(kpis.getByTestId("revenue-module-value")).toContainText(/\+|−|±/);
 
     await page.waitForTimeout(900);

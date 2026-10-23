@@ -52,7 +52,7 @@ test("setzt Kapitalertragsteuer flexibel und erhält bestätigte Werte in Verlau
   await rate.press("Enter");
   await expect(rate).toHaveAttribute("aria-invalid", "true");
   await expect(page.getByRole("alert").filter({ hasText: "Gib eine vollständige" })).toBeVisible();
-  await expect(page.locator(".reform-primary-control .parameter-current-value")).toHaveText("80 %");
+  await expect(page.locator(".reform-primary-control .parameter-current-value")).toHaveText("80 %; außerhalb des fachlich geprüften Bereichs");
   await rate.press("Escape");
   await expect(rate).toHaveValue("80");
 
@@ -60,7 +60,7 @@ test("setzt Kapitalertragsteuer flexibel und erhält bestätigte Werte in Verlau
   await rate.press("Enter");
   await expect(rate).toHaveAttribute("aria-invalid", "true");
   await expect(page.getByRole("alert").filter({ hasText: "mindestens 0 %" })).toBeVisible();
-  await expect(page.locator(".reform-primary-control .parameter-current-value")).toHaveText("80 %");
+  await expect(page.locator(".reform-primary-control .parameter-current-value")).toHaveText("80 %; außerhalb des fachlich geprüften Bereichs");
   await rate.press("Escape");
   await expect(rate).toHaveValue("80");
 
@@ -117,6 +117,12 @@ test("erweitert absolute Parameter und bleibt auf Mobilgeräten ohne Seitenüber
   await expect(allowance).toHaveAttribute("aria-invalid", "false");
 
   const viewportWidth = await page.evaluate(() => document.documentElement.clientWidth);
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewportWidth + 1);
+  const controlBounds = await allowanceControl.boundingBox();
+  expect(controlBounds).not.toBeNull();
+  expect(controlBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(controlBounds!.x + controlBounds!.width).toBeLessThanOrEqual(viewportWidth + 1);
+  if (isMobile) {
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewportWidth + 1);
+  }
   await page.screenshot({ path: `test-results/issue-82-flexible-parameters-${isMobile ? "mobile" : "desktop"}.png`, fullPage: true });
 });
