@@ -149,7 +149,7 @@ export function LongTermPage({ settings, onTargetYear, onBack, onOpenSource }: {
         <Metric label="Bevölkerung" value={million(scenarioPopulation.population)} note={`Baseline ${million(basePopulation.population)}`} delta={signed(populationDifference / 1_000_000, " Mio.")} />
         <Metric label="Erwartete Erwerbspersonen" value={million(scenarioLabour.availableWorkers)} note="Erwerbsbeteiligung, nicht nur Altersgruppe" delta={signed(workforceDifference / 1_000_000, " Mio.")} />
         <Metric label="Beitragszahlende je 100 Rentenbeziehende" value={ratio(scenarioPension.contributorsPer100Pensioners)} note={`Baseline ${ratio(basePension.contributorsPer100Pensioners)} je 100 Rentenbeziehende · Strukturindikator, keine Finanzrechnung`} delta={signed(scenarioPension.contributorsPer100Pensioners - basePension.contributorsPer100Pensioners, " je 100 Rentenbeziehende")} />
-        <Metric label="Saldo der Alterssicherung" value={billion(scenarioPension.balanceBn)} note={`Baseline ${billion(basePension.balanceBn)} · Zieljahr ${settings.targetYear}`} delta={signed(scenarioPension.balanceBn - basePension.balanceBn, " Mrd. € pro Jahr")} />
+        <Metric label="Saldo der Alterssicherung" value={billion(scenarioPension.balanceBn)} note={`Baseline ${billion(basePension.balanceBn)}`} delta={signed(scenarioPension.balanceBn - basePension.balanceBn, " Mrd. € pro Jahr")} />
       </section>
 
       <p className="long-term-summary"><strong>Einordnung für {settings.targetYear}:</strong> {causeNote} Der Unterschied zur Baseline beträgt {signed(populationDifference / 1_000_000, " Mio. Menschen")} bei der Bevölkerung und {signed(workforceDifference / 1_000_000, " Mio. Erwerbspersonen")} bei den Erwerbspersonen.</p>
