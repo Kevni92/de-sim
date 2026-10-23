@@ -191,6 +191,7 @@ export function ComparisonPage({
         Ergebnisse beruhen je Spalte auf den dort angezeigten Modellannahmen. Gini, Armutsrisiko und regionale Wirkungen sind noch nicht berechnet. Eine amtliche Tarifgrundlage bestätigt keine abgeleiteten Modellwirkungen.
       </p>
 
+      <p className="money-context-note comparison-money-context" role="note" data-testid="comparison-money-context">Staatliche Perspektive · öffentlicher Gesamthaushalt, nur ausgewiesene Posten · Einnahmen, Ausgaben, Saldo und Steueraufkommen: Jahreswerte in Mrd. € · Referenzdatenjahr 2025, Rechtsstand 2026 · Preisgrundlage nicht ausgewiesen.</p>
       <section className="card-flat compare-table" role="region" aria-label="Haushaltskennzahlen im Vergleich" tabIndex={0}>
         <div className="compare-row compare-head"><strong>Kennzahl</strong><ColumnHead title="Status quo" note="wie in der Übersicht" /><ColumnHead title={currentScenario.name || "Aktueller Entwurf"} note={`Entwurf · ${modelLevelLabel(currentScenario.modelLevel)}`} active /><ColumnHead title={selectedScenario?.name ?? "Gespeicherte Alternative"} note={selectedScenario ? `Gespeichert · ${modelLevelLabel(selectedScenario.modelLevel)}` : "noch nicht ausgewählt"} /></div>
         {rows.map((row) => <div className="compare-row" data-testid={`comparison-${row.id}`} key={row.id}>
@@ -206,6 +207,7 @@ export function ComparisonPage({
           : `Die Gesamtsummen des Entwurfs sind unvollständig${[...budgetSummary.missingRevenueModules, ...budgetSummary.missingExpenseModules].length ? ` · fehlend: ${[...budgetSummary.missingRevenueModules, ...budgetSummary.missingExpenseModules].join(", ")}` : ""}. Fehlende Teilwerte werden nicht als null gerechnet.`}
       </p>
 
+      <p className="money-context-note comparison-effects-context" role="note" data-testid="comparison-effects-context">Direkte fiskalische Wirkung: staatlicher Jahreswert in Mrd. € aus den ausgewiesenen Posten. Kurzfristige Reaktionen und langfristige Pfade sind separate Szenariowerte im gewählten Zeithorizont; ihre Preisgrundlage ist nicht ausgewiesen.</p>
       <section className="effects-context-comparison" data-testid="effect-level-comparison" data-status={effectStatus}>
         <header><h2>Wirkungsebenen getrennt vergleichen</h2><p>{effectSummary.activeContextCount} geänderte Reformmodule mit expliziter Wirkungszuordnung · {currentEffectNote}</p></header>
         {selectedScenario && activeSnapshot?.effectError && <p className="comparison-scope-note" role="note">Wirkungen von „{selectedScenario.name}“: {activeSnapshot.effectError}</p>}

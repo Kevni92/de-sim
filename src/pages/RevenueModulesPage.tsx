@@ -92,6 +92,7 @@ export function RevenueModulesPage({
         description="Maßnahme ändern, direkte Wirkung verstehen und fachliche Details nur bei Bedarf öffnen."
         onBack={onBack}
       />
+      <p className="money-context-note module-money-context" role="note" data-testid="module-money-context">Staatliche Einnahmeperspektive · aggregierte Modulwerte sind Jahreswerte in Mrd. € · Referenzdatenjahr 2025, Rechtsstand 2026 · Preisgrundlage nicht ausgewiesen. Private Monatswirkungen sind separat beschriftet.</p>
 
       <section className="revenue-module-layout">
         <aside className="card-flat revenue-module-list" aria-label="Einnahmemodule">

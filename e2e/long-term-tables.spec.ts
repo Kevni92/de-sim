@@ -50,7 +50,7 @@ test("ordnet Baseline, Szenario, Differenz und Band für alle Zieljahre zu", asy
     await expect(contributors.getByTestId("band")).toContainText("bis");
 
     const balance = page.getByTestId("long-term-row-pension-balance");
-    const balanceMetric = page.locator(".long-term-metric").filter({ hasText: "Vereinfachter Finanzierungssaldo" });
+    const balanceMetric = page.locator(".long-term-metric").filter({ hasText: "Saldo der Alterssicherung" });
     await expect(balance.getByTestId("scenario")).toHaveText(await balanceMetric.locator("strong").innerText());
     await expect(balance.getByTestId("baseline")).toHaveText((await balanceMetric.locator("small").innerText()).replace("Baseline ", ""));
     await expect(balance.getByTestId("difference")).toContainText("Mrd. €");

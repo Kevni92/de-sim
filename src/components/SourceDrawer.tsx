@@ -70,6 +70,10 @@ export function SourceDrawer({
 
           <dl className="meta-grid">
             <Meta label="Kategorie" value={metric.category} />
+            {metric.period && <Meta label="Zeitraum" value={metric.period} />}
+            {metric.level && <Meta label="Ebene" value={metric.level} />}
+            {metric.perspective && <Meta label="Perspektive" value={metric.perspective} />}
+            {metric.unit.includes("€") && <Meta label="Preisgrundlage" value={metric.priceBasis?.trim() || "nicht ausgewiesen"} />}
             <Meta label="Datenjahr" value={metric.dataYear === null ? "nicht belegt" : String(metric.dataYear)} />
             <Meta label="Rechtsstand" value={metric.legalYear === null ? "nicht anwendbar" : String(metric.legalYear)} />
             <Meta label="Modellversion" value={scenario.modelVersion} />

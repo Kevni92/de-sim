@@ -63,6 +63,10 @@ export interface MetricRecord {
   confidence: Confidence;
   dataYear: number | null;
   legalYear: number | null;
+  period?: string | null;
+  level?: string | null;
+  perspective?: string | null;
+  priceBasis?: string | null;
   sourceIds: string[];
   formula: string;
   parameters: MetricParameter[];
