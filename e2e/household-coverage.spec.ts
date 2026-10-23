@@ -48,7 +48,7 @@ test("kennzeichnet die Einkommensteuer als Umfang der Haushalts- und Verteilungs
   await center.getByRole("button", { name: "Quelle für Referenzhaushalte" }).click();
   const source = page.getByRole("dialog", { name: "Nachweis: Referenzhaushalte" });
   await expect(source).toBeVisible();
-  await source.getByRole("button", { name: "Schließen" }).click();
+  await source.getByRole("button", { name: "Schließen", exact: true }).click();
   if (isMobile) {
     const widths = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, page: document.documentElement.scrollWidth }));
     expect(widths.page).toBeLessThanOrEqual(widths.viewport + 1);
