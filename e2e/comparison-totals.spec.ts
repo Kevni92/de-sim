@@ -13,7 +13,7 @@ async function compareDashboardValue(page: Page, rowId: string, label: string) {
   const expected = await dashboardValue(page, label);
   await page.getByRole("button", { name: "Vergleich öffnen" }).click();
   const row = page.getByTestId(`comparison-${rowId}`);
-  await expect(row.getByTestId("scenario-a-value")).toHaveText(expected);
+  await expect(row.getByTestId("scenario-current-value")).toHaveText(expected);
   return expected;
 }
 
@@ -25,10 +25,11 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
   const baselineBalance = await dashboardValue(page, "Saldo pro Jahr");
 
   await page.getByRole("button", { name: "Vergleich öffnen" }).click();
-  await expect(page.getByTestId("comparison-revenue").getByTestId("scenario-a-value")).toHaveText(baselineRevenue);
-  await expect(page.getByTestId("comparison-expense").getByTestId("scenario-a-value")).toHaveText(baselineExpense);
-  await expect(page.getByTestId("comparison-balance").getByTestId("scenario-a-value")).toHaveText(baselineBalance);
-  await expect(page.getByTestId("comparison-revenue")).toContainText("Nicht vergleichbar");
+  await expect(page.getByTestId("comparison-revenue").getByTestId("scenario-current-value")).toHaveText(baselineRevenue);
+  await expect(page.getByTestId("comparison-expense").getByTestId("scenario-current-value")).toHaveText(baselineExpense);
+  await expect(page.getByTestId("comparison-balance").getByTestId("scenario-current-value")).toHaveText(baselineBalance);
+  await expect(page.getByTestId("comparison-empty-state")).toContainText("Noch keine gespeicherten Szenarien");
+  await expect(page.getByTestId("comparison-revenue").getByTestId("scenario-alternative-value")).toHaveText("Keine Alternative ausgewählt");
   await expect(page.getByRole("note").filter({ hasText: "keine vollständige Haushaltsrechnung" })).toBeVisible();
   await page.screenshot({ path: "test-results/issue-97-comparison-baseline-desktop.png", fullPage: true });
 
@@ -37,8 +38,8 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
   await page.getByLabel("Regelsteuersatz Wert").fill("20");
   await expect(page.getByTestId("revenue-module-value")).toHaveText("+13,1 Mrd. €");
   const revenueOnlyValue = await compareDashboardValue(page, "revenue", "Einnahmen");
-  await expect(page.getByTestId("comparison-expense").getByTestId("scenario-a-value")).toHaveText(baselineExpense);
-  await expect(page.getByTestId("comparison-balance").getByTestId("scenario-a-value")).not.toHaveText(baselineBalance);
+  await expect(page.getByTestId("comparison-expense").getByTestId("scenario-current-value")).toHaveText(baselineExpense);
+  await expect(page.getByTestId("comparison-balance").getByTestId("scenario-current-value")).not.toHaveText(baselineBalance);
   expect(revenueOnlyValue).not.toBe(baselineRevenue);
 
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
@@ -48,8 +49,8 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
   await page.getByRole("button", { name: "Rente bearbeiten" }).click();
   await page.getByLabel("Rentenwert Wert").fill("105");
   const expenseOnlyValue = await compareDashboardValue(page, "expense", "Ausgaben");
-  await expect(page.getByTestId("comparison-revenue").getByTestId("scenario-a-value")).toHaveText(baselineRevenue);
-  await expect(page.getByTestId("comparison-balance").getByTestId("scenario-a-value")).not.toHaveText(baselineBalance);
+  await expect(page.getByTestId("comparison-revenue").getByTestId("scenario-current-value")).toHaveText(baselineRevenue);
+  await expect(page.getByTestId("comparison-balance").getByTestId("scenario-current-value")).not.toHaveText(baselineBalance);
   expect(expenseOnlyValue).not.toBe(baselineExpense);
 
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
@@ -66,9 +67,9 @@ test("hält Übersicht und Vergleich für unveränderte, Einnahmen-, Ausgaben- u
   expect(combinedExpense).not.toBe(baselineExpense);
 
   await page.getByRole("button", { name: "Vergleich öffnen" }).click();
-  await expect(page.getByTestId("comparison-revenue").getByTestId("scenario-a-value")).toHaveText(combinedRevenue);
-  await expect(page.getByTestId("comparison-expense").getByTestId("scenario-a-value")).toHaveText(combinedExpense);
-  await expect(page.getByTestId("comparison-balance").getByTestId("scenario-a-value")).toHaveText(combinedBalance);
+  await expect(page.getByTestId("comparison-revenue").getByTestId("scenario-current-value")).toHaveText(combinedRevenue);
+  await expect(page.getByTestId("comparison-expense").getByTestId("scenario-current-value")).toHaveText(combinedExpense);
+  await expect(page.getByTestId("comparison-balance").getByTestId("scenario-current-value")).toHaveText(combinedBalance);
   await expect(page.getByText(/Modellstufe „Mit kurzfristigen Reaktionen“/)).toBeVisible();
   const effects = page.getByTestId("effect-level-comparison");
   const effectFreshness = await effects.getAttribute("data-status");
