@@ -123,7 +123,7 @@ test("ersetzt eine nicht rekonstruierbare Importreferenz nur nach bewusster Ents
   await page.goto("./#/dashboard");
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
-  await dialog.getByLabel("Szenario-JSON auswählen").setInputFiles({
+  await dialog.getByLabel("Szenario-Datei auswählen").setInputFiles({
     name: "fehlende-alte-modellbasis.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify({
@@ -153,7 +153,7 @@ test("exportiert Laufreferenz und Rekonstruktionsmetadaten", async ({ page, isMo
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Szenario verwalten" });
   const downloadPromise = page.waitForEvent("download");
-  await dialog.getByRole("button", { name: "JSON exportieren" }).click();
+  await dialog.getByRole("button", { name: "Szenario herunterladen" }).click();
   const download = await downloadPromise;
   const downloadPath = await download.path();
   expect(downloadPath).not.toBeNull();

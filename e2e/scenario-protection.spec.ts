@@ -10,7 +10,7 @@ test("fragt vor dem Löschen nach und erhält ein abgebrochenes Szenario", async
   await panel.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(panel).toHaveCount(0);
 
-  const list = page.locator(".saved-scenarios");
+  const list = page.locator(".saved-scenarios:visible");
   await expect(list).toContainText("Zu löschendes Szenario");
   const row = list.locator("li").filter({ has: page.getByText("Zu löschendes Szenario", { exact: true }) });
   await row.getByRole("button", { name: "Zu löschendes Szenario löschen" }).click();
@@ -25,7 +25,8 @@ test("fragt vor dem Löschen nach und erhält ein abgebrochenes Szenario", async
 
   await row.getByRole("button", { name: "Zu löschendes Szenario löschen" }).click();
   await page.getByRole("alertdialog", { name: "Szenario löschen?" }).getByRole("button", { name: "Szenario löschen" }).click();
-  await expect(page.locator(".saved-scenarios")).toHaveCount(0);
+  await expect(page.locator(".saved-scenarios:visible li")).toHaveCount(0);
+  await expect(page.locator(".saved-scenarios:visible")).toContainText("Noch keine Szenarien gespeichert");
   await expect(page.getByRole("button", { name: "Szenario", exact: true })).toBeFocused();
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const panelAfterDelete = page.getByRole("dialog", { name: "Szenario verwalten" });
@@ -41,12 +42,12 @@ test("schützt geänderte Entwürfe vor Neu und Laden, ohne unveränderte Entwü
   await panel.getByRole("button", { name: "Szenario speichern" }).click();
   await expect(page.locator(".toast")).toContainText("Szenario lokal gespeichert");
 
-  await panel.getByRole("button", { name: "Neu", exact: true }).click();
+  await panel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await expect(panel.getByLabel("Szenarioname im Dialog")).toHaveValue("Neues Szenario");
   const description = panel.getByLabel("Szenariobeschreibung");
   await description.fill("Ungespeicherte Arbeit");
-  await panel.getByRole("button", { name: "Neu", exact: true }).click();
+  await panel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   let guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await expect(guard).toContainText("Neues Szenario");
   await page.screenshot({ path: "test-results/scenario-protection-replacement-desktop.png", fullPage: true });
@@ -54,18 +55,18 @@ test("schützt geänderte Entwürfe vor Neu und Laden, ohne unveränderte Entwü
   await expect(guard).toHaveCount(0);
   await expect(description).toHaveValue("Ungespeicherte Arbeit");
 
-  await panel.getByRole("button", { name: "Neu", exact: true }).click();
+  await panel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await guard.getByRole("button", { name: "Als Variante sichern und fortfahren" }).click();
   await expect(guard).toHaveCount(0);
   await expect(panel.getByLabel("Szenarioname im Dialog")).toHaveValue("Neues Szenario");
-  await expect(page.locator(".saved-scenarios")).toContainText("Neues Szenario (Kopie)");
+  await expect(page.locator(".saved-scenarios:visible")).toContainText("Neues Szenario (Kopie)");
 
   const nextDescription = panel.getByLabel("Szenariobeschreibung");
   await nextDescription.fill("Noch nicht abgelegte Änderung");
   await panel.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(panel).toHaveCount(0);
-  const original = page.locator(".saved-scenarios li").filter({ has: page.getByText("Basis", { exact: true }) });
+  const original = page.locator(".saved-scenarios:visible li").filter({ has: page.getByText("Basis", { exact: true }) });
   await original.getByRole("button").first().click();
   guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await expect(guard).toContainText("das gespeicherte Szenario „Basis“ laden");
@@ -91,7 +92,7 @@ test("prüft Importe vor dem Wechsel und erhält den Entwurf bei Abbruch", async
   const panel = page.getByRole("dialog", { name: "Szenario verwalten" });
   const description = panel.getByLabel("Szenariobeschreibung");
   await description.fill("Entwurf vor dem Import");
-  const importInput = panel.getByLabel("Szenario-JSON auswählen");
+  const importInput = panel.getByLabel("Szenario-Datei auswählen");
 
   await importInput.setInputFiles({ name: "ungueltig.json", mimeType: "application/json", buffer: Buffer.from("{kaputt") });
   await expect(page.locator(".toast")).toContainText("kein gültiges JSON");
@@ -145,7 +146,7 @@ test("blockiert den Wechsel bei fehlgeschlagener Varianten-Sicherung und ist mob
   const description = panel.getByLabel("Szenariobeschreibung");
   await description.fill("Mobil geänderte Arbeit");
   await page.evaluate(() => sessionStorage.setItem("fail-next-scenario-save", "true"));
-  await panel.getByRole("button", { name: "Neu", exact: true }).click();
+  await panel.getByRole("button", { name: "Neues Szenario", exact: true }).click();
   const guard = page.getByRole("alertdialog", { name: "Deinen Entwurf sichern?" });
   await expect(guard.getByRole("button", { name: "Abbrechen" })).toBeFocused();
   await page.keyboard.press("Tab");
@@ -163,5 +164,7 @@ test("blockiert den Wechsel bei fehlgeschlagener Varianten-Sicherung und ist mob
   await guard.getByRole("button", { name: "Als Variante sichern und fortfahren" }).click();
   await expect(guard).toHaveCount(0);
   await expect(panel.getByLabel("Szenarioname im Dialog")).toHaveValue("Neues Szenario");
-  await expect(page.locator(".saved-scenarios")).toContainText("Mobilbasis (Kopie)");
+  await panel.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.getByRole("tab", { name: "Szenario" }).click();
+  await expect(page.locator(".saved-scenarios:visible")).toContainText("Mobilbasis (Kopie)");
 });

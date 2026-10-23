@@ -227,17 +227,20 @@ h1, h2, h3, p { margin-top: 0; }
 .migration-grid span { border: 1px solid var(--line); border-radius: 5px; background: var(--subtle); padding: 9px; color: var(--muted-foreground); font-size: var(--fs-xs); }
 .migration-grid b { display: block; margin-bottom: 3px; color: var(--foreground); font-size: var(--fs-md); }
 .saved-scenarios { overflow: hidden; }
-.saved-scenarios > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 12px 14px; }
+.saved-scenarios > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 12px 14px; }
 .saved-scenarios h3 { margin: 5px 0 0; font-size: var(--fs-md); }
-.saved-scenarios > header > strong { color: var(--primary); }
+.saved-scenarios-help { max-width: 58ch; margin: 6px 0 0; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.5; }
+.saved-scenarios > header > strong { flex: 0 0 auto; color: var(--primary); }
 .saved-scenarios ul { margin: 0; padding: 0; list-style: none; }
 .saved-scenarios li { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; border-bottom: 1px solid var(--line); }
 .saved-scenarios li:last-child { border-bottom: 0; }
 .saved-scenarios li > button:first-child { border: 0; background: transparent; padding: 10px 14px; text-align: left; }
 .saved-scenarios li > button:first-child:hover { background: var(--subtle); }
-.saved-scenarios li strong, .saved-scenarios li small { display: block; }
+.saved-scenarios li strong, .saved-scenarios li small { display: block; overflow-wrap: anywhere; }
 .saved-scenarios li strong { font-size: var(--fs-sm); }
 .saved-scenarios li small { margin-top: 3px; color: var(--muted-foreground); font-size: var(--fs-xs); }
+.saved-scenarios li .saved-scenario-description { margin-top: 5px; color: var(--foreground); line-height: 1.45; }
+.saved-scenarios li .saved-scenario-updated { margin-top: 5px; }
 .saved-scenarios .delete { margin-right: 12px; }
 .empty-state { margin: 0; padding: 14px; color: var(--muted-foreground); font-size: var(--fs-sm); }
 .app-footer { border-top: 1px solid var(--line); padding: 16px 0 28px; color: var(--muted-foreground); font-size: var(--fs-xs); line-height: 1.5; }

@@ -4,7 +4,7 @@ test("zeigt importierte Änderungen aus drei Modulen, Einzelreset und Undo/Redo 
   await page.goto("./#/dashboard");
   await page.getByRole("button", { name: "Szenario", exact: true }).click();
   const panel = page.getByRole("dialog", { name: "Szenario verwalten" });
-  const importInput = panel.getByLabel("Szenario-JSON auswählen");
+  const importInput = panel.getByLabel("Szenario-Datei auswählen");
   const imported = {
     schemaVersion: 7,
     scenario: {
