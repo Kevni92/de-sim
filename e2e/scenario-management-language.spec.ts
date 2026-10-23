@@ -10,6 +10,7 @@ test("zeigt Szenarioverwaltung und Speicherort in Alltagssprache auf Desktop und
   await expect(savedList).not.toContainText(/IndexedDB|lokaler Worker/i);
   await page.screenshot({ path: "test-results/issue-106-scenario-management-empty.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("tab", { name: "Szenario" }).click();
   await expect(savedList).toContainText("Noch keine Szenarien gespeichert");
   await page.screenshot({ path: "test-results/issue-106-scenario-management-empty-mobile.png", fullPage: true });
   await page.setViewportSize({ width: 1280, height: 900 });

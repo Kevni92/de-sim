@@ -164,5 +164,7 @@ test("blockiert den Wechsel bei fehlgeschlagener Varianten-Sicherung und ist mob
   await guard.getByRole("button", { name: "Als Variante sichern und fortfahren" }).click();
   await expect(guard).toHaveCount(0);
   await expect(panel.getByLabel("Szenarioname im Dialog")).toHaveValue("Neues Szenario");
+  await panel.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.getByRole("tab", { name: "Szenario" }).click();
   await expect(page.locator(".saved-scenarios:visible")).toContainText("Mobilbasis (Kopie)");
 });
