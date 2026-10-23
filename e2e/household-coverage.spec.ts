@@ -68,18 +68,27 @@ test("erklärt bei einer reinen Umsatzsteueränderung die fehlende Haushaltsabde
   };
   await importScenario(page, isMobile, { name: "Unveränderte Einkommensteuer", incomeTax: incomeTaxBaseline });
   const baselineCenter = await openHouseholdView(page, isMobile);
+  await expect(baselineCenter.locator(".result-content")).toContainText("Referenzhaushalte · Einkommensteuer");
   const baselineHouseholds = await baselineCenter.locator(".result-content").innerText();
 
-  await page.getByRole("button", { name: "Umsatzsteuer bearbeiten" }).click();
-  await page.getByLabel("Regelsteuersatz Wert").fill("21");
+  if (isMobile) {
+    await page.getByRole("button", { name: "Hauptmenü öffnen" }).click();
+    await page.getByRole("dialog", { name: "Hauptmenü" }).getByRole("button", { name: "Einnahmen", exact: true }).click();
+  } else {
+    await page.getByRole("navigation", { name: "Hauptnavigation" }).getByRole("button", { name: "Einnahmen", exact: true }).click();
+  }
+  const revenueSummary = page.locator(".reform-result-layout");
+  await expect(revenueSummary.getByLabel("Regelsteuersatz Wert")).toBeVisible();
+  await revenueSummary.getByLabel("Regelsteuersatz Wert").fill("21");
   await page.getByRole("button", { name: "Zum HaushaltsKompass-Dashboard" }).click();
+  await expect(page).toHaveURL(/#\/dashboard$/);
   const center = await openHouseholdView(page, isMobile);
   const scope = center.getByTestId("household-distribution-scope");
   await expect(scope).toContainText("Einkommensteuer wird angezeigt, ist in diesem Paket aber unverändert.");
   await expect(scope).toContainText("Umsatzsteuer");
   await expect(scope).toContainText("hier nicht abgebildet");
   await expect(scope).toContainText("belegen keine Wirkungslosigkeit");
-  await expect(center.locator(".result-content")).toHaveText(baselineHouseholds);
+  await expect.poll(() => center.locator(".result-content").innerText()).toBe(baselineHouseholds);
   await page.screenshot({ path: `test-results/issue-107-vat-scope-${isMobile ? "mobile" : "desktop"}.png`, fullPage: true });
 });
 
