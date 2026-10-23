@@ -326,7 +326,7 @@ test("öffnet den neutralen Szenariovergleich", async ({ page, isMobile }) => {
   await page.getByRole("button", { name: "Vergleich öffnen" }).click();
   await expect(page).toHaveURL(/#\/vergleich$/);
   await expect(page.getByRole("heading", { name: "Szenariovergleich" })).toBeVisible();
-  await expect(page.getByText("Zentrale Politikeinstellungen")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Geänderte Maßnahmen und Annahmen" })).toBeVisible();
 });
 
 test("bietet mobil Dashboard, Einkommensteuer und Einnahmemodule", async ({ page, isMobile }) => {

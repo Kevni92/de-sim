@@ -4,8 +4,8 @@ import { ModelBasisStatus, type ModelBasisStatusKind } from "./components/ModelB
 import { ScenarioPanel } from "./components/ScenarioPanel";
 import { ScenarioGuardDialog, type ScenarioGuardRequest } from "./components/ScenarioGuardDialog";
 import { SourceDrawer } from "./components/SourceDrawer";
-import { calculateExpenseModules, type ExpenseModuleId } from "./lib/expense-modules";
-import { calculateBudgetSummary } from "./lib/budget-summary";
+import { calculateExpenseModules, type ExpenseModuleId, type ExpenseModuleResult } from "./lib/expense-modules";
+import { calculateBudgetSummary, type BudgetSummary } from "./lib/budget-summary";
 import { estimateIncomeTaxRevenue, type IncomeTaxResult } from "./lib/income-tax";
 import { localServer } from "./lib/local-server-client";
 import { SUPPORTED_LEGAL_YEAR } from "./lib/model-baseline";
@@ -13,12 +13,14 @@ import type { EffectRun } from "./lib/long-term-effects";
 import { canReconstructPopulationBasis, populationBasisFromRun, type PopulationBasisReference } from "./lib/population-basis";
 import { populationSources } from "./lib/population-model";
 import { calculateRevenueModules, type RevenueModuleId } from "./lib/revenue-modules";
-import { activeReformContextKeys, contextualSources, deriveReformEffectParameters, effectInputSignature, hasContextualEffects, summarizeScenarioEffects } from "./lib/reform-effects";
+import { activeReformContextKeys, contextualSources, deriveReformEffectParameters, effectInputSignature, hasContextualEffects, summarizeScenarioEffects, type ScenarioEffectSummary } from "./lib/reform-effects";
 import { resolveCalculationFreshness, type CalculationFreshness } from "./lib/scenario-calculation";
 import { createScenarioHistory, defaultScenarioDraft, normalizeScenarioDraft, scenarioFromJson, scenarioHistoryReducer, scenarioToJson, type ScenarioDraftWithPopulationBasis } from "./lib/scenario-state";
 import { collectScenarioChanges, resetScenarioChange } from "./lib/scenario-changes";
+import { compareScenarioChanges, compareScenarioFoundations, type ScenarioChangeComparisonRow, type ScenarioFoundationDifference } from "./lib/scenario-comparison";
 import { fmtBn, fmtDiff } from "./lib/sim-data";
 import { sgb2PreviewClient } from "./lib/sgb2-preview-client";
+import { sgb2UiHasChanges } from "./lib/sgb2-ui";
 import type { Sgb2UiPreviewResult } from "./lib/sgb2-ui";
 import type { MetricRecord, PopulationGenerationOptions, PopulationRun, ScenarioState, SourceRecord } from "./lib/types";
 import { ComparisonPage } from "./pages/ComparisonPage";
@@ -47,6 +49,45 @@ const formatMillion = (value: number) => value.toLocaleString("de-DE", { minimum
 const centsToBillions = (value: number) => value / 100_000_000_000;
 type DraftSaveStatus = "idle" | "saving" | "saved" | "error";
 
+interface SavedComparisonSnapshot {
+  scenarioId: string;
+  status: "loading" | "ready" | "error";
+  budgetSummary?: BudgetSummary;
+  incomeTaxResult?: IncomeTaxResult;
+  directFiscalDelta?: number;
+  effectSummary?: ScenarioEffectSummary;
+  effectStatus?: CalculationFreshness;
+  effectError?: string;
+  warnings: string[];
+  error?: string;
+}
+
+function applySgb2Preview(results: ExpenseModuleResult[], preview: Sgb2UiPreviewResult | null): ExpenseModuleResult[] {
+  if (!preview) return results;
+  return results.map((item) => {
+    if (item.id !== "social") return item;
+    const baseline = centsToBillions(preview.baselinePaymentCents);
+    const value = centsToBillions(preview.scenarioPaymentCents);
+    const standard = preview.components.find((component) => component.id === "standard-need");
+    const additional = preview.components.find((component) => component.id === "additional-need");
+    const accommodation = preview.components.find((component) => component.id === "accommodation");
+    const heating = preview.components.find((component) => component.id === "heating");
+    const benefitValue = centsToBillions((standard?.scenarioCents ?? 0) + (additional?.scenarioCents ?? 0));
+    const housingValue = centsToBillions((accommodation?.scenarioCents ?? 0) + (heating?.scenarioCents ?? 0));
+    return {
+      ...item,
+      baseline,
+      staticValue: value,
+      value,
+      staticDelta: value - baseline,
+      feedbackAdjustment: 0,
+      delta: value - baseline,
+      lineValues: { ...item.lineValues, buerger: benefitValue, wohnen: housingValue },
+      components: preview.components.map((component) => ({ id: component.id, label: component.label, baseline: centsToBillions(component.baselineCents), value: centsToBillions(component.scenarioCents) })),
+    };
+  });
+}
+
 function createNewScenarioDraft(): ScenarioDraftWithPopulationBasis {
   return normalizeScenarioDraft({
     ...defaultScenarioDraft,
@@ -68,6 +109,8 @@ export function App() {
   const [scenarios, setScenarios] = useState<ScenarioState[]>([]);
   const [history, dispatch] = useReducer(scenarioHistoryReducer, defaultScenarioDraft, createScenarioHistory);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
+  const [selectedComparisonScenarioId, setSelectedComparisonScenarioId] = useState<string | null>(null);
+  const [comparisonSnapshot, setComparisonSnapshot] = useState<SavedComparisonSnapshot | null>(null);
   const [selectedRevenueModule, setSelectedRevenueModule] = useState<RevenueModuleId>("ust");
   const [selectedExpenseModule, setSelectedExpenseModule] = useState<ExpenseModuleId>("social");
   const [activePopulation, setActivePopulation] = useState<PopulationRun | null>(null);
@@ -129,7 +172,7 @@ export function App() {
   const directFiscalDelta = taxResult.staticDelta + revenueModuleResults.reduce((sum, item) => sum + item.staticDelta, 0) - expenseModuleResults.reduce((sum, item) => sum + item.staticDelta, 0);
   const activeEffectContexts = useMemo(() => activeReformContextKeys(scenario).filter(hasContextualEffects), [scenario]);
   const effectParameters = useMemo(() => deriveReformEffectParameters(scenario, expenseModuleResults), [expenseModuleResults, scenario]);
-  const routeNeedsEffects = route === "/einnahmen" || route === "/ausgaben" || route === "/vergleich";
+  const routeNeedsEffects = route === "/einnahmen" || route === "/ausgaben";
   const hasActiveEffects = activeEffectContexts.length > 0;
   const routeNeedsPopulation = route === "/bevoelkerung" || route === "/einkommensteuer" || (route === "/ausgaben" && selectedExpenseModule === "social") || (routeNeedsEffects && hasActiveEffects);
   const showCompactModelBasis = route === "/einkommensteuer" || (route === "/ausgaben" && selectedExpenseModule === "social") || (routeNeedsEffects && hasActiveEffects);
@@ -172,6 +215,18 @@ export function App() {
   const activeSavedScenario = useMemo(
     () => activeScenarioId ? scenarios.find((item) => item.id === activeScenarioId) : undefined,
     [activeScenarioId, scenarios],
+  );
+  const selectedComparisonScenario = useMemo(
+    () => selectedComparisonScenarioId ? scenarios.find((item) => item.id === selectedComparisonScenarioId) : undefined,
+    [selectedComparisonScenarioId, scenarios],
+  );
+  const comparisonFoundations = useMemo(
+    () => selectedComparisonScenario ? compareScenarioFoundations(materializedScenario, normalizeScenarioDraft(selectedComparisonScenario)) : [],
+    [materializedScenario, selectedComparisonScenario],
+  );
+  const comparisonChangeRows = useMemo(
+    () => compareScenarioChanges(materializedScenario, selectedComparisonScenario ? normalizeScenarioDraft(selectedComparisonScenario) : materializedScenario),
+    [materializedScenario, selectedComparisonScenario],
   );
   const hasChangesSinceSaved = Boolean(activeSavedScenario && scenarioToJson(materializedScenario) !== scenarioToJson(normalizeScenarioDraft(activeSavedScenario)));
   const isPristineScenarioDraft = scenarioToJson(scenario) === scenarioToJson(normalizeScenarioDraft(defaultScenarioDraft))
@@ -425,6 +480,113 @@ export function App() {
     const timeout = window.setTimeout(() => void calculateEffects(requestId), 350);
     return () => window.clearTimeout(timeout);
   }, [activePopulation, calculateEffects, currentEffectSignature, hasActiveEffects, ready, routeNeedsEffects]);
+
+  useEffect(() => {
+    if (!ready || route !== "/vergleich" || !selectedComparisonScenario) {
+      setComparisonSnapshot(null);
+      return;
+    }
+
+    let cancelled = false;
+    const selected = normalizeScenarioDraft(selectedComparisonScenario);
+    setComparisonSnapshot({ scenarioId: selectedComparisonScenario.id, status: "loading", warnings: [] });
+
+    const calculate = async () => {
+      if (selected.legalYear !== SUPPORTED_LEGAL_YEAR) {
+        throw new Error(`Rechtsstand ${selected.legalYear} wird für Berechnungen nicht unterstützt. Wähle eine Alternative mit Rechtsstand ${SUPPORTED_LEGAL_YEAR} oder passe die gespeicherte Grundlage an.`);
+      }
+
+      const warnings: string[] = [];
+      const revenue = calculateRevenueModules(selected.revenueChanges, selected.modelLevel);
+      let expenses = calculateExpenseModules(selected.expenseChanges, selected.modelLevel);
+      const populationRunId = selected.populationBasis?.runId ?? selected.populationRunId;
+      let incomeTaxResult: IncomeTaxResult;
+
+      if (populationRunId) {
+        try {
+          incomeTaxResult = await localServer.estimatePopulationIncomeTax(selected.incomeTax, selected.modelLevel, populationRunId);
+        } catch (error) {
+          const cause = error instanceof Error ? error.message : "Der Lauf ist nicht verfügbar.";
+          throw new Error(`Der gespeicherte Bevölkerungs-Lauf ${populationRunId} für die Einkommensteuer ist hier nicht verfügbar (${cause}). Wähle eine Alternative mit lokal verfügbarer Modellbasis.`);
+        }
+      } else {
+        incomeTaxResult = estimateIncomeTaxRevenue(selected.incomeTax, selected.modelLevel);
+        warnings.push("Kein eigener Bevölkerungs-Lauf gespeichert. Die Einkommensteuer nutzt die eingebaute Referenzpopulation.");
+      }
+
+      if (sgb2UiHasChanges(selected.sgb2)) {
+        const sgb2PopulationRunId = selected.sgb2.populationRunId ?? populationRunId;
+        if (!sgb2PopulationRunId) {
+          expenses = expenses.filter((item) => item.id !== "social");
+          warnings.push("Bürgergeld und Unterkunft sind nicht berechnet: Für die gespeicherten Regeländerungen fehlt ein Bevölkerungs-Lauf.");
+        } else {
+          try {
+            const preview = await sgb2PreviewClient.preview(sgb2PopulationRunId, { ...selected.sgb2, populationRunId: sgb2PopulationRunId });
+            expenses = applySgb2Preview(expenses, preview);
+          } catch (error) {
+            expenses = expenses.filter((item) => item.id !== "social");
+            warnings.push(`Bürgergeld und Unterkunft sind nicht berechnet: ${error instanceof Error ? error.message : "Die gespeicherte Modellbasis ist nicht verfügbar."}`);
+          }
+        }
+      }
+
+      const summary = calculateBudgetSummary({ incomeTaxResult, revenueModules: revenue, expenseModules: expenses });
+      const effectContexts = activeReformContextKeys(selected).filter(hasContextualEffects);
+      let savedEffectRun: EffectRun | null = null;
+      let savedEffectStatus: CalculationFreshness = "current";
+      let effectError: string | undefined;
+      if (effectContexts.length) {
+        if (!populationRunId) {
+          savedEffectStatus = "stale";
+          effectError = "Keine Wirkungsrechnung: Für dieses Szenario ist kein Bevölkerungs-Lauf gespeichert.";
+        } else {
+          try {
+            savedEffectRun = await localServer.getLatestEffectRun(selectedComparisonScenario.id, populationRunId);
+            const effectParameters = deriveReformEffectParameters(selected, expenses);
+            const signature = effectInputSignature({ scenario: selected, populationRunId, parameters: effectParameters });
+            savedEffectStatus = resolveCalculationFreshness({
+              loading: false,
+              hasResult: Boolean(savedEffectRun),
+              runModelLevel: savedEffectRun?.modelLevel,
+              runHorizonYears: savedEffectRun?.horizonYears,
+              modelLevel: selected.modelLevel,
+              horizonYears: selected.horizonYears,
+              runInputSignature: savedEffectRun?.inputSignature,
+              inputSignature: signature,
+            });
+            if (savedEffectStatus === "stale") effectError = "Keine aktuelle Wirkungsrechnung für die gespeicherten Einstellungen vorhanden.";
+          } catch (error) {
+            savedEffectStatus = "stale";
+            effectError = error instanceof Error ? error.message : "Gespeicherte Wirkungen konnten nicht geladen werden.";
+          }
+        }
+      }
+
+      if (cancelled) return;
+      setComparisonSnapshot({
+        scenarioId: selectedComparisonScenario.id,
+        status: "ready",
+        budgetSummary: summary,
+        incomeTaxResult,
+        directFiscalDelta: incomeTaxResult.staticDelta + revenue.reduce((sum, item) => sum + item.staticDelta, 0) - expenses.reduce((sum, item) => sum + item.staticDelta, 0),
+        effectSummary: summarizeScenarioEffects(effectContexts, savedEffectRun),
+        effectStatus: savedEffectStatus,
+        effectError,
+        warnings: [...warnings, ...(effectError ? [effectError] : [])],
+      });
+    };
+
+    void calculate().catch((error) => {
+      if (cancelled) return;
+      setComparisonSnapshot({
+        scenarioId: selectedComparisonScenario.id,
+        status: "error",
+        warnings: [],
+        error: error instanceof Error ? error.message : "Die gespeicherte Alternative konnte nicht berechnet werden.",
+      });
+    });
+    return () => { cancelled = true; };
+  }, [ready, route, selectedComparisonScenario]);
 
   const retryEffects = () => {
     if (!activePopulation || !currentEffectSignature) return;
@@ -796,7 +958,7 @@ export function App() {
     {route === "/einkommensteuer" && <IncomeTaxPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} result={taxResult} revenueResults={revenueModuleResults} onSettings={(incomeTax) => updateScenario({ incomeTax })} onNavigateRevenue={navigateRevenueModule} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/einnahmen" && <RevenueModulesPage selectedId={selectedRevenueModule} results={revenueModuleResults} incomeTaxResult={taxResult} parameters={scenario.revenueChanges} modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} effectRun={effectRun} effectStatus={effectStatus} effectError={effectError} populationAvailable={Boolean(activePopulation)} onSelect={setSelectedRevenueModule} onNavigateIncomeTax={() => navigate("/einkommensteuer")} onParameters={(revenueChanges) => updateScenario({ revenueChanges })} onRetryEffects={retryEffects} onOpenAdvancedEffects={() => navigate("/wirkungen")} onManageBasis={() => navigate("/bevoelkerung")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/ausgaben" && <ExpenseModulesPage selectedId={selectedExpenseModule} results={expenseModuleResults} parameters={scenario.expenseChanges} modelLevel={scenario.modelLevel} horizonYears={scenario.horizonYears} effectRun={effectRun} effectStatus={effectStatus} effectError={effectError} sgb2={scenario.sgb2} sgb2Preview={sgb2Preview} sgb2PreviewLoading={sgb2PreviewLoading} sgb2PreviewError={sgb2PreviewError} populationAvailable={Boolean(activePopulation)} onSelect={setSelectedExpenseModule} onParameters={(expenseChanges) => updateScenario({ expenseChanges })} onSgb2={(sgb2) => updateScenario({ sgb2 })} onRetryEffects={retryEffects} onOpenAdvancedEffects={() => navigate("/wirkungen")} onManageBasis={() => navigate("/bevoelkerung")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
-    {route === "/vergleich" && <ComparisonPage settings={scenario.incomeTax} modelLevel={scenario.modelLevel} budgetSummary={budgetSummary} revenue={taxResult.value} directFiscalDelta={directFiscalDelta} effectSummary={effectSummary} effectStatus={effectStatus} effectError={effectError} policyChangeCount={scenarioChanges.filter((change) => change.category === "policy").length} assumptionChangeCount={scenarioChanges.filter((change) => change.category !== "policy").length} onOpenChanges={() => navigate("/aenderungen")} onOpenAdvancedEffects={() => navigate("/wirkungen")} onOpenLongTerm={() => navigate("/langfrist")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
+    {route === "/vergleich" && <ComparisonPage currentScenario={materializedScenario} savedScenarios={scenarios} selectedScenarioId={selectedComparisonScenario?.id ?? null} snapshot={comparisonSnapshot} budgetSummary={budgetSummary} incomeTaxResult={taxResult} directFiscalDelta={directFiscalDelta} effectSummary={effectSummary} effectStatus={effectStatus} effectError={effectError} foundationDifferences={comparisonFoundations} changeRows={comparisonChangeRows} onSelectScenario={setSelectedComparisonScenarioId} onOpenScenario={() => setScenarioPanelOpen(true)} onOpenChanges={() => navigate("/aenderungen")} onOpenAdvancedEffects={() => navigate("/wirkungen")} onOpenLongTerm={() => navigate("/langfrist")} onBack={() => navigate("/dashboard")} onOpenSource={openSource} />}
     {route === "/langfrist" && <LongTermPage settings={scenario.longTerm} onTargetYear={(targetYear) => updateScenario({ longTerm: { ...scenario.longTerm, targetYear } })} onBack={() => navigate("/vergleich")} onOpenSource={openSource} />}
     {route === "/transparenz" && <TransparencyPage metrics={metrics} sources={sources} values={metricValues} onOpenMetric={openSource} onNavigatePopulation={() => navigate("/bevoelkerung")} onNavigateEffects={() => navigate("/wirkungen")} />}
     {notice && <div className="toast" role={noticeRole}>{notice}</div>}
