@@ -155,7 +155,7 @@ h1, h2, h3, p { margin-top: 0; }
 .confidence.hoch i, .confidence.mittel i:nth-child(-n+2), .confidence.niedrig i:first-child { background: currentColor; }
 .center-panel { min-width: 0; display: grid; gap: 14px; }
 .result-card { overflow: hidden; }
-.dashboard-household-scope { display: grid; gap: 3px; border-bottom: 1px solid var(--line); background: var(--subtle); padding: 9px 12px; font-size: var(--fs-xs); line-height: 1.45; overflow-wrap: anywhere; }
+.dashboard-household-scope { display: grid; gap: 3px; border-bottom: 1px solid var(--line); background: var(--subtle); padding: 9px 12px; font-size: var(--fs-md); line-height: 1.45; overflow-wrap: anywhere; }
 .dashboard-household-scope strong { color: var(--foreground); }
 .dashboard-household-scope span { color: var(--muted-foreground); }
 .result-tabs { min-height: 48px; display: flex; align-items: center; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--line); padding: 7px; }
