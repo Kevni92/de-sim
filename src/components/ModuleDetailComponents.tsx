@@ -1,4 +1,5 @@
 import { ChevronLeft, Clock3, Info, RotateCcw, Settings2 } from "lucide-react";
+import { ReformIcon, type ReformIconName, type ReformIconTone } from "./ReformIcon";
 import {
   calculationFreshnessLabel,
   modelLevelCaution,
@@ -43,6 +44,8 @@ export function ModuleSummaryHeader({
   badgeTone,
   title,
   description,
+  icon,
+  resetIcon,
   onOpenSource,
   onReset,
 }: {
@@ -50,19 +53,21 @@ export function ModuleSummaryHeader({
   badgeTone?: "hoch" | "mittel" | "niedrig";
   title: string;
   description: string;
+  icon?: ReformIconName;
+  resetIcon?: ReformIconName;
   onOpenSource: () => void;
   onReset: () => void;
 }) {
   return (
     <div className="module-summary-head">
-      <div>
+      <div className="module-summary-copy">
         <span className={`evidence-pill ${badgeTone ?? ""}`.trim()}>{badge}</span>
-        <h2>{title}</h2>
+        {icon ? <div className="module-summary-title"><ReformIcon name={icon} size={24} className="module-summary-icon reform-visual-neutral" /><h2>{title}</h2></div> : <h2>{title}</h2>}
         <p>{description}</p>
       </div>
       <div className="module-summary-actions">
         <button className="button secondary small" onClick={onOpenSource}><Info size={13} /> Berechnung und Quellen</button>
-        <button className="button secondary small" onClick={onReset}><RotateCcw size={13} /> Baseline wiederherstellen</button>
+        <button className="button secondary small" onClick={onReset}>{resetIcon ? <ReformIcon name={resetIcon} size={14} className="reform-visual-information" /> : <RotateCcw size={13} />} Baseline wiederherstellen</button>
       </div>
     </div>
   );
@@ -73,6 +78,8 @@ export function ModuleMetric({
   value,
   note,
   tone = "neutral",
+  icon,
+  iconTone = "neutral",
   testId,
   onSource,
 }: {
@@ -80,12 +87,15 @@ export function ModuleMetric({
   value: string;
   note: string;
   tone?: "positive" | "negative" | "neutral";
+  icon?: ReformIconName;
+  iconTone?: ReformIconTone;
   testId?: string;
   onSource?: () => void;
 }) {
   return (
     <article>
       <div className="module-metric-head">
+        {icon && <ReformIcon name={icon} size={16} className={`module-metric-icon reform-visual-${iconTone}`} />}
         <span>{label}</span>
         {onSource && <button className="plain-icon" aria-label={`Nachweis für ${label}`} onClick={onSource}><Info size={11} /></button>}
       </div>

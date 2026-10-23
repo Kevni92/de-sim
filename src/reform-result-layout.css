@@ -1,4 +1,15 @@
 ﻿.reform-result-layout { padding: 19px; }
+.reform-visual-neutral { color: var(--muted-foreground); }
+.reform-visual-information { color: var(--primary); }
+.reform-visual-positive { color: var(--positive); }
+.reform-visual-negative { color: var(--negative); }
+.reform-visual-affected { color: var(--chart-2); }
+.reform-visual-caution { color: var(--warning); }
+.module-summary-copy { min-width: 0; }
+.module-summary-title { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.module-summary-title h2 { min-width: 0; }
+.module-summary-icon, .module-metric-icon { flex: 0 0 auto; }
+.module-metric-head > span { flex: 1; }
 .reform-step-label { display: block; color: var(--primary, #147d7e); font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
 .reform-primary-control { display: grid; grid-template-columns: minmax(210px, .7fr) minmax(320px, 1.3fr); gap: 22px; align-items: center; margin-top: 18px; padding: 16px; border: 1px solid #bcd7d7; border-radius: 7px; background: #f1f7f7; }
 .reform-primary-control h3 { margin: 5px 0 4px; font-size: var(--fs-lg); }
